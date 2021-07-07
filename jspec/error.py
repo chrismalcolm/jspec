@@ -1,3 +1,6 @@
+"""Module for defining JSPEC errors."""
+
+
 class JSpecError(Exception):
     """Base class for Jspec Errors"""
     pass

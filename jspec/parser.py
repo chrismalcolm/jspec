@@ -1,15 +1,18 @@
-"""Module for parsing JSPEC"""
+"""Module for parsing JSPEC."""
 
 import re
 
-from constants import JSPEC_ELLIPSIS_SUBSITUTIONS
-from regex import JSpec
+from jspec import constants
+from jspec import error
+from jspec import jregex
 
 
 def load(jspec_file):
+    """Load the JSPEC as a readable file."""
     return _parse_jspec(jspec_file.read())
 
 def loads(jspec_string):
+    """Load the JSPEC as a jspec string."""
     return _parse_jspec(jspec_string)
 
 def _parse_jspec(jspec_string):
@@ -27,10 +30,10 @@ def _parse_jspec(jspec_string):
     """
     jspec_string = jspec_string.replace("\n", "").replace("\\", "\\\\")
 
-    for regex, func in JSPEC_ELLIPSIS_SUBSITUTIONS.items():
+    for regex, func in constants.JSPEC_ELLIPSIS_SUBSTITUTIONS.items():
         jspec_string = re.sub(regex, func, jspec_string)
 
     try:
-        return JSpec(jspec_string)
-    except Exception as exc:
-        raise exc
+        return jregex.JSpec(jspec_string)
+    except error.JSpecLoadError as jle:
+        raise jle

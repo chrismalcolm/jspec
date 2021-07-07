@@ -1,18 +1,13 @@
-"""
-    Module for checking candidate JSON against a specification JSON.
-"""
+"""Module for checking candidate JSON against JSPEC."""
 
-import json
 import io
-from error import JSpecLoadError
-
-from constants import (
-    JSPEC_OBJECT_ITEMS_SUBSITUTION, 
-    JSPEC_OBJECT_TEMPLATE_VALUE, 
-    JSPEC_ARRAY_ELEMENT_SUBSITUTION, 
-    JSPEC_ARRAY_TEMPLATE_VALUE
-)
+import json
 import re
+
+from jspec import error
+from jspec import constants
+from jspec import result
+
 
 class JSpec():
     """JSPEC interface"""
@@ -21,15 +16,27 @@ class JSpec():
         self._payload = self._loads(jspec_string)
 
     def _loads(self, jspec_string):
+        """Load the JSPEC as a jspec string."""
         try:
             return json.loads(jspec_string)
         except json.JSONDecodeError as jde:
-            raise JSpecLoadError("later")
+            raise error.JSpecLoadError("Failed to load JSPEC %s" % str(jde))
 
     def match(self, obj):
+        """
+            Checks to see if the JSON object matches the JSPEC
+
+            Parameters:
+            > obj (object) - either a python JSON obejct or a io.TextIOWrapper
+                to be interpreted as a JSON
+
+            Return:
+            > result.Result
+        """
         if isinstance(obj, io.TextIOWrapper):
             obj = json.loads(obj.read())
-        return self._match(self._payload, obj)
+        success, error_message = self._match(self._payload, obj)
+        return result.Result(result=success, message=error_message)
 
     def _match(self, spec, cand):
         """
@@ -102,9 +109,9 @@ class JSpec():
                 if not successsful a short description of where regex didn't match
                 if successful, this is an empty string
         """ 
-        ignore_items = spec.get(JSPEC_OBJECT_ITEMS_SUBSITUTION, False)
-        use_template = spec.get(JSPEC_OBJECT_TEMPLATE_VALUE, False)
-        spec_keys = set(spec.keys()) - {JSPEC_OBJECT_ITEMS_SUBSITUTION, JSPEC_OBJECT_TEMPLATE_VALUE}
+        ignore_items = spec.get(constants.JSPEC_OBJECT_ITEMS_SUBSTITUTION, False)
+        use_template = spec.get(constants.JSPEC_OBJECT_TEMPLATE_VALUE, False)
+        spec_keys = set(spec.keys()) - {constants.JSPEC_OBJECT_ITEMS_SUBSTITUTION, constants.JSPEC_OBJECT_TEMPLATE_VALUE}
         if not isinstance(cand, dict):
             return (
                 False,
@@ -176,8 +183,8 @@ class JSpec():
                 if not successsful a short description of where regex didn't match
                 if successful, this is an empty string
         """
-        ignore_elements = JSPEC_ARRAY_ELEMENT_SUBSITUTION in spec
-        use_template = JSPEC_ARRAY_TEMPLATE_VALUE in spec
+        ignore_elements = constants.JSPEC_ARRAY_ELEMENT_SUBSTITUTION in spec
+        use_template = constants.JSPEC_ARRAY_TEMPLATE_VALUE in spec
         if not isinstance(cand, list):
             return (
                 False,
@@ -191,7 +198,7 @@ class JSpec():
                 % (name, len(spec), len(cand))
             )
         if use_template:
-            raw_spec = list(filter(lambda a: a != JSPEC_ARRAY_TEMPLATE_VALUE, spec))
+            raw_spec = list(filter(lambda a: a != constants.JSPEC_ARRAY_TEMPLATE_VALUE, spec))
             if raw_spec:
                 template = raw_spec[0]
                 for cand_index, cand_element in enumerate(cand):
@@ -206,7 +213,7 @@ class JSpec():
         cand_index = 0
         ignoring = False
         for element in spec:
-            if element == JSPEC_ARRAY_ELEMENT_SUBSITUTION:
+            if element == constants.JSPEC_ARRAY_ELEMENT_SUBSTITUTION:
                 ignoring = True
                 continue
             if cand_index >= len(cand):

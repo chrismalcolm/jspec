@@ -2,7 +2,7 @@
 Jspec is a tool that can be used to check the regex and structure of JSON. This can be done by composing a .jspec file, generating a JSpec object and using it to return whether the .json file adheres to the regex and structure defined in the .jspec file.
 
 ## What is a .jspec file
-A .jspec file is a document which outlines the desired regex and structure for .json files. It's format adheres to normal JSON rules, with the addition of regex, ellipsis subsitution and ellipsis templeting. Below is a description of all the addition rules which apply to JSPEC and an example of a .jspec file and matching .json file.
+A .jspec file is a document which outlines the desired regex and structure for .json files. It's format adheres to normal JSON rules, with the addition of regex, ellipsis substitution and ellipsis templeting. Below is a description of all the addition rules which apply to JSPEC and an example of a .jspec file and matching .json file.
 
 ### Regex
 ---
@@ -12,9 +12,9 @@ In order for a JSPEC to match a JSON, the JSON has to satify all the regex condi
 |-|-|
 | `["\w", "\d", "b", 2]` | `["a", 1, "b", 2]` |
 | `{"\w+": {"id-\d{4}": "green"}}` | `{"word": {"id-1256": "green"}}` |
-| `{"timestamp": ["\d+", "\d+], "e-[A-Za-z]{6}": "\d"}` | `{"timestamp": [1200, 3600]}, "e-ArHqzL": 4}` |
+| `{"timestamp": ["\d+", "\d+"], "e-[A-Za-z]{6}": "\d"}` | `{"timestamp": [1200, 3600], "e-ArHqzL": 4}` |
 
-### Ellipsis subsitution
+### Ellipsis substitution
 ---
 Using an ellipsis in a JSPEC array will instruct the JSPEC interepter to ignore all elements, arrays or objects in that place. If necessary, commas need to be placed before or after the ellipsis. Similarly, using a ellipsis in a JSPEC object will instruct the JSPEC interepter to ignore all additional key-value pairs in that object. If necessary, commas need to be placed before or after the ellipsis.
 
@@ -30,7 +30,10 @@ Using an ellipsis in a JSPEC array will instruct the JSPEC interepter to ignore 
 | `{ ...,  "y": 25, "z": 26}` | `{"w": 23, "x": 24, "y": 25, "z": 26}` |
 | `{ "a": 1,  "b": 2, ... ,"z": 26}` | `{"a": 1, "b": 2, "c": 3, "x": 24, "y": 25, "z": 26}` |
 | `{ ... }` | `{"a": 1, "z": 26}` |
-| `{"\w+": ["\d{2}", ... , 14], "other": "key-[0-9a-f]{4}", ...}` | `{"word": [12, 13, 14], "other": "key-0af4, "extra": {}}` |
+| `{"same_\w+": ["\d{2}", ... , 14], "other": "key-[0-9a-f]{4}", ...}` | `{"same_word": [12, 13, 14], "other": "key-0af4", "extra": {}}` |
+
+*NOTE*
+*Be careful not to use ambiguous regex when matching arrays or objet fields. E.g. {"\w+": [], "other": 1} is ambiguous since other can match \w+. This is to be avoided as resukts would not be consistent.*
 
 ### Ellipsis Templating
 ---
