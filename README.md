@@ -101,18 +101,44 @@ example.json
 ## Usage
 Once you have created a .jspec file, you can check to see if it matches against JSON. To load the JSPEC, uses the `jspec.load` or `jspec.loads` methods for loading file objects or JSPEC string respectively. These will return an instance of the `JSpec` class if the JSPEC is valid, else a `JSpecLoadError` will be raised. 
 
-The `JSpec` class has a `match` method which checks the JSON arguemnt against the JSPEC. The JSON argument can be a file object, JSON string or Python native object. Example usage is given below.
+The `JSpec` class has a `match` method which checks the JSON arguemnt against the JSPEC. The JSON argument can be a file object, JSON string or Python native object. The function will return `Result` which has a `result()` and `message()` mwthod. The `result()` method will return whether the JSON matched the JSON. The `message()` will return the message for why the JSON match failed if it did. Example usage is given below.
+
+### Example 1
 
 ```python
 import jspec
 
 with open("example.jspec") as f:
-    j = jspec.load(f)
+    spec = jspec.load(f)
 
 with open("example.json") as f:
-    print(j.match(f))
+    r = spec.match(f)
+    print(r.result())
 ```
 Output:
 ```bash
 True
+```
+
+### Example 2
+
+```python
+import jspec
+
+snippet = '{"same_\w+": ["\d{2}", ... , 14], "other": "key-[0-9a-f]{4}", ...}'
+good = {"same_word": [12, 13, 14], "other": "key-0af4", "extra": {}}
+bad = {"same_word": [12, 13, 14], "extra": {}}
+
+spec = jspec.loads(snippet)
+
+r1 = spec.match(good)
+r2 = spec.match(bad)
+
+print("r1 result:", r1.result(), "r1 message:", r1.message())
+print("r2 result:", r2.result(), "r2 message:", r2.message())
+```
+Output:
+```bash
+r1 result: True r1 message: None
+r2 result: False r2 message: Cannot match key regex at position '$'. Want other, same_\w+. Got same_word, extra
 ```

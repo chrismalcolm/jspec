@@ -21,4 +21,6 @@ class Result:
 
     def message(self):
         """Return the message"""
-        return self._message 
+        if self._message == "":
+            return None
+        return self._message.replace("//","/") 
