@@ -11,7 +11,7 @@ setup(
     author="Christopher Malcolm",
     author_email="chris.c.malcolm.96@gmail.com",
     name="jspec",
-    version="0.1.0",
+    version="1.0.0",
     description="Jspec is a tool that can be used to check the regex and structure of JSON",
     long_description_content_type="text/markdown",
     long_description=long_description,
