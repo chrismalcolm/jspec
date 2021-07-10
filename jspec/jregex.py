@@ -27,7 +27,7 @@ class JSpec():
             Checks to see if the JSON object matches the JSPEC
 
             Parameters:
-            > obj (object) - either a python JSON obejct or a io.TextIOWrapper
+            > obj (object) - either a python JSON object or a io.TextIOWrapper
                 to be interpreted as a JSON
 
             Return:
@@ -50,7 +50,7 @@ class JSpec():
             (success, error_msg)
             - success (bool) : whether the candidate matches the specification
             - error_msg (str) : error message on the success of the match
-                if not successsful a short description of where regex didn't match
+                if not successful a short description of where regex didn't match
                 if successful, this is an empty string
         """
         return self._match_section(spec, cand, '$')
@@ -69,7 +69,7 @@ class JSpec():
             (success, error_msg)
             - success (bool) : whether the candidate matches the specification
             - error_msg (str) : error message on the success of the match
-                if not successsful a short description of where regex didn't match
+                if not successful a short description of where regex didn't match
                 if successful, this is an empty string
         """
         if isinstance(spec, dict):
@@ -106,7 +106,7 @@ class JSpec():
             (success, error_msg)
             - success (bool) : whether the candidate matches the specification
             - error_msg (str) : error message on the success of the match
-                if not successsful a short description of where regex didn't match
+                if not successful a short description of where regex didn't match
                 if successful, this is an empty string
         """ 
         ignore_items = spec.get(constants.JSPEC_OBJECT_ITEMS_SUBSTITUTION, False)
@@ -180,7 +180,7 @@ class JSpec():
             (success, error_msg)
             - success (bool) : whether the candidate matches the specification
             - error_msg (str) : error message on the success of the match
-                if not successsful a short description of where regex didn't match
+                if not successful a short description of where regex didn't match
                 if successful, this is an empty string
         """
         ignore_elements = constants.JSPEC_ARRAY_ELEMENT_SUBSTITUTION in spec
@@ -252,7 +252,7 @@ class JSpec():
             (success, error_msg)
             - success (bool) : whether the candidate matches the specification
             - error_msg (str) : error message on the success of the match
-                if not successsful a short description of where regex didn't match
+                if not successful a short description of where regex didn't match
                 if successful, this is an empty string
         """
         success = self._regex_matches(spec, cand)
@@ -282,7 +282,7 @@ class JSpec():
 
     @staticmethod
     def _py_type_to_json_type(obj):
-        """Converts the python type to its name as a corresponing JSON section."""
+        """Converts the python type to its name as a corresponding JSON section."""
         if isinstance(obj, dict):
             return "object"
         if isinstance(obj, list):

@@ -1,6 +1,6 @@
 """Jspec Module"""
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 from jspec.parser import load, loads
 from jspec.error import JSpecError, JSpecLoadError
