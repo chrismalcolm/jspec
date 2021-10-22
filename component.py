@@ -1,15 +1,18 @@
-import re
-
 class JSPEC:
 
     def __init__(self, element):
         self.element = element
 
-class JSPECElement:
 
-    def __init__(self):
-        self.spec = None
-        self.string = ""
+class JSPECElement:
+    PLACEHOLDER = ""
+    SPEC_FUNC   = lambda x: None
+    SERIALIZER  = lambda x: ""
+    
+    def __init__(self, value, is_placeholder=False):
+        self.spec = self.SPEC_FUNC(value)
+        self.string = self.SERIALIZER(value) if not is_placeholder else self.PLACEHOLDER
+        self.is_placeholder = is_placeholder
 
     def __str__(self):
         return self.string
@@ -17,60 +20,61 @@ class JSPECElement:
     def __repr__(self):
         return self.string
 
-class JSPECObject(JSPECElement):
-    
-    def __init__(self, pairs):
-        self.spec = dict(pairs)
-        self.string = str(self.spec)
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        if self.is_placeholder and other.is_placeholder:
+            return True
+        if self.is_placeholder or other.is_placeholder:
+            return False
+        return self.spec == other.spec
+
+class JSPECObject(JSPECElement):  
+    PLACEHOLDER = "object"
+    SPEC_FUNC   = dict
+    SERIALIZER   = lambda pairs: str(dict(pairs))
 
 class JSPECArray(JSPECElement):
-    
-    def __init__(self, values):
-        self.spec = values
-        self.string = str(values)
+    PLACEHOLDER = "array"
+    SPEC_FUNC   = list
+    SERIALIZER  = str
 
 class JSPECString(JSPECElement):
-    
-    def __init__(self, value):
-        self.spec = value
-        self.string = '"%s"' % value
+    PLACEHOLDER = "string"
+    SPEC_FUNC   = str
+    SERIALIZER  = lambda val: '"%s"' % val
 
 class JSPECInt(JSPECElement):
-    
-    def __init__(self, value):
-        self.spec = int(value)
-        self.string = str(value)
+    PLACEHOLDER = "imt"
+    SPEC_FUNC   = int
+    SERIALIZER  = str
 
 class JSPECReal(JSPECElement):
-    
-    def __init__(self, value):
-        self.spec = float(value)
-        self.string = str(value)
+    PLACEHOLDER = "real"
+    SPEC_FUNC   = float
+    SERIALIZER  = str
 
 class JSPECBoolean(JSPECElement):
-    
-    def __init__(self, value):
-        self.spec = bool(value)
-        self.string = "true" if self.spec else "false"
-
-class JSPECWildcard(JSPECElement):
-    
-    def __init__(self):
-        self.spec = None
-        self.string = '...'
+    PLACEHOLDER = "bool"
+    SPEC_FUNC   = bool
+    SERIALIZER  = lambda val: "true" if bool(val) else "false"
 
 class JSPECNull(JSPECElement):
-    
-    def __init__(self):
-        self.spec = None
-        self.string = "null"
+    SPEC_FUNC   = lambda val: None
+    SERIALIZER  = lambda val: "null"
+
+class JSPECWildcard(JSPECElement):
+    SPEC_FUNC   = lambda val: None
+    SERIALIZER  = lambda val: "*"
 
 
 class JSPECCapture:
+    SERIALIZER = lambda element: ""
+    ELLIPSIS   = ""
 
-    def __init__(self):
-        self.element = None
-        self.string = ""
+    def __init__(self, element, is_ellipsis=False):
+        self.element = element
+        self.string = self.SERIALIZER(element) if not is_ellipsis else self.ELLIPSIS
 
     def __str__(self):
         return self.string
@@ -78,20 +82,19 @@ class JSPECCapture:
     def __repr__(self):
         return self.string
 
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        return self.element == other.element
+
 class JSPECArrayCaptureElement(JSPECCapture):
-    
-    def __init__(self, element):
-        self.element = element
-        self.string = '<%s>' % str(element)
+    SERIALIZER = lambda element: '(%s)' % str(element)
+    ELLIPSIS   = "..."
 
 class JSPECObjectCaptureKey(JSPECCapture):
-
-    def __init__(self, element):
-        self.element = element
-        self.string = '<%s' % str(element)
+    SERIALIZER = lambda element: '(%s' % str(element)
+    ELLIPSIS   = ""
 
 class JSPECObjectCaptureValue(JSPECCapture):
-
-    def __init__(self, element):
-        self.element = element
-        self.string = '%s>' % str(element)
+    SERIALIZER = lambda element: '%s)' % str(element)
+    ELLIPSIS   = "..."
