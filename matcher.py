@@ -1,7 +1,6 @@
 import re
 
 from component import (
-    JSPEC,
     JSPECObject,
     JSPECArray,
     JSPECString,
