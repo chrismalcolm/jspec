@@ -14,7 +14,6 @@ from component import (
     JSPECObjectCaptureKey,
     JSPECObjectCaptureValue
 )
-from error import JSPECDecodeError
 
 STRING_MATCH = re.compile(r"""
     "     # preceded by a double quote
@@ -29,6 +28,26 @@ NUMBER_MATCH = re.compile(r"""
 WHITESPACE_CHARACTERS = ' \t\n\r'
 WHITESPACE_MATCH = re.compile(r"""
     [ \t\n\r]* # any space, tab, newline or carrage return characters""", re.VERBOSE).match
+
+MULTIPLIER_MATCH = re.compile(r"""
+    x          # preceded by an x
+    ([1-9]\d*) # positive integer, unsigned digit string with no leading zeroes """, re.VERBOSE).match
+
+class JSPECDecodeError(ValueError):
+
+    def __init__(self, msg, doc, pos):
+        lineno = doc.count('\n', 0, pos) + 1
+        colno = pos - doc.rfind('\n', 0, pos)
+        errmsg = '%s: line %d column %d (char %d)' % (msg, lineno, colno, pos)
+        ValueError.__init__(self, errmsg)
+        self.msg = msg
+        self.doc = doc
+        self.pos = pos
+        self.lineno = lineno
+        self.colno = colno
+
+    def __reduce__(self):
+        return self.__class__, (self.msg, self.doc, self.pos)
 
 def skip_any_whitespace(doc, idx):
     nextchar = doc[idx:idx + 1]
@@ -87,22 +106,44 @@ def scan_object_capture(doc, idx):
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar == ')':
         raise JSPECDecodeError("Empty capture", doc, idx)
-    if nextchar != '"':
-        raise JSPECDecodeError("Expecting property name enclosed in double quotes in capture", doc, idx) 
-    key, idx = scan_string(doc, idx)
-    nextchar, idx = skip_any_whitespace(doc, idx)
-    if nextchar != ':':
-        raise JSPECDecodeError("Expecting ':' delimiter in capture", doc, idx)
-    _, idx = skip_any_whitespace(doc, idx + 1)
-    try:
-        value, idx = scan_once(doc, idx)
-    except StopIteration as err:
-        raise JSPECDecodeError("Expecting value in capture", doc, err.value) from None
-    nextchar, idx = skip_any_whitespace(doc, idx)
+    keys = set()
+    vals = set()
+    while True:
+        if nextchar != '"':
+            raise JSPECDecodeError("Expecting property name enclosed in double quotes in capture", doc, idx) 
+        key, idx = scan_string(doc, idx)
+        nextchar, idx = skip_any_whitespace(doc, idx)
+        if nextchar != ':':
+            raise JSPECDecodeError("Expecting ':' delimiter in capture", doc, idx)
+        _, idx = skip_any_whitespace(doc, idx + 1)
+        try:
+            val, idx = scan_once(doc, idx)
+        except StopIteration as err:
+            raise JSPECDecodeError("Expecting value in capture", doc, err.value) from None
+        if key in keys:
+            raise JSPECDecodeError("Repeated key in conditional", doc, idx)
+        keys.add(key)
+        vals.add(val)
+        nextchar, idx = skip_any_whitespace(doc, idx)
+        if nextchar != '|':
+            break
+        nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar != ')':
         raise JSPECDecodeError("Expecting capture termination", doc, idx)
-    pair = (JSPECObjectCaptureKey(key), JSPECObjectCaptureValue(value))
-    return pair, idx + 1
+    idx += 1
+    m = MULTIPLIER_MATCH(doc, idx)
+    if m is None:
+        pair = (
+            JSPECObjectCaptureKey(keys), 
+            JSPECObjectCaptureValue(vals)
+        )
+        return pair, idx
+    multiplier = int(m.groups()[0])
+    pair = (
+        JSPECObjectCaptureKey(keys, multiplier=multiplier), 
+        JSPECObjectCaptureValue(vals, multiplier=multiplier)
+    )
+    return pair, m.end()
 
 def scan_object_ellipsis(doc, idx):
     if not doc[idx:idx + 3] == '...':
@@ -151,14 +192,27 @@ def scan_array_capture(doc, idx):
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar == ')':
         raise JSPECDecodeError("Empty capture", doc, idx)
-    try:
-        value, idx = scan_once(doc, idx)
-    except StopIteration as err:
-        raise JSPECDecodeError("Expecting value in capture", doc, err.value) from None
-    nextchar, idx = skip_any_whitespace(doc, idx)
+    elements = set()
+    while True:
+        try:
+            element, idx = scan_once(doc, idx)
+        except StopIteration as err:
+            raise JSPECDecodeError("Expecting value in capture", doc, err.value) from None
+        if element in elements:
+            raise JSPECDecodeError("Repeated element in conditional", doc, idx)
+        elements.add(element)
+        nextchar, idx = skip_any_whitespace(doc, idx)
+        if nextchar != '|':
+            break
+        nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar != ')':
         raise JSPECDecodeError("Expecting capture termination", doc, idx)
-    return JSPECArrayCaptureElement(value), idx + 1
+    idx += 1
+    m = MULTIPLIER_MATCH(doc, idx)
+    if m is None:
+        return JSPECArrayCaptureElement(elements), idx
+    multiplier = int(m.groups()[0])
+    return JSPECArrayCaptureElement(elements, multiplier=multiplier), m.end()
 
 def scan_array_ellipsis(doc, idx):
     if not doc[idx:idx + 3] == '...':

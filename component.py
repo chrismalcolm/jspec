@@ -3,6 +3,9 @@ class JSPEC:
     def __init__(self, element):
         self.element = element
 
+    def __str__(self):
+        return str(self.element)
+
 
 class JSPECElement:
     PLACEHOLDER = ""
@@ -69,12 +72,13 @@ class JSPECWildcard(JSPECElement):
 
 
 class JSPECCapture:
-    SERIALIZER = lambda element: ""
+    SERIALIZER = lambda elements: ""
     ELLIPSIS   = ""
 
-    def __init__(self, element, is_ellipsis=False):
-        self.element = element
-        self.string = self.SERIALIZER(element) if not is_ellipsis else self.ELLIPSIS
+    def __init__(self, elements, multiplier=-1, is_ellipsis=False):
+        self.elements = elements
+        self.multiplier = multiplier
+        self.string = self.SERIALIZER(elements) if not is_ellipsis else self.ELLIPSIS
 
     def __str__(self):
         return self.string
@@ -85,16 +89,16 @@ class JSPECCapture:
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        return self.element == other.element
+        return bool(self.elements & other.elements)
 
 class JSPECArrayCaptureElement(JSPECCapture):
-    SERIALIZER = lambda element: '(%s)' % str(element)
+    SERIALIZER = lambda elements: '(%s)' % "|".join([str(element) for element in elements])
     ELLIPSIS   = "..."
 
 class JSPECObjectCaptureKey(JSPECCapture):
-    SERIALIZER = lambda element: '(%s' % str(element)
+    SERIALIZER = lambda elements: '(%s' % "|".join([str(element) for element in elements])
     ELLIPSIS   = ""
 
 class JSPECObjectCaptureValue(JSPECCapture):
-    SERIALIZER = lambda element: '%s)' % str(element)
+    SERIALIZER = lambda elements: '%s)' % "|".join([str(element) for element in elements])
     ELLIPSIS   = "..."
