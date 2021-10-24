@@ -7,8 +7,9 @@ from component import (
     JSPECInt,
     JSPECReal,
     JSPECBoolean,
-    JSPECWildcard,
     JSPECNull,
+    JSPECWildcard,
+    JSPECConditional,
     JSPECArrayCaptureElement,
     JSPECObjectCaptureKey,
     JSPECObjectCaptureValue,
@@ -153,6 +154,13 @@ def match_real(loc, spec, obj):
 def match_boolean(loc, spec, obj):
     return GoodMatch() if spec == obj else BadMatch(loc, "expected '%s', got '%s'" % (spec, obj))
 
+def match_conditional(loc, spec, obj):
+    for element in spec:
+        result = match_element(loc, element, obj)
+        if bool(result):
+            return result
+    return BadMatch(loc, "conditional elements '%s' do not match the element '%s'" % (spec, obj))
+
 def match_element(loc, element, obj):
     spec = element.spec
     is_placeholder = element.is_placeholder
@@ -192,6 +200,9 @@ def match_element(loc, element, obj):
 
     if isinstance(element, JSPECWildcard):
         return GoodMatch()
+
+    if isinstance(element, JSPECConditional):
+        return match_conditional(loc, spec, obj)
 
     raise ValueError("JSPEC does not support elements of class %s" % element.__class__)
 
