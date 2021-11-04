@@ -33,9 +33,9 @@ def dump(obj, f):
 def dumps(obj):
     return _encode(obj)
 
-def require(jspec, obj):
+def check(jspec, obj):
     return _match(jspec, obj)
 
-def requires(document, obj):
+def checks(document, obj):
     jspec = _decode(document)
     return _match(jspec, obj)
