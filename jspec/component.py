@@ -1,4 +1,21 @@
+# TODO should finish the docs for this
+
 class JSPEC:
+    """The summary line for a class docstring should fit on one line.
+
+    If the class has public attributes, they may be documented here
+    in an ``Attributes`` section and follow the same formatting as a
+    function's ``Args`` section. Alternatively, attributes may be documented
+    inline with the attribute's declaration (see __init__ method below).
+
+    Properties created with the ``@property`` decorator should be documented
+    in the property's getter method.
+
+    Attributes:
+        attr1 (str): Description of `attr1`.
+        attr2 (:obj:`int`, optional): Description of `attr2`.
+
+    """
 
     def __init__(self, element):
         self.element = element
@@ -6,8 +23,27 @@ class JSPEC:
     def __str__(self):
         return str(self.element)
 
+    def __eq__(self, other):
+        return self.element == other.element
+
 
 class JSPECElement:
+    """The summary line for a class docstring should fit on one line.
+
+    If the class has public attributes, they may be documented here
+    in an ``Attributes`` section and follow the same formatting as a
+    function's ``Args`` section. Alternatively, attributes may be documented
+    inline with the attribute's declaration (see __init__ method below).
+
+    Properties created with the ``@property`` decorator should be documented
+    in the property's getter method.
+
+    Attributes:
+        spec (str): Description of `attr1`.
+        attr2 (:obj:`int`, optional): Description of `attr2`.
+
+    """
+
     PLACEHOLDER = ""
     SPEC_FUNC   = lambda x: None
     SERIALIZER  = lambda x: ""
@@ -57,7 +93,7 @@ class JSPECString(JSPECElement):
     SERIALIZER  = lambda val: '"%s"' % val
 
 class JSPECInt(JSPECElement):
-    PLACEHOLDER = "imt"
+    PLACEHOLDER = "int"
     SPEC_FUNC   = int
     SERIALIZER  = str
 
@@ -89,6 +125,7 @@ class JSPECCapture:
     ELLIPSIS   = ""
 
     def __init__(self, elements, multiplier=-1, is_ellipsis=False):
+        self.element = None # TODO may be a better way
         self.elements = elements
         self.multiplier = multiplier
         self.string = self.serializer(elements, multiplier) if not is_ellipsis else self.ELLIPSIS

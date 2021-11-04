@@ -143,8 +143,16 @@ r1 result: True r1 message: None
 r2 result: False r2 message: Cannot match key regex at position '$'. Want other, same_\w+. Got same_word, extra
 ```
 
-# TODO
+# new stuff
+python3 -m unittest
+
+to run test
 
 add tests
 
 add comments
+
+| Element | JSON Native | JSPEC Native | Excepted Values |
+|---------|--------------|-------------|-------------|
+| Object | dict | JSPECObject | A set of key-value pairs, enclosed within curly braces |
+| String | str | JSPEString | Any sequence of characters or a regex pattern, enclosed in double quotes |

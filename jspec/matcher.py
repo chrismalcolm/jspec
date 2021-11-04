@@ -1,6 +1,6 @@
 import re
 
-from component import (
+from .component import (
     JSPECObject,
     JSPECArray,
     JSPECString,
@@ -28,13 +28,16 @@ class Result:
     def errormsg(self):
         if self.res:
             return ""
-        return "At location '%s' - %s" % (self.msg, self.loc)
+        return "At location %s - %s" % (self.loc, self.msg)
 
 def GoodMatch():
     return Result(True)
 
 def BadMatch(loc, msg):
     return Result(False, loc, msg)
+
+def captures_are_filled(captures):
+    return not any([capture.multiplier > 0 for capture in captures])
 
 def remove_key(d, r):
     return dict((k, v) for k, v in d.items() if k != r)
@@ -53,17 +56,42 @@ def match_object_traverse(loc, spec, obj, capture_dict):
 
     spec_terminated = len(spec) == 0
     obj_terminated = len(obj) == 0
+    captures_terminated = captures_are_filled(capture_dict.keys())
 
     if obj_terminated:
-        return GoodMatch() if spec_terminated else BadMatch(loc, "the following jspec keys were unmatched: %s" % ", ".join([str(k) for k in spec.keys()]))
+        if not spec_terminated:
+            return BadMatch(loc, "the following jspec keys were unmatched: %s" % ", ".join([str(k) for k in spec.keys()]))
+        if not captures_terminated:
+            return BadMatch(loc, "the following captures have not been fully matched: %s" % capture_dict)
+        return GoodMatch()
+
+    #for obj_key, obj_val in obj.items():
+    #    for capture_key, capture_val in capture_dict.items():
+    #        if (
+    #                bool(match_object_capture(loc, capture_key, capture_val, obj_key, obj_val)) and 
+    #                bool(match_object_traverse(loc, spec, remove_key(obj, obj_key), capture_dict))
+    #            ):
+    #                return GoodMatch()
+    #    for spec_key, spec_val in spec.items():
+    #        if (
+    #                bool(match_element(loc, spec_key, obj_key)) and
+    #                bool(match_element(loc + '.%s' % obj_key, spec_val, obj_val))
+    #            ):
+    #                return match_object_traverse(loc, remove_key(spec, spec_key), remove_key(obj, obj_key), capture_dict)
 
     for obj_key, obj_val in obj.items():
         for capture_key, capture_val in capture_dict.items():
-            if (
-                    bool(match_object_capture(loc, capture_key, capture_val, obj_key, obj_val)) and 
-                    bool(match_object_traverse(loc, spec, remove_key(obj, obj_key), capture_dict))
-                ):
-                    return GoodMatch()
+            capture_key_elements = set([capture_key.element]) if capture_key.element is not None else capture_key.elements
+            for capture_key_element in capture_key_elements:
+                capture_key.element = capture_key_element
+                capture_val_elements = set([capture_val.element]) if capture_val.element is not None else capture_val.elements
+                for capture_val_element in capture_val_elements:
+                    capture_val.element = capture_val_element
+                    if (
+                            bool(match_object_capture(loc, capture_key, capture_val, obj_key, obj_val)) and 
+                            bool(match_object_traverse(loc, spec, remove_key(obj, obj_key), capture_dict))
+                    ):
+                        return GoodMatch()
         for spec_key, spec_val in spec.items():
             if (
                     bool(match_element(loc, spec_key, obj_key)) and
@@ -71,24 +99,38 @@ def match_object_traverse(loc, spec, obj, capture_dict):
                 ):
                     return match_object_traverse(loc, remove_key(spec, spec_key), remove_key(obj, obj_key), capture_dict) 
 
-    return BadMatch(loc, "the following object keys were unmatched: %s" % ", ".join([str(k) for k in obj.keys()]))
+    return BadMatch(loc, "the following object keys were unmatched: %s" % ", ".join(['"%s"' % k for k in obj.keys()]))
+    
+
+#def match_object_capture(loc, capture_key, capture_val, obj_key, obj_val):
+#    if capture_key.multiplier == 0:
+#        return BadMatch(loc, "exhausted capture")
+#    if len(capture_key.elements) == 0:
+#        return BadMatch(loc, "no elements in capture")
+#    for element in capture_key.elements:
+#        result = match_element(loc, element, obj_key)
+#        if bool(result):
+#            break
+#    else:
+#        return result
+#    for element in capture_val.elements:
+#        result = match_element(loc + '.%s' % obj_key, element, obj_val)
+#        if bool(result):
+#            break
+#    else:
+#        return result
+#    capture_key.multiplier -= 1
+#    capture_val.multiplier -= 1
+#    return result
 
 def match_object_capture(loc, capture_key, capture_val, obj_key, obj_val):
     if capture_key.multiplier == 0:
         return BadMatch(loc, "exhausted capture")
-    if len(capture_key.elements) == 0:
-        return BadMatch(loc, "no elements in capture")
-    for element in capture_key.elements:
-        result = match_element(loc, element, obj_key)
-        if bool(result):
-            break
-    else:
+    result = match_element(loc, capture_key.element, obj_key)
+    if not bool(result):
         return result
-    for element in capture_val.elements:
-        result = match_element(loc + '.%s' % obj_key, element, obj_val)
-        if bool(result):
-            break
-    else:
+    result = match_element(loc + '.%s' % obj_key, capture_val.element, obj_val)
+    if not bool(result):
         return result
     capture_key.multiplier -= 1
     capture_val.multiplier -= 1
@@ -101,6 +143,7 @@ def match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx, capture_li
     
     spec_terminated = spec_idx >= len(spec_list)
     obj_terminated = obj_idx >= len(obj_list)
+    captures_terminated = captures_are_filled(capture_list)
 
     if not spec_terminated:
         spec = spec_list[spec_idx]
@@ -109,21 +152,36 @@ def match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx, capture_li
             return match_array_traverse(loc, spec_list, spec_idx+1, obj_list, obj_idx, capture_list[:])
 
     if obj_terminated:
-        return GoodMatch() if spec_terminated else BadMatch(loc, "exhausted array elements for matching jspec elements at index %i" % spec_idx)
+        if not spec_terminated:
+            return BadMatch(loc, "exhausted array elements for matching jspec elements at index %i" % spec_idx)
+        if not captures_terminated:
+            BadMatch(loc, "the following captures have not been fully matched: %s" % capture_list)
+        return GoodMatch()
     
     obj = obj_list[obj_idx]
 
+    #while capture_list:
+    #    if (
+    #            bool(match_array_capture(loc + '[%i]' % obj_idx, capture_list[0], obj)) and 
+    #            bool(match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx+1, capture_list[:]))
+    #        ):
+    #        return GoodMatch()
+    #    capture_list.pop(0)
+
     while capture_list:
-        if (
-                bool(match_array_capture(loc + '[%s]' % obj_idx, capture_list[0], obj)) and 
-                bool(match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx+1, capture_list[:]))
-            ):
-            return GoodMatch()
+        elements = set([capture_list[0].element]) if capture_list[0].element is not None else capture_list[0].elements
+        for element in elements:
+            capture_list[0].element = element
+            if (
+                    bool(match_array_capture(loc + '[%i]' % obj_idx, capture_list[0], obj)) and 
+                    bool(match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx+1, capture_list[:]))
+                ):
+                return GoodMatch()
         capture_list.pop(0)
 
     if spec_terminated:
         return BadMatch(loc, "exhausted jspec elements for matching array at index %i" % obj_idx)
-    result = match_element(loc + '[%s]' % obj_idx, spec, obj)
+    result = match_element(loc + '[%i]' % obj_idx, spec, obj)
     if not bool(result):
         return result
     return match_array_traverse(loc, spec_list, spec_idx+1, obj_list, obj_idx+1, capture_list[:])
@@ -131,16 +189,25 @@ def match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx, capture_li
 def match_array_capture(loc, capture, obj):
     if capture.multiplier == 0:
         return BadMatch(loc, "exhausted capture")
-    if len(capture.elements) == 0:
-        return BadMatch(loc, "no elements in capture")
-    for element in capture.elements:
-        result = match_element(loc, element, obj)
-        if bool(result):
-            break
-    else:
+    result = match_element(loc, capture.element, obj)
+    if not bool(result):
         return result
     capture.multiplier -= 1
     return result
+
+#def match_array_capture(loc, capture, obj):
+#    if capture.multiplier == 0:
+#        return BadMatch(loc, "exhausted capture")
+#    if len(capture.elements) == 0:
+#        return BadMatch(loc, "no elements in capture")
+#    for element in capture.elements:
+#        result = match_element(loc, element, obj)
+#        if bool(result):
+#            break
+#    else:
+#        return result
+#    capture.multiplier -= 1
+#    return result
     
 def match_string(loc, spec, obj):
     return GoodMatch() if re.compile(r'%s' % spec).fullmatch(obj) is not None else BadMatch(loc, "regex pattern '%s' failed to match '%s'" % (spec, obj))
@@ -167,32 +234,32 @@ def match_element(loc, element, obj):
 
     if isinstance(element, JSPECObject):
         if not isinstance(obj, dict):
-            return False
+            return BadMatch(loc, "expected an object")
         return GoodMatch() if is_placeholder else match_object(loc, spec, obj)
    
     if isinstance(element, JSPECArray):
         if not isinstance(obj, list):
-            return False
+            return BadMatch(loc, "expected an array")
         return GoodMatch() if is_placeholder else match_array(loc, spec, obj)
     
     if isinstance(element, JSPECString):
         if not isinstance(obj, str):
-            return False
+            return BadMatch(loc, "expected a string")
         return GoodMatch() if is_placeholder else match_string(loc, spec, obj)
 
     if isinstance(element, JSPECInt):
         if not isinstance(obj, int):
-            return False
+            return BadMatch(loc, "expected an int")
         return GoodMatch() if is_placeholder else match_int(loc, spec, obj)
 
     if isinstance(element, JSPECReal):
         if not isinstance(obj, float):
-            return False
+            return BadMatch(loc, "expected a real")
         return GoodMatch() if is_placeholder else match_real(loc, spec, obj)
 
     if isinstance(element, JSPECBoolean):
         if not isinstance(obj, bool):
-            return False
+            return BadMatch(loc, "expected a boolean")
         return GoodMatch() if is_placeholder else match_boolean(loc, spec, obj)
 
     if isinstance(element, JSPECNull):

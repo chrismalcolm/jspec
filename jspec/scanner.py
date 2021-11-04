@@ -1,6 +1,9 @@
+"""Module for scanning JSPEC documents.
+"""
+
 import re
 
-from component import (
+from .component import (
     JSPEC,
     JSPECElement,
     JSPECObject,
@@ -17,25 +20,21 @@ from component import (
     JSPECObjectCaptureValue
 )
 
-STRING_MATCH = re.compile(r"""
-    "     # preceded by a double quote
-    (.*?) # any character except \n, zero or more times (not greedy)
-    "     # terminated by a double quote""", re.VERBOSE).match
-
-NUMBER_MATCH = re.compile(r"""
-    (-?(?:0|[1-9]\d*)) # integer, signed digit string with no leading zeroes
-    (\.\d+)?           # fractional part, digit string preceded by a decimal point
-    ([eE][-+]?\d+)?    # exponent, eE followied by a signed digit string""", re.VERBOSE).match
-
-WHITESPACE_CHARACTERS = ' \t\n\r'
-WHITESPACE_MATCH = re.compile(r"""
-    [ \t\n\r]* # any space, tab, newline or carrage return characters""", re.VERBOSE).match
-
-MULTIPLIER_MATCH = re.compile(r"""
-    x          # preceded by an x
-    ([1-9]\d*) # positive integer, unsigned digit string with no leading zeroes """, re.VERBOSE).match
-
 class JSPECDecodeError(ValueError):
+    """Subclass of ValueError with the following additional properties:
+    
+    Args:
+        msg (str): The unformatted error message
+        doc (str): The JSPEC document being parsed
+        pos (int): The start index of doc where parsing failed
+
+    Attributes:
+        msg (str): The unformatted error message
+        doc (str): The JSPEC document being parsed
+        pos (int): The start index of doc where parsing failed
+        lineno (int): The line corresponding to pos
+        colno (int): The column corresponding to pos
+    """
 
     def __init__(self, msg, doc, pos):
         lineno = doc.count('\n', 0, pos) + 1
@@ -51,7 +50,42 @@ class JSPECDecodeError(ValueError):
     def __reduce__(self):
         return self.__class__, (self.msg, self.doc, self.pos)
 
+STRING_MATCH = re.compile(r"""
+    "     # preceded by a double quote
+    (.*?) # any character except \n, zero or more times (not greedy)
+    "     # terminated by a double quote""", re.VERBOSE).match
+"""_sre.SRE_Pattern: Pattern to match a JSPEC string."""
+
+NUMBER_MATCH = re.compile(r"""
+    (-?(?:0|[1-9]\d*)) # integer, signed digit string with no leading zeroes
+    (\.\d+)?           # fractional part, digit string preceded by a decimal point
+    ([eE][-+]?\d+)?    # exponent, eE followied by a signed digit string""", re.VERBOSE).match
+"""_sre.SRE_Pattern: Pattern to match a JSPEC int or real."""
+
+WHITESPACE_CHARACTERS = ' \t\n\r'
+"""string: Whitespace characters."""
+
+WHITESPACE_MATCH = re.compile(r"""
+    [ \t\n\r]* # any space, tab, newline or carrage return characters""", re.VERBOSE).match
+"""_sre.SRE_Pattern: Pattern to match whitespace."""
+
+MULTIPLIER_MATCH = re.compile(r"""
+    x          # preceded by an x
+    ([1-9]\d*) # positive integer, unsigned digit string with no leading zeroes """, re.VERBOSE).match
+"""_sre.SRE_Pattern: Pattern to match a capture multiplier."""
+
 def skip_any_whitespace(doc, idx):
+    """Iterate through characters in ``doc`` starting from index ``idx`` until
+    a non-whitespace character is reached.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the iterator.
+
+    Returns:
+        str: The first non-whitespace character, starting at index ``idx``
+        int: The index of this character in ``doc``
+    """
     nextchar = doc[idx:idx + 1]
     if nextchar not in WHITESPACE_CHARACTERS:
         return nextchar, idx
@@ -60,6 +94,22 @@ def skip_any_whitespace(doc, idx):
     return nextchar, idx
 
 def scan_object(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC object.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECObject: The JSPECElement that represents the valid JSPEC object
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC object
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC object.
+    """
     pairs = []
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
 
@@ -87,7 +137,7 @@ def scan_object(doc, idx):
                 raise JSPECDecodeError("Expecting ':' delimiter", doc, idx)
             _, idx = skip_any_whitespace(doc, idx + 1)
             try:
-                value, idx = scan_once(doc, idx)
+                value, idx = scan_element(doc, idx)
             except StopIteration as err:
                 raise JSPECDecodeError("Expecting value", doc, err.value) from None
             pair = (key, value)
@@ -109,6 +159,23 @@ def scan_object(doc, idx):
         _, idx = skip_any_whitespace(doc, idx + 1)
 
 def scan_object_capture(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC object capture.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        (JSPECObjectCaptureKey, JSPECObjectCaptureValue): The JSPECCapture
+            pairs that represents the valid JSPEC object capture
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC object capture
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC object capture.
+    """
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar == '>':
         raise JSPECDecodeError("Empty capture", doc, idx)
@@ -133,7 +200,7 @@ def scan_object_capture(doc, idx):
     vals = set()
     while True:
         try:
-            val, idx = scan_once(doc, idx)
+            val, idx = scan_element(doc, idx)
         except StopIteration as err:
             raise JSPECDecodeError("Expecting value in capture", doc, err.value) from None
         if key in keys and val in vals:
@@ -161,6 +228,23 @@ def scan_object_capture(doc, idx):
     return pair, m.end()
 
 def scan_object_ellipsis(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC object ellipsis.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        (JSPECObjectCaptureKey, JSPECObjectCaptureValue): The JSPECCapture
+            pairs that represents the valid JSPEC object ellipsis
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC object ellipsis
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC object ellipsis.
+    """
     if not doc[idx:idx + 3] == '...':
         raise JSPECDecodeError("Expecting ellipsis with 3 dots", doc, idx)
     key_element = JSPECString("", is_placeholder=True)
@@ -172,6 +256,22 @@ def scan_object_ellipsis(doc, idx):
     return pair, idx + 3
 
 def scan_array(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC array.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECArray: The JSPECElement that represents the valid JSPEC array
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC array
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC array.
+    """
     values = []
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
 
@@ -188,7 +288,7 @@ def scan_array(doc, idx):
             value, idx = scan_array_ellipsis(doc, idx)
         else:
             try:
-                value, idx = scan_once(doc, idx)
+                value, idx = scan_element(doc, idx)
             except StopIteration as err:
                 raise JSPECDecodeError("Expecting value", doc, err.value) from None
         if len(values) > 0 and isinstance(value, JSPECArrayCaptureElement) and value == values[-1]:
@@ -204,13 +304,30 @@ def scan_array(doc, idx):
         nextchar, idx = skip_any_whitespace(doc, idx + 1)
 
 def scan_array_capture(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC array capture.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECObjectCaptureElement: The JSPECCapture that represents the valid
+            JSPEC array capture
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC array capture
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC array capture.
+    """
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar == '>':
         raise JSPECDecodeError("Empty capture", doc, idx)
     elements = set()
     while True:
         try:
-            element, idx = scan_once(doc, idx)
+            element, idx = scan_element(doc, idx)
         except StopIteration as err:
             raise JSPECDecodeError("Expecting value in capture", doc, err.value) from None
         if element in elements:
@@ -230,20 +347,70 @@ def scan_array_capture(doc, idx):
     return JSPECArrayCaptureElement(elements, multiplier=multiplier), m.end()
 
 def scan_array_ellipsis(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC array ellipsis.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECObjectCaptureElement: The JSPECCapture that represents the valid
+            JSPEC array ellipsis
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC array ellipsis
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC array ellipsis.
+    """
     if not doc[idx:idx + 3] == '...':
         raise JSPECDecodeError("Expecting ellipsis with 3 dots", doc, idx)
     element = JSPECWildcard(None)
     return JSPECArrayCaptureElement(set([element]), is_ellipsis=True), idx + 3
 
 def scan_string(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC string.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECString: The JSPECElement that represents the valid JSPEC string
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC string
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC string.
+    """
     m = STRING_MATCH(doc, idx)
     if m is None:
-        raise JSPECDecodeError("Unterminated string at", doc, idx)
+        raise JSPECDecodeError("Unterminated string", doc, idx)
     s, = m.groups()
     value = JSPECString(s)
     return value, m.end()
 
 def scan_number(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC number.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECInt/JSPECReal: The JSPECElement that represents the valid JSPEC
+            number (i.e int or real)
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC number
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC number.
+    """
     m = NUMBER_MATCH(doc, idx)
     if m is None:
         raise JSPECDecodeError("Invalid number at", doc, idx)
@@ -255,13 +422,30 @@ def scan_number(doc, idx):
     return value, m.end()
 
 def scan_conditional(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC conditional.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECConditional: The JSPECElement that represents the valid JSPEC
+            conditional
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC conditional
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC conditional.
+    """
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar == ')':
         raise JSPECDecodeError("Empty conditional", doc, idx)
     elements = set()
     while True:
         try:
-            element, idx = scan_once(doc, idx)
+            element, idx = scan_element(doc, idx)
         except StopIteration as err:
             raise JSPECDecodeError("Expecting value in conditional", doc, err.value) from None
         elements.add(element)
@@ -273,7 +457,23 @@ def scan_conditional(doc, idx):
         raise JSPECDecodeError("Expecting conditional termination", doc, idx)
     return JSPECConditional(elements), idx + 1
 
-def scan_once(doc, idx):
+def scan_element(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC element.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECElement: The JSPECElement that represents the valid JSPEC element
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC element
+
+    Raises:
+        StopIteration: Raised if the string scanned cannot represent a
+            valid JSPEC element.
+    """
     try:
         nextchar = doc[idx]
     except IndexError:
@@ -327,9 +527,21 @@ def scan_once(doc, idx):
     raise StopIteration(idx)
 
 def scan(doc):
+    """Scan through characters in ``doc``to generate a valid JSPEC instance.
+
+    Args:
+        doc (str): The JSPEC document.
+
+    Returns:
+        JSPEC: The JSPEC instance that represented in ``doc``.
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC.
+    """
     _, start = skip_any_whitespace(doc, 0)
     try:
-        element, idx = scan_once(doc, start)
+        element, idx = scan_element(doc, start)
     except StopIteration as err:
         raise JSPECDecodeError("Expecting value", doc, err.value) from None
     _, end = skip_any_whitespace(doc, idx)
