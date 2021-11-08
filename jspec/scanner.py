@@ -17,7 +17,7 @@ from .component import (
     JSPECConditional,
     JSPECArrayCaptureElement,
     JSPECObjectCaptureKey,
-    JSPECObjectCaptureValue
+    JSPECObjectCaptureValue,
 )
 
 class JSPECDecodeError(ValueError):
@@ -59,7 +59,7 @@ STRING_MATCH = re.compile(r"""
 NUMBER_MATCH = re.compile(r"""
     (-?(?:0|[1-9]\d*)) # integer, signed digit string with no leading zeroes
     (\.\d+)?           # fractional part, digit string preceded by a decimal point
-    ([eE][-+]?\d+)?    # exponent, eE followied by a signed digit string""", re.VERBOSE).match
+    ([eE][-+]?\d+)?    # exponent, eE followed by a signed digit string""", re.VERBOSE).match
 """_sre.SRE_Pattern: Pattern to match a JSPEC int or real."""
 
 WHITESPACE_CHARACTERS = ' \t\n\r'
@@ -139,14 +139,14 @@ def scan_object(doc, idx):
             try:
                 value, idx = scan_element(doc, idx)
             except StopIteration as err:
-                raise JSPECDecodeError("Expecting value", doc, err.value) from None
+                raise JSPECDecodeError("Expecting element", doc, err.value) from None
             pair = (key, value)
         if pair in pairs:
             if isinstance(pair[0], JSPECObjectCaptureKey) and isinstance(pair[1], JSPECObjectCaptureValue):
                 raise JSPECDecodeError("Redundant object pair capture", doc, idx)
         if pair[0] in [pair[0] for pair in pairs]:
             if isinstance(pair[0], JSPECElement):
-                raise JSPECDecodeError("Repeated object key", doc, idx)
+                raise JSPECDecodeError("Repeated object key for pair", doc, idx)
         pairs.append(pair)
 
         nextchar, idx = skip_any_whitespace(doc, idx)
@@ -188,6 +188,8 @@ def scan_object_capture(doc, idx):
             if nextchar != '"':
                 raise JSPECDecodeError("Expecting property name enclosed in double quotes in capture", doc, idx) 
             key, idx = scan_string(doc, idx)
+        if key in keys:
+            raise JSPECDecodeError("Repeated key in capture conditional", doc, idx-1)
         keys.add(key)
         nextchar, idx = skip_any_whitespace(doc, idx)
         if nextchar == ':':
@@ -202,9 +204,9 @@ def scan_object_capture(doc, idx):
         try:
             val, idx = scan_element(doc, idx)
         except StopIteration as err:
-            raise JSPECDecodeError("Expecting value in capture", doc, err.value) from None
-        if key in keys and val in vals:
-            raise JSPECDecodeError("Repeated pair in conditional", doc, idx)
+            raise JSPECDecodeError("Expecting element value in capture", doc, err.value) from None
+        if val in vals:
+            raise JSPECDecodeError("Repeated value in capture conditional", doc, idx-1)
         vals.add(val)
         nextchar, idx = skip_any_whitespace(doc, idx)
         if  nextchar == '>':
@@ -290,7 +292,7 @@ def scan_array(doc, idx):
             try:
                 value, idx = scan_element(doc, idx)
             except StopIteration as err:
-                raise JSPECDecodeError("Expecting value", doc, err.value) from None
+                raise JSPECDecodeError("Expecting element", doc, err.value) from None
         if len(values) > 0 and isinstance(value, JSPECArrayCaptureElement) and value == values[-1]:
             raise JSPECDecodeError("Redundant array capture", doc, idx)
         values.append(value)
@@ -331,7 +333,7 @@ def scan_array_capture(doc, idx):
         except StopIteration as err:
             raise JSPECDecodeError("Expecting value in capture", doc, err.value) from None
         if element in elements:
-            raise JSPECDecodeError("Repeated element in conditional", doc, idx)
+            raise JSPECDecodeError("Repeated element in capture conditional", doc, idx-1)
         elements.add(element)
         nextchar, idx = skip_any_whitespace(doc, idx)
         if nextchar != '|':
@@ -413,7 +415,7 @@ def scan_number(doc, idx):
     """
     m = NUMBER_MATCH(doc, idx)
     if m is None:
-        raise JSPECDecodeError("Invalid number at", doc, idx)
+        raise JSPECDecodeError("Invalid number", doc, idx)
     integer, frac, exp = m.groups()
     if frac is None and exp is None:
         value = JSPECInt(integer)
@@ -447,7 +449,7 @@ def scan_conditional(doc, idx):
         try:
             element, idx = scan_element(doc, idx)
         except StopIteration as err:
-            raise JSPECDecodeError("Expecting value in conditional", doc, err.value) from None
+            raise JSPECDecodeError("Expecting element in conditional", doc, err.value) from None
         elements.add(element)
         nextchar, idx = skip_any_whitespace(doc, idx)
         if nextchar != '|':
@@ -543,7 +545,7 @@ def scan(doc):
     try:
         element, idx = scan_element(doc, start)
     except StopIteration as err:
-        raise JSPECDecodeError("Expecting value", doc, err.value) from None
+        raise JSPECDecodeError("Expecting element", doc, err.value) from None
     _, end = skip_any_whitespace(doc, idx)
     if end != len(doc):
         raise JSPECDecodeError("Extra data", doc, end)

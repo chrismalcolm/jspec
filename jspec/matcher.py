@@ -79,19 +79,32 @@ def match_object_traverse(loc, spec, obj, capture_dict):
     #            ):
     #                return match_object_traverse(loc, remove_key(spec, spec_key), remove_key(obj, obj_key), capture_dict)
 
+    #for obj_key, obj_val in obj.items():
+    #    for capture_key, capture_val in capture_dict.items():
+    #        capture_key_elements = set([capture_key.element]) if capture_key.element is not None else capture_key.elements
+    #        for capture_key_element in capture_key_elements:
+    #            capture_key.element = capture_key_element
+    #            capture_val_elements = set([capture_val.element]) if capture_val.element is not None else capture_val.elements
+    #            for capture_val_element in capture_val_elements:
+    #                capture_val.element = capture_val_element
+    #                if (
+    #                        bool(match_object_capture(loc, capture_key, capture_val, obj_key, obj_val)) and 
+    #                        bool(match_object_traverse(loc, spec, remove_key(obj, obj_key), capture_dict))
+    #                ):
+    #                    return GoodMatch()
+
     for obj_key, obj_val in obj.items():
-        for capture_key, capture_val in capture_dict.items():
-            capture_key_elements = set([capture_key.element]) if capture_key.element is not None else capture_key.elements
-            for capture_key_element in capture_key_elements:
-                capture_key.element = capture_key_element
-                capture_val_elements = set([capture_val.element]) if capture_val.element is not None else capture_val.elements
-                for capture_val_element in capture_val_elements:
-                    capture_val.element = capture_val_element
+        for key, val in capture_dict.items():
+            for split_capture_key in key.split():
+                for split_capture_val in val.split():
+                    split_capture_dict = remove_key(capture_dict, key)
+                    split_capture_dict[split_capture_key] = split_capture_val
                     if (
-                            bool(match_object_capture(loc, capture_key, capture_val, obj_key, obj_val)) and 
-                            bool(match_object_traverse(loc, spec, remove_key(obj, obj_key), capture_dict))
+                            bool(match_object_capture(loc, split_capture_key, split_capture_val, obj_key, obj_val)) and 
+                            bool(match_object_traverse(loc, spec, remove_key(obj, obj_key), split_capture_dict))
                     ):
                         return GoodMatch()
+
         for spec_key, spec_val in spec.items():
             if (
                     bool(match_element(loc, spec_key, obj_key)) and
@@ -100,7 +113,6 @@ def match_object_traverse(loc, spec, obj, capture_dict):
                     return match_object_traverse(loc, remove_key(spec, spec_key), remove_key(obj, obj_key), capture_dict) 
 
     return BadMatch(loc, "the following object keys were unmatched: %s" % ", ".join(['"%s"' % k for k in obj.keys()]))
-    
 
 #def match_object_capture(loc, capture_key, capture_val, obj_key, obj_val):
 #    if capture_key.multiplier == 0:
@@ -168,12 +180,22 @@ def match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx, capture_li
     #        return GoodMatch()
     #    capture_list.pop(0)
 
+    #while capture_list:
+    #    elements = set([capture_list[0].element]) if capture_list[0].element is not None else capture_list[0].elements
+    #    for element in elements:
+    #        capture_list[0].element = element
+    #        if (
+    #                bool(match_array_capture(loc + '[%i]' % obj_idx, capture_list[0], obj)) and 
+    #                bool(match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx+1, capture_list[:]))
+    #            ):
+    #            return GoodMatch()
+    #    capture_list.pop(0)
+
     while capture_list:
-        elements = set([capture_list[0].element]) if capture_list[0].element is not None else capture_list[0].elements
-        for element in elements:
-            capture_list[0].element = element
+        for capture in capture[0].split():
+            capture_list[0] = capture
             if (
-                    bool(match_array_capture(loc + '[%i]' % obj_idx, capture_list[0], obj)) and 
+                    bool(match_array_capture(loc + '[%i]' % obj_idx, capture, obj)) and 
                     bool(match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx+1, capture_list[:]))
                 ):
                 return GoodMatch()
@@ -208,7 +230,7 @@ def match_array_capture(loc, capture, obj):
 #        return result
 #    capture.multiplier -= 1
 #    return result
-    
+
 def match_string(loc, spec, obj):
     return GoodMatch() if re.compile(r'%s' % spec).fullmatch(obj) is not None else BadMatch(loc, "regex pattern '%s' failed to match '%s'" % (spec, obj))
 

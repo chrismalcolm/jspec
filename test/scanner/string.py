@@ -23,35 +23,35 @@ class JSPECTestScannerString(JSPECTestScanner):
         """
         test_cases = [   
             {
-                # Basic string
+                "name": "Basic string",
                 "doc": '"field"',
                 "want": JSPEC(
                     JSPECString("field")
                 )
             },
             {
-                # Uppercase string
+                "name": "Uppercase string",
                 "doc": '"ABCD"',
                 "want": JSPEC(
                     JSPECString("ABCD")
                 )
             },
             {
-                # Mixed case string
+                "name": "Mixed case string",
                 "doc": '"AxByCzD"',
                 "want": JSPEC(
                     JSPECString("AxByCzD")
                 )
             },
             {
-                # Digit string
+                "name": "Digit string",
                 "doc": '"1234567890"',
                 "want": JSPEC(
                     JSPECString("1234567890")
                 )
             },
             {
-                # Mixed characters
+                "name": "Mixed characters",
                 "doc": '"_1AbC$@vW;{:[(<*...>)]}"',
                 "want": JSPEC(
                     JSPECString("_1AbC$@vW;{:[(<*...>)]}")
@@ -67,28 +67,28 @@ class JSPECTestScannerString(JSPECTestScanner):
         """
         test_cases = [
             {
-                # Misspelled 
+                "name": "Misspelled",
                 "doc": '"field"',
                 "notwant": JSPEC(
                     JSPECString("feld")
                 )
             },
             {
-                # Uppercase to lowercase
+                "name": "Uppercase to lowercase",
                 "doc": '"ABCD"',
                 "notwant": JSPEC(
                     JSPECString("abcd")
                 )
             },
             {
-                # Lowercase to uppercase
+                "name": "Lowercase to uppercase",
                 "doc": '"wxyz"',
                 "notwant": JSPEC(
                     JSPECString("WXYZ")
                 )
             },
             {
-                # Digits as a number
+                "name": "Digits as a number",
                 "doc": '123',
                 "notwant": JSPEC(
                     JSPECString("123")
@@ -104,15 +104,21 @@ class JSPECTestScannerString(JSPECTestScanner):
         """
         test_cases = [
             {
-                # Missing first double quote
+                "name": "Missing first double quote",
                 "doc": 'field"',
-                "errmsg": "Expecting value",
+                "errmsg": "Expecting element",
                 "errpos": 0,
             },
             {
-                # Missing final double quote
+                "name": "Missing final double quote",
                 "doc": '"field',
                 "errmsg": "Unterminated string",
+                "errpos": 0,
+            },
+            {
+                "name": "Missing final double quote",
+                "doc": "'field'",
+                "errmsg": "Expecting element",
                 "errpos": 0,
             },
         ]

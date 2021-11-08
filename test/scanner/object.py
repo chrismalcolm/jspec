@@ -6,6 +6,7 @@ from test.scanner import JSPECTestScanner
 from jspec.component import (
     JSPEC, 
     JSPECObject,
+    JSPECString,
 )
 
 class JSPECTestScannerObject(JSPECTestScanner):
@@ -21,7 +22,115 @@ class JSPECTestScannerObject(JSPECTestScanner):
         The ``scan`` method should return a matching ``JSPEC`` with a
         ``JSPECObject`` as its element.
         """
-        test_cases = []
+        test_cases = [
+            {
+                "name": "Basic object",
+                "doc": '{"key":"value"}',
+                "want": JSPEC(
+                    JSPECObject([
+                        (
+                            JSPECString("key"),
+                            JSPECString("value")
+                        ),
+                    ]),
+                )
+            },
+            {
+                "name": "Basic multiple pairs",
+                "doc": '{"key1":"value1","key2":"value2","key3":"value3"}',
+                "want": JSPEC(
+                    JSPECObject([
+                        (
+                            JSPECString("key1"),
+                            JSPECString("value1")
+                        ),
+                        (
+                            JSPECString("key2"),
+                            JSPECString("value2")
+                        ),
+                        (
+                            JSPECString("key3"),
+                            JSPECString("value3")
+                        ),
+                    ]),
+                )
+            },
+            {
+                "name": "Basic multiple pairs unordered",
+                "doc": '{"key1":"value1","key2":"value2","key3":"value3"}',
+                "want": JSPEC(
+                    JSPECObject([
+                        (
+                            JSPECString("key2"),
+                            JSPECString("value2")
+                        ),
+                        (
+                            JSPECString("key1"),
+                            JSPECString("value1")
+                        ),
+                        (
+                            JSPECString("key3"),
+                            JSPECString("value3")
+                        ),
+                    ]),
+                )
+            },
+            {
+                "name": "Space (1)",
+                "doc": '{\t"key1":"value1",\t"key2":"value2"}',
+                "want": JSPEC(
+                    JSPECObject([
+                        (
+                            JSPECString("key1"),
+                            JSPECString("value1")
+                        ),
+                        (
+                            JSPECString("key2"),
+                            JSPECString("value2")
+                        ),
+                    ]),
+                )
+            },
+            {
+                "name": "Space (2)",
+                "doc": '{"key1": "value1", "key2": "value2"}',
+                "want": JSPEC(
+                    JSPECObject([
+                        (
+                            JSPECString("key1"),
+                            JSPECString("value1")
+                        ),
+                        (
+                            JSPECString("key2"),
+                            JSPECString("value2")
+                        ),
+                    ]),
+                )
+            },
+            {
+                "name": "Space (3)",
+                "doc": '{\t"key1":\t"value1" \t ,"key2": \t"value2" \t }',
+                "want": JSPEC(
+                    JSPECObject([
+                        (
+                            JSPECString("key1"),
+                            JSPECString("value1")
+                        ),
+                        (
+                            JSPECString("key2"),
+                            JSPECString("value2")
+                        ),
+                    ]),
+                )
+            },
+            {
+                "name": "Empty object",
+                "doc": '{}',
+                "want": JSPEC(
+                    JSPECObject([]),
+                )
+            },
+        ]
         self._good_match(test_cases)
 
     def test_scanner_object_bad(self):
@@ -37,5 +146,48 @@ class JSPECTestScannerObject(JSPECTestScanner):
         The ``scan`` method should raise an error, associated with attempting
         to scan for a ``JSPEC`` with a ``JSPECObject`` as its element.
         """
-        test_cases = []
+        test_cases = [
+            {
+                "name": "Unterminated object",
+                "doc": '{"a":"b"',
+                "errmsg": "Unterminated object",
+                "errpos": 8,
+            },
+            {
+                "name": "Expecting field",
+                "doc": '{1:"b"}',
+                "errmsg": "Expecting property name enclosed in double quotes",
+                "errpos": 1,
+            },
+            {
+                "name": "Expected colon",
+                "doc": '{"a","b"}',
+                "errmsg": "Expecting ':' delimiter",
+                "errpos": 4,
+            },
+            {
+                "name": "Expected colon",
+                "doc": '{"a":}',
+                "errmsg": "Expecting element",
+                "errpos": 5,
+            },
+            {
+                "name": "Repeated object key for pair",
+                "doc": '{"a":"b","a":"b"}',
+                "errmsg": "Repeated object key for pair",
+                "errpos": 16,
+            },
+            {
+                "name": "Unterminated object",
+                "doc": '{"a":"b"',
+                "errmsg": "Unterminated object",
+                "errpos": 8,
+            },
+            {
+                "name": "Unterminated object",
+                "doc": '{"a":"b"]',
+                "errmsg": "Expecting ',' delimiter",
+                "errpos": 8,
+            },
+        ]
         self._error_match(test_cases)

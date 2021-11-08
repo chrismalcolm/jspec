@@ -144,15 +144,11 @@ r2 result: False r2 message: Cannot match key regex at position '$'. Want other,
 ```
 
 # new stuff
-python3 -m unittest
+
 
 to run test
+python3 -m unittest test/test.py
 
-add tests
+todo 
 
-add comments
-
-| Element | JSON Native | JSPEC Native | Excepted Values |
-|---------|--------------|-------------|-------------|
-| Object | dict | JSPECObject | A set of key-value pairs, enclosed within curly braces |
-| String | str | JSPEString | Any sequence of characters or a regex pattern, enclosed in double quotes |
+write test for matcher

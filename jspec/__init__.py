@@ -1,25 +1,23 @@
 from . import scanner
 from . import matcher
+from . import component
 
 __version__ = "1.1.0"
-
-def scant(s):
-    print("s")
 
 def _decode(document):
     if not isinstance(document, str):
         raise TypeError("Object of type %s is not readbale as a JSPEC document" % document.__class__.__name__) 
-    return scan(document)
+    return scanner.scan(document)
 
 def _encode(jspec):
-    if not isinstance(jspec, JSPEC):
+    if not isinstance(jspec, component.JSPEC):
         raise TypeError("Object of type %s is not JSPEC serializable" % jspec.__class__.__name__)
     return str(jspec)
 
 def _match(jspec, obj):
-    if not isinstance(jspec, JSPEC):
+    if not isinstance(jspec, component.JSPEC):
         raise TypeError("Object of type %s is not a JSPEC" % obj.__class__.__name__)
-    return match(jspec, obj)
+    return matcher.match(jspec, obj)
 
 def load(f):
     return loads(f.read())

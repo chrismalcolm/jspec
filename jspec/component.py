@@ -16,7 +16,6 @@ class JSPEC:
         attr2 (:obj:`int`, optional): Description of `attr2`.
 
     """
-
     def __init__(self, element):
         self.element = element
 
@@ -43,7 +42,6 @@ class JSPECElement:
         attr2 (:obj:`int`, optional): Description of `attr2`.
 
     """
-
     PLACEHOLDER = ""
     SPEC_FUNC   = lambda x: None
     SERIALIZER  = lambda x: ""
@@ -52,6 +50,7 @@ class JSPECElement:
         self.spec = self.spec_func(value)
         self.string = self.serializer(value) if not is_placeholder else self.PLACEHOLDER
         self.is_placeholder = is_placeholder
+        self.hash = self.string.__hash__()
 
     def __str__(self):
         return self.string
@@ -60,7 +59,7 @@ class JSPECElement:
         return self.string
 
     def __hash__(self):
-        return self.string.__hash__()
+        return self.hash
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
@@ -125,10 +124,11 @@ class JSPECCapture:
     ELLIPSIS   = ""
 
     def __init__(self, elements, multiplier=-1, is_ellipsis=False):
-        self.element = None # TODO may be a better way
         self.elements = elements
         self.multiplier = multiplier
-        self.string = self.serializer(elements, multiplier) if not is_ellipsis else self.ELLIPSIS
+        serialized = self.serializer(elements, multiplier)
+        self.hash = serialized.__hash__()
+        self.string = serialized if not is_ellipsis else self.ELLIPSIS
 
     def __str__(self):
         return self.string
@@ -137,15 +137,25 @@ class JSPECCapture:
         return self.string
 
     def __hash__(self):
-        return self.string.__hash__()
+        return self.hash
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        return bool(self.elements & other.elements)
+        if self.multiplier != other.multiplier:
+            return False
+        return self.elements == other.elements
 
     def serializer(self, value, multiplier):
         return self.__class__.SERIALIZER(value, multiplier)
+
+    def split(self):
+        for element in self.elements:
+            yield self.__class__(
+                set(element),
+                self.multiplier,
+                self.is_ellipsis,
+            )
 
 class JSPECArrayCaptureElement(JSPECCapture):
     SERIALIZER = lambda elements, multiplier: '<%s>' % " | ".join(sorted([str(element) for element in elements])) + ("x%i" % multiplier if multiplier > 0 else "")
