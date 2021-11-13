@@ -1,3 +1,9 @@
+# TODO Add documentation here
+# TODO Finish all unit tests
+# TODO Set as version 1.2.0 as beta
+# TODO See how to get github badges
+# TODO deploy as module
+
 from . import scanner
 from . import matcher
 from . import component
