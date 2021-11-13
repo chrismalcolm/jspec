@@ -3,10 +3,6 @@
 """
 
 from test.matcher import JSPECTestMatcher
-from jspec.component import (
-    JSPEC, 
-    JSPECBoolean,
-)
 
 class JSPECTestMatcherBoolean(JSPECTestMatcher):
     """Class for testing the behaviour when using the ``match`` method for
@@ -20,7 +16,18 @@ class JSPECTestMatcherBoolean(JSPECTestMatcher):
         The ``match`` method should return a matching ``JSPEC`` with a
         ``JSPECBoolean`` as its element.
         """
-        test_cases = []
+        test_cases = [
+            {
+                "name": "Simple boolean true",
+                "doc": "true",
+                "obj": True,
+            },
+            {
+                "name": "Simple boolean false",
+                "doc": "false",
+                "obj": False,
+            },
+        ]
         self._good_match(test_cases)
 
     def test_matcher_boolean_bad(self):
@@ -28,5 +35,18 @@ class JSPECTestMatcherBoolean(JSPECTestMatcher):
         The ``match`` method should not return a matching ``JSPEC`` with the
         specified ``JSPECBoolean`` as its element.
         """
-        test_cases = []
+        test_cases = [
+            {
+                "name": "True not false",
+                "doc": "false",
+                "obj": True,
+                "want": "At location $ - expected 'False', got 'True'",
+            },
+            {
+                "name": "False not true",
+                "doc": "true",
+                "obj": False,
+                "want": "At location $ - expected 'True', got 'False'",
+            },
+        ]
         self._bad_match(test_cases)

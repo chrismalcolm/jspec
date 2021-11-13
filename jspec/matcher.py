@@ -1,3 +1,7 @@
+# TODO fix array and object matching + captures
+# TODO add tests for these too
+# TODO add documentation
+
 import re
 
 from .component import (
@@ -248,7 +252,8 @@ def match_conditional(loc, spec, obj):
         result = match_element(loc, element, obj)
         if bool(result):
             return result
-    return BadMatch(loc, "conditional elements '%s' do not match the element '%s'" % (spec, obj))
+    sorted_elements = sorted([str(e) for e in spec])
+    return BadMatch(loc, "conditional elements %s do not match the element '%s'" % (sorted_elements, obj))
 
 def match_element(loc, element, obj):
     spec = element.spec
@@ -285,9 +290,13 @@ def match_element(loc, element, obj):
         return GoodMatch() if is_placeholder else match_boolean(loc, spec, obj)
 
     if isinstance(element, JSPECNull):
-        return GoodMatch() if obj is None else BadMatch(loc, "expected '%s', got '%s'" % (spec, obj))
+        if obj is not None:
+            return BadMatch(loc, "expected '%s', got '%s'" % (spec, obj))
+        return GoodMatch()  
 
     if isinstance(element, JSPECWildcard):
+        if not isinstance(obj, (dict, list, str, int, float, bool)) and obj is not None:
+            return BadMatch(loc, "expected a Python native JSON element, not %s" % obj.__class__)
         return GoodMatch()
 
     if isinstance(element, JSPECConditional):

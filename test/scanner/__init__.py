@@ -35,12 +35,12 @@ class JSPECTestScanner(unittest.TestCase):
                 Expected_JSPEC_output_X is the output for test case X
         """
         for test_case in test_cases:
-            doc, want = test_case["doc"], test_case["want"]
+            name, doc, want = test_case["name"], test_case["doc"], test_case["want"]
             got = jspec.scanner.scan(doc)
             self.assertEqual(
                 want,
                 got,
-                msg="Unexpected bad match - want: %s, got: %s" %  (want, got),
+                msg="(%s) Unexpected bad match - want: %s, got: %s" %  (name, want, got),
             )
     
     def _bad_match(self, test_cases):
@@ -69,12 +69,12 @@ class JSPECTestScanner(unittest.TestCase):
                 Unexpected_JSPEC_output_X is not the output for test case X
         """
         for test_case in test_cases:
-            doc, want = test_case["doc"], test_case["notwant"]
+            name, doc, want = test_case["name"], test_case["doc"], test_case["notwant"]
             got = jspec.scanner.scan(doc)
             self.assertNotEqual(
                 got,
                 want,
-                msg="Unexpected good match - got: %s" % got,
+                msg="(%s) Unexpected good match - got: %s" % (name, got),
             )
 
     def _error_match(self, test_cases):
@@ -108,7 +108,7 @@ class JSPECTestScanner(unittest.TestCase):
                 Where err is the raised JSPECDecodeError
         """
         for test_case in test_cases:
-            doc, errmsg, errpos = test_case["doc"], test_case["errmsg"], test_case["errpos"]
+            name, doc, errmsg, errpos = test_case["name"], test_case["doc"], test_case["errmsg"], test_case["errpos"]
             err = JSPECDecodeError(errmsg, doc, errpos)
             exc = None
             try:
@@ -118,5 +118,5 @@ class JSPECTestScanner(unittest.TestCase):
             self.assertEqual(
                 str(err),
                 str(exc),
-                msg="Expected an error to be raised - want: %s, got: %s" %  (err, exc),
+                msg="(%s) Expected an error to be raised - want: %s, got: %s" %  (name, err, exc),
             )

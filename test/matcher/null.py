@@ -3,10 +3,6 @@
 """
 
 from test.matcher import JSPECTestMatcher
-from jspec.component import (
-    JSPEC, 
-    JSPECNull,
-)
 
 class JSPECTestMatcherNull(JSPECTestMatcher):
     """Class for testing the behaviour when using the ``match`` method for
@@ -20,7 +16,13 @@ class JSPECTestMatcherNull(JSPECTestMatcher):
         The ``match`` method should return a matching ``JSPEC`` with a
         ``JSPECNull`` as its element.
         """
-        test_cases = []
+        test_cases = [
+            {
+                "name": "Simple null",
+                "doc": "null",
+                "obj": None,
+            },
+        ]
         self._good_match(test_cases)
 
     def test_matcher_null_bad(self):
@@ -28,5 +30,12 @@ class JSPECTestMatcherNull(JSPECTestMatcher):
         The ``match`` method should not return a matching ``JSPEC`` with the
         specified ``JSPECNull`` as its element.
         """
-        test_cases = []
+        test_cases = [
+            {
+                "name": "Not null",
+                "doc": "null",
+                "obj": False,
+                "want": "At location $ - expected 'None', got 'False'",
+            },
+        ]
         self._bad_match(test_cases)

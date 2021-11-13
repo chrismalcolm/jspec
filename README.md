@@ -145,10 +145,7 @@ r2 result: False r2 message: Cannot match key regex at position '$'. Want other,
 
 # new stuff
 
-
 to run test
 python3 -m unittest test/test.py
 
-todo 
-
-write test for matcher
+Look at TODOs for work to finish
