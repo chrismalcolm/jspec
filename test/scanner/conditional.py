@@ -6,12 +6,17 @@ from test.scanner import JSPECTestScanner
 from jspec.component import (
     JSPEC, 
     JSPECConditional,
+    JSPECLogicalOperatorAnd,
+    JSPECLogicalOperatorOr,
+    JSPECLogicalOperatorXor,
+    JSPECIntPlaceholder,
     JSPECObject,
     JSPECArray,
     JSPECString,
     JSPECInt,
     JSPECReal,
     JSPECBoolean,
+    JSPECNegation,
 )
 
 class JSPECTestScannerConditional(JSPECTestScanner):
@@ -32,150 +37,57 @@ class JSPECTestScannerConditional(JSPECTestScanner):
                 "name": "One element",
                 "doc": '(1)',
                 "want": JSPEC(
-                    JSPECConditional({
+                    JSPECConditional([
                         JSPECInt(1),
-                    }),
+                    ]),
                 )
             },
             {
-                "name": "Two elements",
-                "doc": '(1|3)',
+                "name": "Simple AND",
+                "doc": '(int & !5)',
                 "want": JSPEC(
-                    JSPECConditional({
-                        JSPECInt(1),
-                        JSPECInt(3),
-                    }),
+                    JSPECConditional([
+                        JSPECIntPlaceholder(),
+                        JSPECLogicalOperatorAnd(),
+                        JSPECNegation(JSPECInt(5)),
+                    ]),
                 )
             },
             {
-                "name": "Multiple elements",
-                "doc": '("a"|"b"|5|7.8|true|"c")',
+                "name": "Simple OR",
+                "doc": '(int | "hello")',
                 "want": JSPEC(
-                    JSPECConditional({
-                        JSPECString("a"),
-                        JSPECString("b"),
-                        JSPECInt(5),
-                        JSPECReal(7.8),
-                        JSPECBoolean(True),
-                        JSPECString("c"),
-                    }),
+                    JSPECConditional([
+                        JSPECIntPlaceholder(),
+                        JSPECLogicalOperatorOr(),
+                        JSPECString("hello"),
+                    ]),
                 )
             },
             {
-                "name": "Embedded once",
-                "doc": '(1|2|(3|4)|5)',
+                "name": "Simple XOR",
+                "doc": '(int ^ "hello")',
                 "want": JSPEC(
-                    JSPECConditional({
-                        JSPECInt(1),
-                        JSPECInt(2),
-                        JSPECConditional({
-                            JSPECInt(3),
-                            JSPECInt(4),
-                        }),
-                        JSPECInt(5),
-                    }),
+                    JSPECConditional([
+                        JSPECIntPlaceholder(),
+                        JSPECLogicalOperatorXor(),
+                        JSPECString("hello"),
+                    ]),
                 )
             },
             {
-                "name": "Embedded multiple",
-                "doc": '(((((true|false)))))',
+                "name": "Combination XOR",
+                "doc": '(!int & !"hello" ^ "abc" | "okay")',
                 "want": JSPEC(
-                    JSPECConditional({
-                        JSPECConditional({
-                            JSPECConditional({
-                                JSPECConditional({
-                                    JSPECConditional({
-                                        JSPECBoolean(True),
-                                        JSPECBoolean(False),
-                                    }),
-                                }),
-                            }),
-                        }),
-                    }),
-                )
-            },
-            {
-                "name": "Different order two",
-                "doc": '(1|3)',
-                "want": JSPEC(
-                    JSPECConditional({
-                        JSPECInt(3),
-                        JSPECInt(1),
-                    }),
-                )
-            },
-            {
-                "name": "Different oder multiple",
-                "doc": '("a"|"b"|5|78|true|"c")',
-                "want": JSPEC(
-                    JSPECConditional({
-                        JSPECString("c"),
-                        JSPECString("a"),
-                        JSPECString("b"),
-                        JSPECInt(78),
-                        JSPECBoolean(True),
-                        JSPECInt(5),
-                    }),
-                )
-            },
-            {
-                "name": "Spaces (1)",
-                "doc": '( 1|2|3|4)',
-                "want": JSPEC(
-                    JSPECConditional({
-                        JSPECInt(1),
-                        JSPECInt(2),
-                        JSPECInt(3),
-                        JSPECInt(4),
-                    }),
-                )
-            },
-            {
-                "name": "Spaces (2)",
-                "doc": '(1|2|3|4 )',
-                "want": JSPEC(
-                    JSPECConditional({
-                        JSPECInt(1),
-                        JSPECInt(2),
-                        JSPECInt(3),
-                        JSPECInt(4),
-                    }),
-                )
-            },
-            {
-                "name": "Spaces (3)",
-                "doc": '(\t1|2|\t3\t|4\t)',
-                "want": JSPEC(
-                    JSPECConditional({
-                        JSPECInt(1),
-                        JSPECInt(2),
-                        JSPECInt(3),
-                        JSPECInt(4),
-                    }),
-                )
-            },
-            {
-                "name": "Spaces (4)",
-                "doc": '(1 | 2 | 3 | 4)',
-                "want": JSPEC(
-                    JSPECConditional({
-                        JSPECInt(1),
-                        JSPECInt(2),
-                        JSPECInt(3),
-                        JSPECInt(4),
-                    }),
-                )
-            },
-            {
-                "name": "Spaces (5)",
-                "doc": '( 1 | 2 | 3 | 4 )',
-                "want": JSPEC(
-                    JSPECConditional({
-                        JSPECInt(1),
-                        JSPECInt(2),
-                        JSPECInt(3),
-                        JSPECInt(4),
-                    }),
+                    JSPECConditional([
+                        JSPECNegation(JSPECIntPlaceholder()),
+                        JSPECLogicalOperatorAnd(),
+                        JSPECNegation(JSPECString("hello")),
+                        JSPECLogicalOperatorXor(),
+                        JSPECString("abc"),
+                        JSPECLogicalOperatorOr(),
+                        JSPECString("okay"),
+                    ]),
                 )
             },
         ]
@@ -210,7 +122,7 @@ class JSPECTestScannerConditional(JSPECTestScanner):
             {
                 "name": "Unfinished conditional",
                 "doc": '(1|2]',
-                "errmsg": "Expecting conditional termination",
+                "errmsg": "Expecting conditional termination ')'",
                 "errpos": 4,
             },
         ]

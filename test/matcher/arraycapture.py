@@ -5,7 +5,7 @@
 from test.matcher import JSPECTestMatcher
 from jspec.component import (
     JSPEC, 
-    JSPECArrayCaptureElement,
+    JSPECArrayCaptureGroup,
 )
 
 class JSPECTestMatcherArrayCapture(JSPECTestMatcher):
@@ -19,7 +19,7 @@ class JSPECTestMatcherArrayCapture(JSPECTestMatcher):
     def test_matcher_array_capture_good(self):
         """Test examples of good matches.
         The ``match`` method should return a matching ``JSPEC`` with
-        ``JSPECArrayCaptureElement``.
+        ``JSPECArrayCaptureGroup``.
         """
         test_cases = []
         self._good_match(test_cases)
@@ -27,7 +27,7 @@ class JSPECTestMatcherArrayCapture(JSPECTestMatcher):
     def test_matcher_array_capture_bad(self):
         """Test examples of bad matches.
         The ``match`` method should not return a matching ``JSPEC`` with
-        ``JSPECArrayCaptureElement``.
+        ``JSPECArrayCaptureGroup``.
         """
         test_cases = []
         self._bad_match(test_cases)

@@ -6,6 +6,7 @@ from test.scanner import JSPECTestScanner
 from jspec.component import (
     JSPEC, 
     JSPECObject,
+    JSPECObjectPair,
     JSPECString,
 )
 
@@ -27,107 +28,94 @@ class JSPECTestScannerObject(JSPECTestScanner):
                 "name": "Basic object",
                 "doc": '{"key":"value"}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECString("key"),
-                            JSPECString("value")
+                    JSPECObject({
+                        JSPECObjectPair(
+                            (JSPECString("key"), JSPECString("value"))
                         ),
-                    ]),
+                    }),
                 )
             },
             {
                 "name": "Basic multiple pairs",
                 "doc": '{"key1":"value1","key2":"value2","key3":"value3"}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECString("key1"),
-                            JSPECString("value1")
+                    JSPECObject({
+                        JSPECObjectPair(
+                            (JSPECString("key1"), JSPECString("value1"))
                         ),
-                        (
-                            JSPECString("key2"),
-                            JSPECString("value2")
+                        JSPECObjectPair(
+                            (JSPECString("key2"), JSPECString("value2"))
                         ),
-                        (
-                            JSPECString("key3"),
-                            JSPECString("value3")
+                        JSPECObjectPair(
+                            (JSPECString("key3"), JSPECString("value3"))
                         ),
-                    ]),
+                    }),
                 )
             },
             {
                 "name": "Basic multiple pairs unordered",
                 "doc": '{"key1":"value1","key2":"value2","key3":"value3"}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECString("key2"),
-                            JSPECString("value2")
+                    JSPECObject({
+                        JSPECObjectPair(
+                            (JSPECString("key2"), JSPECString("value2"))
                         ),
-                        (
-                            JSPECString("key1"),
-                            JSPECString("value1")
+                        JSPECObjectPair(
+                            (JSPECString("key1"), JSPECString("value1"))
                         ),
-                        (
-                            JSPECString("key3"),
-                            JSPECString("value3")
+                        JSPECObjectPair(
+                            (JSPECString("key3"), JSPECString("value3"))
                         ),
-                    ]),
+                    }),
                 )
             },
             {
                 "name": "Space (1)",
                 "doc": '{\t"key1":"value1",\t"key2":"value2"}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECString("key1"),
-                            JSPECString("value1")
+                    JSPECObject({
+                        JSPECObjectPair(
+                            (JSPECString("key1"), JSPECString("value1"))
                         ),
-                        (
-                            JSPECString("key2"),
-                            JSPECString("value2")
+                        JSPECObjectPair(
+                            (JSPECString("key2"), JSPECString("value2"))
                         ),
-                    ]),
+                    }),
                 )
             },
             {
                 "name": "Space (2)",
                 "doc": '{"key1": "value1", "key2": "value2"}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECString("key1"),
-                            JSPECString("value1")
+                    JSPECObject({
+                        JSPECObjectPair(
+                            (JSPECString("key1"), JSPECString("value1"))
                         ),
-                        (
-                            JSPECString("key2"),
-                            JSPECString("value2")
+                        JSPECObjectPair(
+                            (JSPECString("key2"), JSPECString("value2"))
                         ),
-                    ]),
+                    }),
                 )
             },
             {
                 "name": "Space (3)",
                 "doc": '{\t"key1":\t"value1" \t ,"key2": \t"value2" \t }',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECString("key1"),
-                            JSPECString("value1")
+                    JSPECObject({
+                        JSPECObjectPair(
+                            (JSPECString("key1"), JSPECString("value1"))
                         ),
-                        (
-                            JSPECString("key2"),
-                            JSPECString("value2")
+                        JSPECObjectPair(
+                            (JSPECString("key2"), JSPECString("value2"))
                         ),
-                    ]),
+                    }),
                 )
             },
             {
                 "name": "Empty object",
                 "doc": '{}',
                 "want": JSPEC(
-                    JSPECObject([]),
+                    JSPECObject(set()),
                 )
             },
         ]
@@ -156,25 +144,25 @@ class JSPECTestScannerObject(JSPECTestScanner):
             {
                 "name": "Expecting field",
                 "doc": '{1:"b"}',
-                "errmsg": "Expecting property name enclosed in double quotes",
+                "errmsg": "Expecting property name enclosed in double quotes as key in object pair",
                 "errpos": 1,
             },
             {
                 "name": "Expected colon",
                 "doc": '{"a","b"}',
-                "errmsg": "Expecting ':' delimiter",
+                "errmsg": "Expecting key-value delimiter ':' in object",
                 "errpos": 4,
             },
             {
                 "name": "Expected colon",
                 "doc": '{"a":}',
-                "errmsg": "Expecting element",
+                "errmsg": "Expecting element as value in object pair",
                 "errpos": 5,
             },
             {
                 "name": "Repeated object key for pair",
                 "doc": '{"a":"b","a":"b"}',
-                "errmsg": "Repeated object key for pair",
+                "errmsg": "Repeated object key for pair in object",
                 "errpos": 16,
             },
             {
@@ -186,7 +174,7 @@ class JSPECTestScannerObject(JSPECTestScanner):
             {
                 "name": "Unterminated object",
                 "doc": '{"a":"b"]',
-                "errmsg": "Expecting ',' delimiter",
+                "errmsg": "Expecting object pair delimiter ','",
                 "errpos": 8,
             },
         ]

@@ -1,11 +1,12 @@
 """Module for scanning JSPEC documents.
 """
+#TODO finise docs
 
 import re
 
 from .component import (
     JSPEC,
-    JSPECElement,
+    JSPECObjectPair,
     JSPECObject,
     JSPECArray,
     JSPECString,
@@ -14,10 +15,23 @@ from .component import (
     JSPECBoolean,
     JSPECNull,
     JSPECWildcard,
+    JSPECNegation,
     JSPECConditional,
-    JSPECArrayCaptureElement,
-    JSPECObjectCaptureKey,
-    JSPECObjectCaptureValue,
+    JSPECObjectPlaceholder,
+    JSPECArrayPlaceholder,
+    JSPECStringPlaceholder,
+    JSPECIntPlaceholder,
+    JSPECRealPlaceholder,
+    JSPECBooleanPlaceholder,
+    JSPECNumberPlaceholder,
+    JSPECLogicalOperatorAnd,
+    JSPECLogicalOperatorOr,
+    JSPECLogicalOperatorXor,
+    JSPECArrayCaptureGroup,
+    JSPECObjectCaptureGroup,
+    JSPECArrayEllipsis,
+    JSPECObjectEllipsis,
+    JSPECCaptureMultiplier,
 )
 
 class JSPECDecodeError(ValueError):
@@ -70,8 +84,9 @@ WHITESPACE_MATCH = re.compile(r"""
 """_sre.SRE_Pattern: Pattern to match whitespace."""
 
 MULTIPLIER_MATCH = re.compile(r"""
-    x          # preceded by an x
-    ([1-9]\d*) # positive integer, unsigned digit string with no leading zeroes """, re.VERBOSE).match
+    x                    # preceded by an x
+    ([1-9]\d*|\?)        # non-negative integer or ?
+    (?:\-([1-9]\d*|\?))? # hyphen followed by a non-negative integer or ?""", re.VERBOSE).match
 """_sre.SRE_Pattern: Pattern to match a capture multiplier."""
 
 def skip_any_whitespace(doc, idx):
@@ -110,7 +125,7 @@ def scan_object(doc, idx):
         JSPECDecodeError: Raised if the string scanned cannot represent a
             valid JSPEC object.
     """
-    pairs = []
+    pairs = set()
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
 
     if nextchar == '':
@@ -123,31 +138,31 @@ def scan_object(doc, idx):
 
         if nextchar == '<':
             pair, idx = scan_object_capture(doc, idx)
+            if pair in pairs:
+                raise JSPECDecodeError("Redundant object pair capture", doc, idx)
         elif nextchar == '.':
             pair, idx = scan_object_ellipsis(doc, idx)
+            if pair in pairs:
+                raise JSPECDecodeError("Redundant object ellipsis", doc, idx)
         else:
             if nextchar == 's' and doc[idx:idx+6] == 'string':
                 key, idx = JSPECString("", is_placeholder=True), idx + 6
             else:
                 if nextchar != '"':
-                    raise JSPECDecodeError("Expecting property name enclosed in double quotes", doc, idx) 
+                    raise JSPECDecodeError("Expecting property name enclosed in double quotes as key in object pair", doc, idx) 
                 key, idx = scan_string(doc, idx)
             nextchar, idx = skip_any_whitespace(doc, idx)
             if nextchar != ':':
-                raise JSPECDecodeError("Expecting ':' delimiter", doc, idx)
+                raise JSPECDecodeError("Expecting key-value delimiter ':' in object", doc, idx)
             _, idx = skip_any_whitespace(doc, idx + 1)
             try:
                 value, idx = scan_element(doc, idx)
             except StopIteration as err:
-                raise JSPECDecodeError("Expecting element", doc, err.value) from None
-            pair = (key, value)
-        if pair in pairs:
-            if isinstance(pair[0], JSPECObjectCaptureKey) and isinstance(pair[1], JSPECObjectCaptureValue):
-                raise JSPECDecodeError("Redundant object pair capture", doc, idx)
-        if pair[0] in [pair[0] for pair in pairs]:
-            if isinstance(pair[0], JSPECElement):
-                raise JSPECDecodeError("Repeated object key for pair", doc, idx)
-        pairs.append(pair)
+                raise JSPECDecodeError("Expecting element as value in object pair", doc, err.value) from None
+            pair = JSPECObjectPair((key, value))
+            if key in [pair.key() for pair in pairs if isinstance(pair, JSPECObjectPair)]:
+                raise JSPECDecodeError("Repeated object key for pair in object", doc, idx)
+        pairs.add(pair)
 
         nextchar, idx = skip_any_whitespace(doc, idx)
         if nextchar == '}':
@@ -155,7 +170,7 @@ def scan_object(doc, idx):
         if nextchar == '':
             raise JSPECDecodeError("Unterminated object", doc, idx)
         if nextchar != ',':
-            raise JSPECDecodeError("Expecting ',' delimiter", doc, idx)
+            raise JSPECDecodeError("Expecting object pair delimiter ','", doc, idx)
         _, idx = skip_any_whitespace(doc, idx + 1)
 
 def scan_object_capture(doc, idx):
@@ -167,8 +182,8 @@ def scan_object_capture(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        (JSPECObjectCaptureKey, JSPECObjectCaptureValue): The JSPECCapture
-            pairs that represents the valid JSPEC object capture
+        JSPECObjectCaptureGroup: The JSPECCapture object capture pairs that
+            represents the valid JSPEC object capture
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC object capture
 
@@ -180,54 +195,51 @@ def scan_object_capture(doc, idx):
     if nextchar == '>':
         raise JSPECDecodeError("Empty capture", doc, idx)
     
-    keys = set()
+    entities = list()
     while True:
         if nextchar == 's' and doc[idx:idx+6] == 'string':
-            key, idx = JSPECString("", is_placeholder=True), idx + 6
+            key, idx = JSPECStringPlaceholder(), idx + 6
         else:
             if nextchar != '"':
-                raise JSPECDecodeError("Expecting property name enclosed in double quotes in capture", doc, idx) 
+                raise JSPECDecodeError("Expecting property name enclosed in double quotes as key in object capture pair", doc, idx)
             key, idx = scan_string(doc, idx)
-        if key in keys:
-            raise JSPECDecodeError("Repeated key in capture conditional", doc, idx-1)
-        keys.add(key)
         nextchar, idx = skip_any_whitespace(doc, idx)
-        if nextchar == ':':
-            _, idx = skip_any_whitespace(doc, idx + 1)
-            break
-        if nextchar != '|':
-            raise JSPECDecodeError("Expecting conditional operator or colon", doc, idx) 
+        if nextchar != ':':
+            raise JSPECDecodeError("Expecting key-value delimiter ':' in object capture", doc, idx)
         nextchar, idx = skip_any_whitespace(doc, idx + 1)
-    
-    vals = set()
-    while True:
         try:
             val, idx = scan_element(doc, idx)
         except StopIteration as err:
-            raise JSPECDecodeError("Expecting element value in capture", doc, err.value) from None
-        if val in vals:
-            raise JSPECDecodeError("Repeated value in capture conditional", doc, idx-1)
-        vals.add(val)
+            raise JSPECDecodeError("Expecting element as value in object capture pair", doc, err.value) from None
+        entities.append(JSPECObjectPair((key, val)))
         nextchar, idx = skip_any_whitespace(doc, idx)
-        if  nextchar == '>':
+
+        if nextchar == '&':
+            entities.append(JSPECLogicalOperatorAnd())
+        elif nextchar == '|':
+            entities.append(JSPECLogicalOperatorOr())
+        elif nextchar == '^':
+            entities.append(JSPECLogicalOperatorXor())
+        else:
             break
-        if nextchar != '|':
-            raise JSPECDecodeError("Expecting conditional operator or capture termination", doc, idx) 
-        _, idx = skip_any_whitespace(doc, idx + 1)
+        nextchar, idx = skip_any_whitespace(doc, idx + 1)
+
+    if nextchar != '>':
+        raise JSPECDecodeError("Expecting object capture termination '>'", doc, idx) 
     idx += 1
     m = MULTIPLIER_MATCH(doc, idx)
     if m is None:
-        pair = (
-            JSPECObjectCaptureKey(keys), 
-            JSPECObjectCaptureValue(vals)
-        )
-        return pair, idx
-    multiplier = int(m.groups()[0])
-    pair = (
-        JSPECObjectCaptureKey(keys, multiplier=multiplier), 
-        JSPECObjectCaptureValue(vals, multiplier=multiplier)
-    )
-    return pair, m.end()
+        raise JSPECDecodeError("Expecting object capture multiplier", doc, idx)
+    x, y = m.groups()[0], m.groups()[1]
+    minimum = int(x) if x != '?' else None
+    if y is None:
+        maximum = minimum
+    else:
+        maximum = int(y) if y != '?' else None
+    if minimum is not None and maximum is not None and minimum > maximum:
+        raise JSPECDecodeError("Minimum for object capture multiplier is larger than the maximum", doc, m.end())
+    multiplier = JSPECCaptureMultiplier(minimum, maximum)
+    return JSPECObjectCaptureGroup(entities, multiplier), m.end()
 
 def scan_object_ellipsis(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
@@ -238,8 +250,7 @@ def scan_object_ellipsis(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        (JSPECObjectCaptureKey, JSPECObjectCaptureValue): The JSPECCapture
-            pairs that represents the valid JSPEC object ellipsis
+        JSPECObjectEllipsis: Represents the valid JSPEC object ellipsis
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC object ellipsis
 
@@ -248,14 +259,8 @@ def scan_object_ellipsis(doc, idx):
             valid JSPEC object ellipsis.
     """
     if not doc[idx:idx + 3] == '...':
-        raise JSPECDecodeError("Expecting ellipsis with 3 dots", doc, idx)
-    key_element = JSPECString("", is_placeholder=True)
-    val_element = JSPECWildcard(None)
-    pair = (
-        JSPECObjectCaptureKey(set([key_element]), is_ellipsis=True), 
-        JSPECObjectCaptureValue(set([val_element]), is_ellipsis=True)
-    )
-    return pair, idx + 3
+        raise JSPECDecodeError("Expecting object ellipsis with 3 dots '...'", doc, idx)
+    return JSPECObjectEllipsis(), idx + 3
 
 def scan_array(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
@@ -292,8 +297,8 @@ def scan_array(doc, idx):
             try:
                 value, idx = scan_element(doc, idx)
             except StopIteration as err:
-                raise JSPECDecodeError("Expecting element", doc, err.value) from None
-        if len(values) > 0 and isinstance(value, JSPECArrayCaptureElement) and value == values[-1]:
+                raise JSPECDecodeError("Expecting element in array", doc, err.value) from None
+        if len(values) > 0 and isinstance(value, JSPECArrayCaptureGroup) and value == values[-1]:
             raise JSPECDecodeError("Redundant array capture", doc, idx)
         values.append(value)
         nextchar, idx = skip_any_whitespace(doc, idx)
@@ -302,7 +307,7 @@ def scan_array(doc, idx):
         if nextchar == '':
             raise JSPECDecodeError("Unterminated array", doc, idx)
         if nextchar != ',':
-            raise JSPECDecodeError("Expecting ',' delimiter", doc, idx)
+            raise JSPECDecodeError("Expecting element in array", doc, idx)
         nextchar, idx = skip_any_whitespace(doc, idx + 1)
 
 def scan_array_capture(doc, idx):
@@ -325,28 +330,40 @@ def scan_array_capture(doc, idx):
     """
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar == '>':
-        raise JSPECDecodeError("Empty capture", doc, idx)
-    elements = set()
+        raise JSPECDecodeError("Empty array capture", doc, idx)
+    entities = list()
     while True:
         try:
             element, idx = scan_element(doc, idx)
         except StopIteration as err:
-            raise JSPECDecodeError("Expecting value in capture", doc, err.value) from None
-        if element in elements:
-            raise JSPECDecodeError("Repeated element in capture conditional", doc, idx-1)
-        elements.add(element)
+            raise JSPECDecodeError("Expecting element in array capture", doc, err.value) from None
+        entities.append(element)
         nextchar, idx = skip_any_whitespace(doc, idx)
-        if nextchar != '|':
+        if nextchar == '&':
+            entities.append(JSPECLogicalOperatorAnd())
+        elif nextchar == '|':
+            entities.append(JSPECLogicalOperatorOr())
+        elif nextchar == '^':
+            entities.append(JSPECLogicalOperatorXor())
+        else:
             break
-        nextchar, idx = skip_any_whitespace(doc, idx + 1)
+        _, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar != '>':
-        raise JSPECDecodeError("Expecting capture termination", doc, idx)
+        raise JSPECDecodeError("Expecting array capture termination '>'", doc, idx)
     idx += 1
     m = MULTIPLIER_MATCH(doc, idx)
     if m is None:
-        return JSPECArrayCaptureElement(elements), idx
-    multiplier = int(m.groups()[0])
-    return JSPECArrayCaptureElement(elements, multiplier=multiplier), m.end()
+        raise JSPECDecodeError("Expecting array capture multiplier", doc, idx)
+    x, y = m.groups()[0], m.groups()[1]
+    minimum = int(x) if x != '?' else None
+    if y is None:
+        maximum = minimum
+    else:
+        maximum = int(y) if y != '?' else None
+    if minimum is not None and maximum is not None and minimum > maximum:
+        raise JSPECDecodeError("Minimum for array capture multiplier is larger than the maximum", doc, m.end())
+    multiplier = JSPECCaptureMultiplier(minimum, maximum)
+    return JSPECArrayCaptureGroup(entities, multiplier), m.end()
 
 def scan_array_ellipsis(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
@@ -357,8 +374,7 @@ def scan_array_ellipsis(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECObjectCaptureElement: The JSPECCapture that represents the valid
-            JSPEC array ellipsis
+        JSPECArrayEllipsis: Represents the valid JSPEC array ellipsis
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC array ellipsis
 
@@ -367,9 +383,8 @@ def scan_array_ellipsis(doc, idx):
             valid JSPEC array ellipsis.
     """
     if not doc[idx:idx + 3] == '...':
-        raise JSPECDecodeError("Expecting ellipsis with 3 dots", doc, idx)
-    element = JSPECWildcard(None)
-    return JSPECArrayCaptureElement(set([element]), is_ellipsis=True), idx + 3
+        raise JSPECDecodeError("Expecting array ellipsis with 3 dots '...'", doc, idx)
+    return JSPECArrayEllipsis(), idx + 3
 
 def scan_string(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
@@ -423,6 +438,31 @@ def scan_number(doc, idx):
         value = JSPECReal(integer + (frac or '') + (exp or ''))
     return value, m.end()
 
+def scan_negation(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC negation.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECNegation: The JSPECElement that represents the valid JSPEC
+            negation
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC negation
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC negation.
+    """
+    _, idx = skip_any_whitespace(doc, idx + 1)
+    try:
+        element, idx = scan_element(doc, idx)
+    except StopIteration as err:
+        raise JSPECDecodeError("Expecting element in negation", doc, err.value) from None
+    return JSPECNegation(element), idx
+
 def scan_conditional(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
     characters scanned represeting a valid JSPEC conditional.
@@ -444,20 +484,26 @@ def scan_conditional(doc, idx):
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar == ')':
         raise JSPECDecodeError("Empty conditional", doc, idx)
-    elements = set()
+    values = list()
     while True:
         try:
             element, idx = scan_element(doc, idx)
         except StopIteration as err:
             raise JSPECDecodeError("Expecting element in conditional", doc, err.value) from None
-        elements.add(element)
+        values.append(element)
         nextchar, idx = skip_any_whitespace(doc, idx)
-        if nextchar != '|':
+        if nextchar == '&':
+            values.append(JSPECLogicalOperatorAnd())
+        elif nextchar == '|':
+            values.append(JSPECLogicalOperatorOr())
+        elif nextchar == '^':
+            values.append(JSPECLogicalOperatorXor())
+        else:
             break
-        nextchar, idx = skip_any_whitespace(doc, idx + 1)
+        _, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar != ')':
-        raise JSPECDecodeError("Expecting conditional termination", doc, idx)
-    return JSPECConditional(elements), idx + 1
+        raise JSPECDecodeError("Expecting conditional termination ')'", doc, idx)
+    return JSPECConditional(values), idx + 1
 
 def scan_element(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
@@ -493,6 +539,12 @@ def scan_element(doc, idx):
     if nextchar in "-0123456789":
         return scan_number(doc, idx)
 
+    if nextchar == '!':
+        return scan_negation(doc, idx)
+
+    if nextchar == '(':
+        return scan_conditional(doc, idx)
+
     if nextchar == 't' and doc[idx:idx+4] == 'true':
         return JSPECBoolean(True), idx + 4
     
@@ -503,28 +555,28 @@ def scan_element(doc, idx):
         return JSPECNull(None), idx + 4
 
     if nextchar == '*':
-        return JSPECWildcard(None), idx + 1
-
-    if nextchar == '(':
-        return scan_conditional(doc, idx)
+        return JSPECWildcard(), idx + 1
 
     if nextchar == 'o' and doc[idx:idx+6] == 'object':
-        return JSPECObject({}, is_placeholder=True), idx + 6
+        return JSPECObjectPlaceholder(), idx + 6
 
     if nextchar == 'a' and doc[idx:idx+5] == 'array':
-        return JSPECArray([], is_placeholder=True), idx + 5
+        return JSPECArrayPlaceholder(), idx + 5
 
     if nextchar == 's' and doc[idx:idx+6] == 'string':
-        return JSPECString("", is_placeholder=True), idx + 6
+        return JSPECStringPlaceholder(), idx + 6
 
     if nextchar == 'i' and doc[idx:idx+3] == 'int':
-        return JSPECInt(0, is_placeholder=True), idx + 3
+        return JSPECIntPlaceholder(), idx + 3
 
     if nextchar == 'r' and doc[idx:idx+4] == 'real':
-        return JSPECReal(0, is_placeholder=True), idx + 4
+        return JSPECRealPlaceholder(), idx + 4
 
     if nextchar == 'b' and doc[idx:idx+4] == 'bool':
-        return JSPECBoolean(False, is_placeholder=True), idx + 4
+        return JSPECBooleanPlaceholder(), idx + 4
+
+    if nextchar == 'n' and doc[idx:idx+6] == 'number':
+        return JSPECNumberPlaceholder(), idx + 6
 
     raise StopIteration(idx)
 

@@ -1,10 +1,21 @@
-# TODO explanation on what a jspec is
+"""This module contains the components required to construct a JSPEC instance.
+A JSPEC instance consists of a JSPEC entities and every JSPEC entity has it's
+own dedicated class. This module defines the JSPEC class and all of the JSPEC
+entity classes
+"""
 
 class JSPEC:
     """This class represents a JSPEC.
 
+    A JSPEC instance consists of an arrangement of JSPEC entities. This
+    arrangement is derivied from a base JSPEC element.
+    
+    This JSPEC class must have functionality for the following:
+    - Ability to serialize itself as a string (__str__)
+    - Ability to know if it is equivalent to another JSPEC (__eq__)
+
     Attributes:
-        element (JSPECElement): The base level JSPEC element for this JSPEC.
+        element (JSPECElement): The base JSPEC element for this JSPEC.
 
     Args:
         element (JSPECElement): The element to set as the base level JSPEC 
@@ -20,40 +31,52 @@ class JSPEC:
         return self.element == other.element
 
 
-# TODO explanation on what a element is
+"""
+*-----------------------------------------------------------------------------*
+JSPEC Standard Elements:
+
+These standard classes correspond with the basic data types for JSON elements.
+*-----------------------------------------------------------------------------*
+"""
 
 class JSPECElement:
-    """This class is the base class that represents a JSPEC element.
+    """This class represents a JSPEC element.
+    
+    A JSPEC element is a JSPEC entity that can be used to compare against a
+    single JSON element. When a JSPEC element is compared against a JSON
+    element, whether the JSON element is a good match or a bad match should be
+    able to be determined. Generally JSON element is a good match if it is
+    equivalent to the JSPEC Element's ``specification``.
+    
+    This JSPEC element class must have functionality for the following:
+    - Ability to create its ``specification`` from a given value (GENERATOR)
+    - Ability to create its ``string`` from a given value (SERIALIZER)
+    - Ability to serialize itself as a string (__str__)
+    - Ability to know if it is equivalent to another JSPEC (__eq__)
+    - Ability to have its own hash for mappings (__hash__)
 
     Attributes:
-        spec (obj): The Python native instance to match with
-        string (string): The serialization of the element
-        hash (int): The hash of the element
-        is_placeholder (bool): Whether the element is a placeholder
+        spec (obj): The Python native JSON element instance to match with
+        string (string): The serialization of the JSPEC element
+        hash (int): The hash of the JSPEC element, required for mappings
 
     Args:
-        value (obj): Python native instance used to generate the ``spec`` and
-            the serialization to make ``string``
-       is_placeholder (bool): Whether the element is a placeholder
+        value (obj): Python native instance used to generate the
+        ``specification`` and the serialization to make ``string``
     """
 
-    PLACEHOLDER = ""
-    """string: How this element is serialzed if 'is_placeholder' is True.
-    """
-
-    SPEC_FUNC = lambda x: None
-    """func: Convert the ``value`` into the ``spec``.
+    GENERATOR = lambda x: None
+    """func: Convert the ``value`` into the ``specification``.
     """
 
     SERIALIZER = lambda x: ""
     """func: Convert the ``value`` into the ``string``.
     """
     
-    def __init__(self, value, is_placeholder=False):
-        self.spec = self._spec_func(value)
-        self.string = self._serializer(value) if not is_placeholder else self.PLACEHOLDER
+    def __init__(self, value):
+        self.specification = self._generator(value)
+        self.string = self._serializer(value)
         self.hash = self.string.__hash__()
-        self.is_placeholder = is_placeholder
 
     def __str__(self):
         return self.string
@@ -67,42 +90,118 @@ class JSPECElement:
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        if self.is_placeholder and other.is_placeholder:
-            return True
-        if self.is_placeholder or other.is_placeholder:
-            return False
-        return self.spec == other.spec
+        return self.specification == other.specification
 
-    def _spec_func(self, value):
-        return self.__class__.SPEC_FUNC(value)
+    def _generator(self, value):
+        return self.__class__.GENERATOR(value)
 
     def _serializer(self, value):
         return self.__class__.SERIALIZER(value)
+
+class JSPECObjectPair:
+    """This class represents a JSPEC object key-value pair.
+    
+    A JSPEC object key-value pair is two JSPEC entities, the key is a JSPEC
+    string and the value is a JSPEC element.
+    
+    This JSPEC element pair class must have functionality for the following:
+    - Ability to create its ``specification`` from a given value (GENERATOR)
+    - Ability to create its ``string`` from a given value (SERIALIZER)
+    - Ability to serialize itself as a string (__str__)
+    - Ability to know if it is equivalent to another JSPEC (__eq__)
+    - Ability to have its own hash for mappings (__hash__)
+
+    Attributes:
+        spec (obj): The Python native JSON element instance to match with
+        string (string): The serialization of the JSPEC element
+        hash (int): The hash of the JSPEC element, required for mappings
+
+    Args:
+        value (obj): Python native instance used to generate the
+        ``specification`` and the serialization to make ``string``
+    """
+
+    GENERATOR = lambda x: x
+    """func: Convert the ``value`` into the ``specification``.
+    """
+
+    SERIALIZER = lambda x: str(x[0]) + ": " + str(x[1])
+    """func: Convert the ``value`` into the ``string``.
+    """
+    
+    def __init__(self, value):
+        self.specification = self._generator(value)
+        self.string = self._serializer(value)
+        self.hash = self.string.__hash__()
+
+    def __str__(self):
+        return self.string
+
+    def __repr__(self):
+        return self.string
+
+    def __hash__(self):
+        return self.hash
+
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        return self.specification == other.specification
+
+    def _generator(self, value):
+        return self.__class__.GENERATOR(value)
+
+    def _serializer(self, value):
+        return self.__class__.SERIALIZER(value)
+
+    def key(self):
+        return self.specification[0]
+
+    def value(self):
+        return self.specification[1]
 
 class JSPECObject(JSPECElement):
     """This class represents a JSPEC object.
 
     Args:
-        value (list): list of tuple pairs of the form:
-            pairs = [
-                (key_1: value_1),
-                (key_2: value_2),
+        value (set): set of the form:
+            pairs = {
+                pair_1,
+                pair_2,
                 ...
-            ]
-            where each key_x/value_x is a JSPECString/JSPECElement pair or a
-            JSPECObjectCaptureKey/JSPECObjectCaptureValue pair.
+                pair_n
+            }
+            where each pair_n is a JSPECObjectPair or a
+            JSPECObjectCaptureGroup.
     """
 
-    PLACEHOLDER = "object"
-    """string: Placeholder JSPECObject instances are serialized as 'object'.
+    GENERATOR = lambda pairs: pairs
+    """func: Identity on pairs.
     """
 
-    SPEC_FUNC = dict
-    """func: Convert pairs into a Python dict.
+    SERIALIZER = lambda pairs: '{%s}' % ', '.join([str(pair) for pair in pairs])
+    """func: Serialize ``pairs`` into a comma separated list, enclosed by curly
+    parentheses.
     """
 
-    SERIALIZER = lambda pairs: str(dict(pairs))
-    """func: Serialize ``value`` by applying dict then str.
+class JSPECObjectPair(JSPECObjectPair):
+    """This class represents a JSPEC object pair.
+
+    Args:
+        values (tuple): tuple of the form:
+            pair = (
+                key,
+                value,
+            )
+            where key is a JSPECString and value is a JSPECElement.
+    """
+
+    GENERATOR = lambda pair: pair
+    """func: Identity on pair.
+    """
+
+    SERIALIZER = lambda pair: "%s: %s" % pair
+    """func: Serialize ``pair`` as a key-value string.
     """
 
 class JSPECArray(JSPECElement):
@@ -115,15 +214,10 @@ class JSPECArray(JSPECElement):
                 value_2,
                 ...
             ]
-            where each value_x is a JSPECElement or a
-            JSPECObjectCaptureElement.
+            where each value_x is a JSPECElement or a JSPECArrayCaptureGroup.
     """
 
-    PLACEHOLDER = "array"
-    """string: Placeholder JSPECArray instances are serialized as 'array'.
-    """
-
-    SPEC_FUNC = list
+    GENERATOR = list
     """func: Convert values into a Python list.
     """
 
@@ -138,11 +232,7 @@ class JSPECString(JSPECElement):
         value (string): A regex string to be matched.
     """
 
-    PLACEHOLDER = "string"
-    """string: Placeholder JSPECString instances are serialized as 'string'.
-    """
-
-    SPEC_FUNC = str
+    GENERATOR = str
     """func: Convert the value into a Python string.
     """
 
@@ -157,11 +247,7 @@ class JSPECInt(JSPECElement):
         value (int): An integer.
     """
 
-    PLACEHOLDER = "int"
-    """string: Placeholder JSPECInt instances are serialized as 'int'.
-    """
-
-    SPEC_FUNC = int
+    GENERATOR = int
     """func: Convert the value into a Python int.
     """
 
@@ -176,11 +262,7 @@ class JSPECReal(JSPECElement):
         value (float): A real.
     """
 
-    PLACEHOLDER = "real"
-    """string: Placeholder JSPECReal instances are serialized as 'real'.
-    """
-
-    SPEC_FUNC = float
+    GENERATOR = float
     """func: Convert the value into a Python float.
     """
 
@@ -195,11 +277,7 @@ class JSPECBoolean(JSPECElement):
         value (bool): A boolean.
     """
 
-    PLACEHOLDER = "bool"
-    """string: Placeholder JSPECBoolean instances are serialized as 'bool'.
-    """
-
-    SPEC_FUNC = bool
+    GENERATOR = bool
     """func: Convert the value into a Python bool.
     """
 
@@ -214,7 +292,7 @@ class JSPECNull(JSPECElement):
         value (None): None.
     """
 
-    SPEC_FUNC = lambda val: None
+    GENERATOR = lambda val: None
     """func: Convert the value into a Python None.
     """
 
@@ -229,7 +307,7 @@ class JSPECWildcard(JSPECElement):
         value (None): None.
     """
 
-    SPEC_FUNC = lambda val: None
+    GENERATOR = lambda val: None
     """func: Returns None.
     """
 
@@ -237,67 +315,235 @@ class JSPECWildcard(JSPECElement):
     """func: Returns '*'.
     """
 
+    def __init__(self):
+        super().__init__(None)
+
+class JSPECNegation(JSPECElement):
+    """This class represents a JSPEC negation.
+
+    Args:
+        value (JSPECElement): The JSPEC element to negate.
+    """
+
+    GENERATOR = lambda val: val
+    """func: Returns the value.
+    """
+
+    SERIALIZER = lambda val: "!" + str(val)
+    """func: Returns the value preceded by a exclamation mark.
+    """
+
 class JSPECConditional(JSPECElement):
     """This class represents a JSPEC conditional.
 
     Args:
-        value (set): Set of the form:
-            elements = {
+        value (list): A list of alternating instances of the form:
+            elements = [
                 element_1,
+                operator_1,
                 element_2,
+                operator_2,
                 ...
-            }
-            where each element_x is a JSPECElement.
+                element_n-1,
+                operator_n-1,
+                element_n,
+            ]
+        where each element_x is a JSPECElement, each operator_y is a
+        JSPECLogicalOperator.
     """
-    
-    SPEC_FUNC = lambda elements: elements
-    """func: Returns 'elements'.
+
+    GENERATOR = lambda x: x
+    """func: Returns the value tuple.
     """
-    
-    SERIALIZER = lambda elements: '(%s)' % (
-        " | ".join(sorted([str(element) for element in elements]))
-    )
-    """func: Returns the elements separated by '|' enclosed in round
-    parentheses.
+
+    SERIALIZER = lambda x: "(" + " ".join(str(v) for v in x) + ")"
+    """func: Returns the elements and operators alternating.
     """
 
 
-# TODO explanation on what a capture is
+"""
+*-----------------------------------------------------------------------------*
+JSPEC Placeholders:
 
-class JSPECCapture:
-    """This class is the base class that represents a JSPEC capture.
+This classes represent a placeholder for their given type. It will be a good
+match with any JSON element provided it is the matching datatype.
+*-----------------------------------------------------------------------------*
+"""
+
+class JSPECObjectPlaceholder(JSPECObject):
+    """This class represents a JSPEC object placeholder. Matches any object.
+    """
+
+    SERIALIZER = lambda _: "object"
+
+    def __init__(self):
+        super().__init__(dict())
+
+class JSPECArrayPlaceholder(JSPECArray):
+    """This class represents a JSPEC array placeholder. Matches any array.
+    """
+
+    SERIALIZER = lambda _: "array"
+
+    def __init__(self):
+        super().__init__(list())
+
+class JSPECStringPlaceholder(JSPECString):
+    """This class represents a JSPEC string placeholder. Matches any string.
+    """
+
+    SERIALIZER = lambda _: "string"
+
+    def __init__(self):
+        super().__init__("")
+
+class JSPECIntPlaceholder(JSPECInt):
+    """This class represents a JSPEC int placeholder. Matches any int.
+    """
+
+    SERIALIZER = lambda _: "int"
+
+    def __init__(self):
+        super().__init__(0)
+
+class JSPECRealPlaceholder(JSPECReal):
+    """This class represents a JSPEC real placeholder. Matches any real.
+    """
+
+    SERIALIZER = lambda _: "real"
+
+    def __init__(self):
+        super().__init__(0.0)
+
+class JSPECBooleanPlaceholder(JSPECBoolean):
+    """This class represents a JSPEC boolean placeholder. Matches any
+    boolean.
+    """
+
+    SERIALIZER = lambda _: "boolean"
+
+    def __init__(self):
+        super().__init__(False)
+
+class JSPECNumberPlaceholder(JSPECConditional):
+    """This class represents a JSPEC number placeholder. Matches ant int or
+    real.
+    """
+
+    SERIALIZER = lambda _: "number"
+
+    def __init__(self):
+        super().__init__([JSPECIntPlaceholder(), JSPECLogicalOperatorOr(), JSPECRealPlaceholder()])
+
+
+"""
+*-----------------------------------------------------------------------------*
+JSPEC Logical Operators:
+
+This classes are for the logical operators entities used in JSPEC.
+*-----------------------------------------------------------------------------*
+"""
+
+class JSPECLogicalOperator:
+    """This class is the base class that represents a JSPEC logical operator.
+    A JSPEC conditional operator is any logical operator that can be used to
+    construct logical statements.
+
+    This JSPEC element class must have functionality for the following:
+    - Ability to know its symbol to create its ``string`` (SYMBOL)
+    - Ability to serialize itself as a string (__str__)
+    - Ability to know if it is equivalent to another JSPEC (__eq__)
 
     Attributes:
-        elements (list): List of JSPECElement instances
-        multiplier (int): The number of elements the capture has to
-            match to be a valid match
+        string (string): The serialization of the logical operator
+    """
+
+    SYMBOL = ""
+    """string: Symbol to represent the logical operation. 
+    """
+
+    def __init__(self):
+        self.string = self.__class__.SYMBOL
+
+    def __str__(self):
+        return self.string
+
+    def __repr__(self):
+        return self.string
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+class JSPECLogicalOperatorAnd(JSPECLogicalOperator):
+    """This class represents a JSPEC AND logical operator.
+    """
+
+    SYMBOL = "&"
+    """string: Symbol for AND operation.
+    """
+
+class JSPECLogicalOperatorOr(JSPECLogicalOperator):
+    """This class represents a JSPEC OR logical operator.
+    """
+
+    SYMBOL = "|"
+    """string: Symbol for OR operation.
+    """
+
+class JSPECLogicalOperatorXor(JSPECLogicalOperator):
+    """This class represents a JSPEC XOR logical operator.
+    """
+
+    SYMBOL = "^"
+    """string: Symbol for XOR operation.
+    """
+
+
+"""
+*-----------------------------------------------------------------------------*
+JSPEC Capture:
+
+This classes are for the JSPEC capture entities.
+*-----------------------------------------------------------------------------*
+"""
+
+class JSPECCapture:
+    """This class represents a JSPEC capture.
+    
+    A JSPEC capture is any JSPEC entity that can be used to match a group of
+    JSON elements. The capture decides the logic of what Python native JSON
+    elements compares to give a good match.
+
+    This JSPEC capture class must have functionality for the following:
+    - Ability to create its ``string`` from a given arguments (SERIALIZER)
+    - Ability to serialize itself as a string (__str__)
+    - Ability to know if it is equivalent to another JSPEC (__eq__)
+    - Ability to have its own hash for mappings (__hash__)
+
+    Attributes:
+        entities (list): List of JSPEC entities
+        multiplier (JSPECCaptureMultiplier): Contains info on the range for the
+            number of elements a capture should match with.
         string (string): The serialization of the capture
         hash (int): The hash of the capture
         
     Args:
-        elements (list): List of JSPECElement instances
-        multiplier (int, optional): The number of elements the capture has to
-            match to be a valid match. Omit for this capture to except any
+        entities (list): List of JSPEC entities
+        multiplier (int, optional): The number of JSON elements the capture has
+            to match to be a valid match. Omit for this capture to except any
             number of elements to be a valid match.
-        is_ellipsis (bool, optional): Whether this capture should automatically
-            be an ellipsis (a wildcard capture) or not.
     """
 
-    SERIALIZER = lambda elements, multiplier: ""
-    """func: Function which converts the elements and multiplier into a
+    SERIALIZER = lambda entities, multiplier: ""
+    """func: Function which converts the entities and multiplier into a
     serialized string
     """
 
-    ELLIPSIS = ""
-    """string: How this capture is serialzed if 'is_ellipsis' is True.
-    """
-
-    def __init__(self, elements, multiplier=-1, is_ellipsis=False):
-        self.elements = elements
+    def __init__(self, entities, multiplier):
+        self.entities = entities
         self.multiplier = multiplier
-        serialized = self._serializer(elements, multiplier)
-        self.string = serialized if not is_ellipsis else self.ELLIPSIS
-        self.hash = serialized.__hash__()   
+        self.string = self._serializer(entities, multiplier)
+        self.hash = self.string.__hash__()   
 
     def __str__(self):
         return self.string
@@ -313,90 +559,122 @@ class JSPECCapture:
             return False
         if self.multiplier != other.multiplier:
             return False
-        return self.elements == other.elements
+        return self.entities == other.entities
 
     def _serializer(self, value, multiplier):
         return self.__class__.SERIALIZER(value, multiplier)
 
-    # TODO this should be removed, splitting should happen in 'matcher'
-    #def split(self):
-    #    for element in self.elements:
-    #        yield self.__class__(
-    #            set(element),
-    #            self.multiplier,
-    #            self.is_ellipsis,
-    #        )
+class JSPECCaptureMultiplier():
+    """This class represents a JSPEC capture multiplier.
 
-class JSPECArrayCaptureElement(JSPECCapture):
+    It contains a range for the number of elements a capture should match with.
+
+    Attributes:
+        minimum (int/None): The minimum for the range of elements to match
+            with. If this is None, this is 0.
+        maximum (int/None): The maximum for the range of elements to match
+            with. If this is None, this is infinity.
+        
+    Args:
+        minimum (int/None): The minimum for the range of elements to match
+            with. If this is None, this is 0.
+        maximum (int/None): The maximum for the range of elements to match
+            with. If this is None, this is infinity.
+        string (string): The serialization of the multiplier.
+    """
+
+    def __init__(self, minimum=None, maximum=None):
+        self.minimum = minimum
+        self.maximum = maximum
+        self.string = self._string()
+
+    def _string(self):
+        minimum = str(self.minimum) if self.minimum != None else '?'
+        maximum = str(self.maximum) if self.maximum != None else '?'
+        if minimum == maximum:
+            return "x%s" % minimum
+        return "x%s-%s" % (minimum, maximum)
+
+    def __str__(self):
+        return self.string
+
+    def __eq__(self, other):
+        return self.minimum == other.minimum and self.maximum == other.maximum
+
+# TODO change to rounded brackets
+# TODO add < > constant macro
+# TODO create equality operators
+
+class JSPECArrayCaptureGroup(JSPECCapture):
     """This class represents a JSPEC capture for arrays.
 
     Args:
         elements (list): List of the form:
-            elements = [
+           entities = [
                 element_1,
+                operator_1,
                 element_2,
+                operator_2,
                 ...
+                element_n-1,
+                operator_n-1,
+                element_n,
             ]
-            where each element_x is a JSPECElement.
+            where each element_x is a JSPECElement and each operator_y is a
+            JSPECLogicalOperator.
     """
-    
-    SERIALIZER = lambda elements, multiplier: '<%s>' % (
-        " | ".join(sorted([str(element) for element in elements])) +
-        ("x%i" % multiplier if multiplier > 0 else "")
+
+    SERIALIZER = lambda entities, multiplier: (
+        "<%s>" % " ".join(str(e) for e in entities) + str(multiplier)
     )
-    """func: returns the elements separated by '|' enclosed in angled
-    parentheses, with a optional x and multiplier."""
+    """func: Returns the entities and operators alternating, enclosed in
+    angled parentheses, with a optional x and multiplier."""
 
-    ELLIPSIS = "..."
-    """string: a 3 dot ellipsis '...'."""
-
-class JSPECObjectCaptureKey(JSPECCapture):
-    """This class represents a JSPEC capture for object keys.
+class JSPECObjectCaptureGroup(JSPECCapture):
+    """This class represents a JSPEC capture pair for objects.
 
     Args:
         elements (list): List of the form:
-            elements = [
-                element_1,
-                element_2,
+           entities = [
+                pair_1,
+                operator_1,
+                pair_2,
+                operator_2,
                 ...
+                pair_n-1,
+                operator_n-1,
+                pair_n,
             ]
-            where each element_x is a JSPECElement.
+            where each pair_x is a JSPECObjectPair and each operator_y is a
+            JSPECLogicalOperator.
     """
 
-    SERIALIZER = lambda elements, multiplier: '<%s' % (
-        " | ".join(sorted([str(element) for element in elements]))
+    SERIALIZER = lambda entities, multiplier: (
+        "<%s>" % " ".join([str(v) for v in entities]) + str(multiplier)
     )
-    """func: returns the elements separated by '|' preceded by an angled
-    parenthesis."""
-
-    ELLIPSIS = ""
-    """string: is empty as the full ellipsis string will be serialized by the
-    accompanying JSPECObjectCaptureValue."""
-
-class JSPECObjectCaptureValue(JSPECCapture):
-    """This class represents a JSPEC capture for object values.
-
-    Args:
-        elements (list): List of the form:
-            elements = [
-                element_1,
-                element_2,
-                ...
-            ]
-            where each element_x is a JSPECElement.
+    """func: Returns the key-value pairs and operators alternating, enclosed in
+    angled parentheses, with a optional x and multiplier.
     """
 
-    SERIALIZER = lambda elements, multiplier: '%s>' % (
-        " | ".join(sorted([str(element) for element in elements])) +
-        ("x%i" % multiplier if multiplier > 0 else "")
-    )
-    """func: returns the elements separated by '|' terminated by an angled
-    parenthesis, with a optional x and multiplier.
+
+class JSPECArrayEllipsis(JSPECArrayCaptureGroup):
+    """This class represents a JSPEC array ellipsis.
     """
     
-    ELLIPSIS = "\b\b..."
-    """string: is two backspaces followed by a 3 dot ellipsis. The two
-    backspaces are present to remove the delimiter character between the
-    key-value pair in an object serialization. This ensures that the
-    JSPECObjectCaptureKey and JSPECObjectCaptureValue pair appear as a '...'.
+    def __init__(self):
+        super().__init__([JSPECWildcard()], JSPECCaptureMultiplier(None, None))
+
+    SERIALIZER = lambda entities, multiplier: '...'
+    """func: Returns a 3 dot ellipsis.
+    """
+
+class JSPECObjectEllipsis(JSPECObjectCaptureGroup):
+    """This class represents a JSPEC object ellipsis.
+    """
+
+    def __init__(self):
+        super().__init__({(JSPECStringPlaceholder(), JSPECWildcard())}, JSPECCaptureMultiplier(None, None))
+
+    SERIALIZER = lambda entities, multiplier: '...'
+    """func: Returns a 3 dot ellipsis.
     """

@@ -149,3 +149,52 @@ to run test
 python3 -m unittest test/test.py
 
 Look at TODOs for work to finish
+
+! negation
+!4
+!"sds"
+!(342)
+|| or
+^^ xor
+&& and
+()xn conditional as capture
+()x3
+{("a": 4)x4} conditional as object capture
+
+[< !0 >x5]
+[<< !0 >>x5]
+
+[1, 2, 3, 4, <<5 | 6>>x32, (7)xn, int <= 7 ]
+[...] = [(*)xn]
+{
+    "w": 1,
+    ("a": 4)x4,
+}
+{
+    ...,
+    ("a": 4)x4,
+}
+{
+    (string:*)xn,
+    ("a": 4)x4,
+}
+{
+    (string:*)xn,
+    ("a": 4 | "b": 5),
+    (("a": 4)x4 | ("b": 5)x4),
+}
+
+- negation class
+- pair object
+
+- conditional logic
+- capture logic
+
+construct error message
+
+Error message must be of the form
+<verb or adjective> <subject> <location>
+
+Use words to describe of subject, of what is odes not what it is.
+e.g. capture group terminator, not >
+you should be able to change the symbol for the subject and the error message still makes sense

@@ -4,12 +4,13 @@
 from test.scanner import JSPECTestScanner
 from jspec.component import (
     JSPEC,
-    JSPECObject,
-    JSPECArray,
-    JSPECString,
-    JSPECInt,
-    JSPECReal,
-    JSPECBoolean,
+    JSPECObjectPlaceholder,
+    JSPECArrayPlaceholder,
+    JSPECStringPlaceholder,
+    JSPECIntPlaceholder,
+    JSPECRealPlaceholder,
+    JSPECBooleanPlaceholder,
+    JSPECNumberPlaceholder,
 )
 
 class JSPECTestScannerPlaceholder(JSPECTestScanner):
@@ -30,42 +31,49 @@ class JSPECTestScannerPlaceholder(JSPECTestScanner):
                 "name": "Object placeholder",
                 "doc": 'object',
                 "want": JSPEC(
-                    JSPECObject([], is_placeholder=True),
+                    JSPECObjectPlaceholder(),
                 )
             },
             {
                 "name": "Array placeholder",
                 "doc": 'array',
                 "want": JSPEC(
-                    JSPECArray([], is_placeholder=True),
+                    JSPECArrayPlaceholder(),
                 )
             },
             {
                 "name": "String placeholder",
                 "doc": 'string',
                 "want": JSPEC(
-                    JSPECString("", is_placeholder=True),
+                    JSPECStringPlaceholder(),
                 )
             },
             {
                 "name": "Int placeholder",
                 "doc": 'int',
                 "want": JSPEC(
-                    JSPECInt(0, is_placeholder=True),
+                    JSPECIntPlaceholder(),
                 )
             },
             {
                 "name": "Real placeholder",
                 "doc": 'real',
                 "want": JSPEC(
-                    JSPECReal(0.0, is_placeholder=True),
+                    JSPECRealPlaceholder(),
                 )
             },
             {
                 "name": "Boolean placeholder",
                 "doc": 'bool',
                 "want": JSPEC(
-                    JSPECBoolean(0.0, is_placeholder=True),
+                    JSPECBooleanPlaceholder(),
+                )
+            },
+            {
+                "name": "Number placeholder",
+                "doc": 'number',
+                "want": JSPEC(
+                    JSPECNumberPlaceholder(),
                 )
             },
         ]
@@ -81,42 +89,49 @@ class JSPECTestScannerPlaceholder(JSPECTestScanner):
                 "name": "Object placeholder not a string",
                 "doc": '"object"',
                 "notwant": JSPEC(
-                    JSPECObject([], is_placeholder=True),
+                    JSPECObjectPlaceholder(),
                 )
             },
             {
                 "name": "Array placeholder not a string",
                 "doc": '"array"',
                 "notwant": JSPEC(
-                    JSPECArray([], is_placeholder=True),
+                    JSPECArrayPlaceholder(),
                 )
             },
             {
                 "name": "String placeholder not a string",
                 "doc": '"string"',
                 "notwant": JSPEC(
-                    JSPECString("", is_placeholder=True),
+                    JSPECStringPlaceholder(),
                 )
             },
             {
                 "name": "Int placeholder",
                 "doc": '"int"',
                 "notwant": JSPEC(
-                    JSPECInt(0, is_placeholder=True),
+                    JSPECIntPlaceholder(),
                 )
             },
             {
                 "name": "Real placeholder",
                 "doc": '"real"',
                 "notwant": JSPEC(
-                    JSPECReal(0.0, is_placeholder=True),
+                    JSPECRealPlaceholder(),
                 )
             },
             {
                 "name": "Boolean placeholder",
                 "doc": '"bool"',
                 "notwant": JSPEC(
-                    JSPECBoolean(0.0, is_placeholder=True),
+                    JSPECBooleanPlaceholder(),
+                )
+            },
+            {
+                "name": "Number placeholder",
+                "doc": '"number"',
+                "notwant": JSPEC(
+                    JSPECNumberPlaceholder(),
                 )
             },
         ]

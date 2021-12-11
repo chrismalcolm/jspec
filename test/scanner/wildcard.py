@@ -4,7 +4,8 @@
 
 from test.scanner import JSPECTestScanner
 from jspec.component import (
-    JSPEC, 
+    JSPEC,
+    JSPECObjectPair, 
     JSPECWildcard,
     JSPECArray,
     JSPECInt,
@@ -30,7 +31,7 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
                 "name":"Basic wildcard",
                 "doc": '*',
                 "want": JSPEC(
-                    JSPECWildcard(None)
+                    JSPECWildcard()
                 )
             },
             {
@@ -38,7 +39,7 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
                 "doc": '[*]',
                 "want": JSPEC(
                     JSPECArray([
-                        JSPECWildcard(None),
+                        JSPECWildcard(),
                     ])   
                 )
             },
@@ -47,8 +48,8 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
                 "doc": '[*, *]',
                 "want": JSPEC(
                     JSPECArray([
-                        JSPECWildcard(None),
-                        JSPECWildcard(None),
+                        JSPECWildcard(),
+                        JSPECWildcard(),
                     ])   
                 )
             },
@@ -57,10 +58,10 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
                 "doc": '[*, *, *, *]',
                 "want": JSPEC(
                     JSPECArray([
-                        JSPECWildcard(None),
-                        JSPECWildcard(None),
-                        JSPECWildcard(None),
-                        JSPECWildcard(None),
+                        JSPECWildcard(),
+                        JSPECWildcard(),
+                        JSPECWildcard(),
+                        JSPECWildcard(),
                     ])   
                 )
             },
@@ -70,10 +71,10 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
                 "want": JSPEC(
                     JSPECArray([
                         JSPECInt(1),
-                        JSPECWildcard(None),
-                        JSPECWildcard(None),
+                        JSPECWildcard(),
+                        JSPECWildcard(),
                         JSPECInt(5),
-                        JSPECWildcard(None),
+                        JSPECWildcard(),
                     ])   
                 )
             },
@@ -82,9 +83,9 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
                 "doc": '[*, *, *, "hello"]',
                 "want": JSPEC(
                     JSPECArray([
-                        JSPECWildcard(None),
-                        JSPECWildcard(None),
-                        JSPECWildcard(None),
+                        JSPECWildcard(),
+                        JSPECWildcard(),
+                        JSPECWildcard(),
                         JSPECString("hello"),
                     ])   
                 )
@@ -94,8 +95,8 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
                 "doc": '[{}, *, "blue"]',
                 "want": JSPEC(
                     JSPECArray([
-                        JSPECObject([]),
-                        JSPECWildcard(None),
+                        JSPECObject(set()),
+                        JSPECWildcard(),
                         JSPECString("blue"),
                     ])   
                 )
@@ -105,12 +106,12 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
                 "doc": '[*, 3, "blue", *, 7, *]',
                 "want": JSPEC(
                     JSPECArray([
-                        JSPECWildcard(None),
+                        JSPECWildcard(),
                         JSPECInt(3),
                         JSPECString("blue"),
-                        JSPECWildcard(None),
+                        JSPECWildcard(),
                         JSPECInt(7),
-                        JSPECWildcard(None),
+                        JSPECWildcard(),
                     ])   
                 )
             },
@@ -118,32 +119,22 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
                 "name":"Wildcard as value",
                 "doc": '{"a": *}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECString("a"),
-                            JSPECWildcard(None),
-                        ),
-                    ]),
+                    JSPECObject({
+                        JSPECObjectPair(
+                            (JSPECString("a"), JSPECWildcard())
+                        )
+                    }),
                 )
             },
              {
                 "name":"Multiple Wildcard as value",
                 "doc": '{"a": *, "b": *, "c": *}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECString("a"),
-                            JSPECWildcard(None),
-                        ),
-                        (
-                            JSPECString("b"),
-                            JSPECWildcard(None),
-                        ),
-                        (
-                            JSPECString("c"),
-                            JSPECWildcard(None),
-                        ),
-                    ]),
+                    JSPECObject({
+                        JSPECObjectPair((JSPECString("a"), JSPECWildcard())),
+                        JSPECObjectPair((JSPECString("b"), JSPECWildcard())),
+                        JSPECObjectPair((JSPECString("c"), JSPECWildcard())),
+                    }),
                 )
             },
         ]
@@ -172,25 +163,25 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
               {
                 "name":"Invlaid double wildcard in array",
                 "doc": '[**]',
-                "errmsg": "Expecting ',' delimiter",
+                "errmsg": "Expecting element in array",
                 "errpos": 2,
             },
             {
                 "name":"Invlaid wildcard use in object as pair",
                 "doc": '{*}',
-                "errmsg": "Expecting property name enclosed in double quotes",
+                "errmsg": "Expecting property name enclosed in double quotes as key in object pair",
                 "errpos": 1,
             },
             {
                 "name":"Invlaid wildcard use in object as field",
                 "doc": '{*: 1}',
-                "errmsg": "Expecting property name enclosed in double quotes",
+                "errmsg": "Expecting property name enclosed in double quotes as key in object pair",
                 "errpos": 1,
             },
             {
                 "name":"Invlaid wildcard use in object as field and value",
                 "doc": '{*: *}',
-                "errmsg": "Expecting property name enclosed in double quotes",
+                "errmsg": "Expecting property name enclosed in double quotes as key in object pair",
                 "errpos": 1,
             },
         ]

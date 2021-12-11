@@ -5,14 +5,20 @@
 
 from test.scanner import JSPECTestScanner
 from jspec.component import (
-    JSPEC, 
+    JSPEC,
+    JSPECObjectPair,
     JSPECObject,
-    JSPECObjectCaptureKey,
-    JSPECObjectCaptureValue,
+    JSPECObjectCaptureGroup,
     JSPECString,
     JSPECWildcard,
     JSPECInt,
     JSPECNull,
+    JSPECStringPlaceholder,
+    JSPECObjectEllipsis,
+    JSPECLogicalOperatorAnd,
+    JSPECLogicalOperatorOr,
+    JSPECLogicalOperatorXor,
+    JSPECCaptureMultiplier,
 )
 
 class JSPECTestScannerObjectCapture(JSPECTestScanner):
@@ -31,238 +37,237 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
         """
         test_cases = [
             {
-                "name": "Basic object capture",
-                "doc": '{<"a\d":"b">}',
+                "name": "Basic object capture (1)",
+                "doc": '{<"a\d":"b">x?}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a\d"),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                            }),
-                        ),
-                    ]),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b"))
+                            ),
+                        ], JSPECCaptureMultiplier()),
+                    }),
+                )
+            },
+            {
+                "name": "Basic object capture (2)",
+                "doc": '{<"a\d":"b">x2}',
+                "want": JSPEC(
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b"))
+                            ),
+                        ], JSPECCaptureMultiplier(2, 2)),
+                    }),
+                )
+            },
+            {
+                "name": "Basic object capture (3)",
+                "doc": '{<"a\d":"b">x?}',
+                "want": JSPEC(
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b"))
+                            ),
+                        ], JSPECCaptureMultiplier(None, None)),
+                    }),
+                )
+            },
+            {
+                "name": "Basic object capture (4)",
+                "doc": '{<"a\d":"b">x2-?}',
+                "want": JSPEC(
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b"))
+                            ),
+                        ], JSPECCaptureMultiplier(2, None)),
+                    }),
+                )
+            },
+            {
+                "name": "Basic object capture (5)",
+                "doc": '{<"a\d":"b">x?-?}',
+                "want": JSPEC(
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b"))
+                            ),
+                        ], JSPECCaptureMultiplier(None, None)),
+                    }),
+                )
+            },
+            {
+                "name": "Basic object capture (6)",
+                "doc": '{<"a\d":"b">x?-4}',
+                "want": JSPEC(
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b"))
+                            ),
+                        ], JSPECCaptureMultiplier(None, 4)),
+                    }),
+                )
+            },
+            {
+                "name": "Basic object capture (7)",
+                "doc": '{<"a\d":"b">x1-7}',
+                "want": JSPEC(
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b"))
+                            ),
+                        ], JSPECCaptureMultiplier(1, 7)),
+                    }),
                 )
             },
             {
                 "name": "Basic object capture with paris",
-                "doc": '{<"a\d":"b">,"c":"d"}',
+                "doc": '{<"a\d":"b">x?,"c":"d"}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a\d"),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                            }),
-                        ),
-                        (
-                            JSPECString("c"),
-                            JSPECString("d"),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b"))
+                            )
+                        ], JSPECCaptureMultiplier()),
+                        JSPECObjectPair(
+                            (JSPECString("c"), JSPECString("d"))
                         )
-                    ]),
+                    }),
                 )
             },
             {
                 "name": "Basic object capture with multiplier",
                 "doc": '{<"a\d":"b">x4}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a\d"),
-                            }, multiplier=4),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                            }, multiplier=4),
-                        ),
-                    ]),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup(
+                            [
+                                JSPECObjectPair(
+                                    (JSPECString("a\d"), JSPECString("b")),
+                                )
+                            ], JSPECCaptureMultiplier(4, 4)
+                        )
+                    }),
                 )
             },
             {
-                "name": "Basic object capture with paris with multiplier",
+                "name": "Basic object capture with pairs with multiplier",
                 "doc": '{<"a\d":"b">x20,"c":"d"}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a\d"),
-                            }, multiplier=20),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                            }, multiplier=20),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup(
+                            [
+                                JSPECObjectPair(
+                                    (JSPECString("a\d"),JSPECString("b")),
+                                )
+                            ], JSPECCaptureMultiplier(20, 20)
                         ),
-                        (
-                            JSPECString("c"),
-                            JSPECString("d"),
+                        JSPECObjectPair(
+                            (JSPECString("c"), JSPECString("d"))
                         )
-                    ]),
+                    }),
                 )
             },
             {
                 "name": "Object ellipsis (1)",
                 "doc": '{...}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("", is_placeholder=True),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECWildcard(None),
-                            }),
-                        ),
-                    ]),
+                    JSPECObject({
+                        JSPECObjectEllipsis(),
+                    }),
                 )
             },
             {
                 "name": "Object ellipsis (2)",
-                "doc": '{<string:*>}',
+                "doc": '{<string:*>x?}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("", is_placeholder=True),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECWildcard(None),
-                            }),
-                        ),
-                    ]),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECStringPlaceholder(), JSPECWildcard()),
+                            )
+                        ], JSPECCaptureMultiplier())
+                    }),
                 )
             },
             {
                 "name": "Object capture with paris and ellipsis (1)",
-                "doc": '{<"a\d":"b">,"c":"d", ... }',
+                "doc": '{<"a\d":"b">x?,"c":"d", ... }',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a\d"),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                            }),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b")),
+                            )
+                        ], JSPECCaptureMultiplier()),
+                        JSPECObjectPair(
+                            (JSPECString("c"), JSPECString("d"))
                         ),
-                        (
-                            JSPECString("c"),
-                            JSPECString("d"),
-                        ),
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("", is_placeholder=True),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECWildcard(None),
-                            }),
-                        ),
-                    ]),
+                        JSPECObjectEllipsis(),
+                    }),
                 )
             },
             {
-                "name": "Object capture with paris and ellipsis (1)",
-                "doc": '{..., <"a\d":"b">,"c":"d"}',
+                "name": "Object capture with paris and ellipsis (2)",
+                "doc": '{..., <"a\d":"b">x?,"c":"d"}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a\d"),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                            }),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b")),
+                            )
+                        ], JSPECCaptureMultiplier()),
+                        JSPECObjectPair(
+                            (JSPECString("c"), JSPECString("d")),
                         ),
-                        (
-                            JSPECString("c"),
-                            JSPECString("d"),
-                        ),
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("", is_placeholder=True),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECWildcard(None),
-                            }),
-                        ),
-                    ]),
+                        JSPECObjectEllipsis(),
+                    }),
                 )
             },
             {
-                "name": "Conditional (1)",
-                "doc": '{<"a\d"|"c":"b">}',
+                "name": "Object capture with logical operators (1)",
+                "doc": '{<"a\d":1 & "b\d":2>x?}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a\d"),
-                                JSPECString("c"),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                            }),
-                        ),
-                    ]),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECInt(1)),
+                            ),
+                            JSPECLogicalOperatorAnd(),
+                            JSPECObjectPair(
+                                (JSPECString("b\d"), JSPECInt(2)),
+                            ),
+                        ], JSPECCaptureMultiplier()),
+                    }),
                 )
             },
             {
-                "name": "Conditional (2)",
-                "doc": '{<"a\d"|"c":"b"|4>}',
+                "name": "Object capture with logical operators (2)",
+                "doc": '{<"a\d":1 ^ "b\d":2 | "c\d":3>x?}',
                 "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a\d"),
-                                JSPECString("c"),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                                JSPECInt(4),
-                            }),
-                        ),
-                    ]),
-                )
-            },
-            {
-                "name": "Conditional (3)",
-                "doc": '{<"a\d":"b"|4>}',
-                "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a\d"),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                                JSPECInt(4),
-                            }),
-                        ),
-                    ]),
-                )
-            },
-            {
-                "name": "Conditional (2)",
-                "doc": '{<"a\d"|"c"|"d"|"\w+":"b"|4|3|5|null>}',
-                "want": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a\d"),
-                                JSPECString("c"),
-                                JSPECString("d"),
-                                JSPECString("\w+"),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                                JSPECInt(4),
-                                JSPECInt(3),
-                                JSPECInt(5),
-                                JSPECNull(None),
-                            }),
-                        ),
-                    ]),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECInt(1)),
+                            ),
+                            JSPECLogicalOperatorXor(),
+                            JSPECObjectPair(
+                                (JSPECString("b\d"), JSPECInt(2)),
+                            ),
+                            JSPECLogicalOperatorOr(),
+                            JSPECObjectPair(
+                                (JSPECString("c\d"), JSPECInt(3)),
+                            ),
+                        ], JSPECCaptureMultiplier()),
+                    }),
                 )
             },
         ]
@@ -277,34 +282,28 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
         test_cases = [
             {
                 "name": "Wrong key",
-                "doc": '{<"a":"b">}',
+                "doc": '{<"a":"b">x?}',
                 "notwant": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("c"),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECString("b"),
-                            }),
-                        ),
-                    ]),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("c"),JSPECString("b"))
+                            ),
+                        ], JSPECCaptureMultiplier()),
+                    }),
                 )
             },
             {
                 "name": "Wrong value",
-                "doc": '{<"a":"b">}',
+                "doc": '{<"a":"b">x?}',
                 "notwant": JSPEC(
-                    JSPECObject([
-                        (
-                            JSPECObjectCaptureKey({
-                                JSPECString("a"),
-                            }),
-                            JSPECObjectCaptureValue({
-                                JSPECString("c"),
-                            }),
-                        ),
-                    ]),
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a"),JSPECString("c"))
+                            ),
+                        ], JSPECCaptureMultiplier()),
+                    }),
                 )
             },
         ]
@@ -319,63 +318,71 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
         test_cases = [
             {
                 "name": "Redundant object pair capture",
-                "doc": '{<"a":"b">,<"a":"b">}',
+                "doc": '{<"a":"b">x?,<"a":"b">x?}',
                 "errmsg": "Redundant object pair capture",
-                "errpos": 20,
+                "errpos": 24,
+            },
+            {
+                "name": "Redundant object pair capture",
+                "doc": '{<"a":"b" | "c": 4>x?,<"a":"b" | "c": 4>x?}',
+                "errmsg": "Redundant object pair capture",
+                "errpos": 42,
             },
             {
                 "name": "Expecting property",
-                "doc": '{<1:"b">}',
-                "errmsg": "Expecting property name enclosed in double quotes in capture",
+                "doc": '{<1:"b">x?}',
+                "errmsg": "Expecting property name enclosed in double quotes as key in object capture pair",
                 "errpos": 2,
             },
             {
-                "name": "Expecting conditional or colon (1)",
-                "doc": '{<"a","b">}',
-                "errmsg": "Expecting conditional operator or colon",
+                "name": "Expecting conditional or colon",
+                "doc": '{<"a","b">x?}',
+                "errmsg": "Expecting key-value delimiter ':' in object capture",
                 "errpos": 5
             },
             {
                 "name": "Expecting element value",
-                "doc": '{<"a":X>}',
-                "errmsg": "Expecting element value in capture",
+                "doc": '{<"a":X>x?}',
+                "errmsg": "Expecting element as value in object capture pair",
                 "errpos": 6
             },
             {
-                "name": "Repeated key",
-                "doc": '{<"a"|"a":1>}',
-                "errmsg": "Repeated key in capture conditional",
-                "errpos": 8
-            },
-            {
-                "name": "Repeated value",
-                "doc": '{<"a":1|1>}',
-                "errmsg": "Repeated value in capture conditional",
-                "errpos": 8
-            },
-            {
-                "name": "Expecting conditional operator or colon (2)",
-                "doc": '{<"a":1}',
-                "errmsg": "Expecting conditional operator or capture termination",
-                "errpos": 7
+                "name": "Expecting capture termination",
+                "doc": '{<"a": "b"}',
+                "errmsg": "Expecting object capture termination '>'",
+                "errpos": 10
             },
             {
                 "name": "One dot",
                 "doc": '{.}',
-                "errmsg": "Expecting ellipsis with 3 dots",
+                "errmsg": "Expecting object ellipsis with 3 dots '...'",
                 "errpos": 1
             },
             {
                 "name": "Two dots",
                 "doc": '{..}',
-                "errmsg": "Expecting ellipsis with 3 dots",
+                "errmsg": "Expecting object ellipsis with 3 dots '...'",
                 "errpos": 1
             },
             {
                 "name": "Four dots",
                 "doc": '{....}',
-                "errmsg": "Expecting ',' delimiter",
+                "errmsg": "Expecting object pair delimiter ','",
                 "errpos": 4
             },
+            {
+                "name": "Double ellipsis",
+                "doc": '{..., ...}',
+                "errmsg": "Redundant object ellipsis",
+                "errpos": 9
+            },
+            {
+                "name": "Min > Max",
+                "doc": '{<"a":1>x5-4}',
+                "errmsg": "Minimum for object capture multiplier is larger than the maximum",
+                "errpos": 12,
+
+                
+            }
         ]
         self._error_match(test_cases)

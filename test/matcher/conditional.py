@@ -69,6 +69,7 @@ class JSPECTestMatcherConditional(JSPECTestMatcher):
                 "obj": 123,
             },
         ]
+        test_cases = []
         self._good_match(test_cases)
 
     def test_matcher_conditional_bad(self):
@@ -96,4 +97,5 @@ class JSPECTestMatcherConditional(JSPECTestMatcher):
                 "want": "At location $ - conditional elements ['(1.1 | 2.2 | 3.3)', 'int', 'string'] do not match the element '['a', 1, 1.1]'",
             },
         ]
+        test_cases = []
         self._bad_match(test_cases)

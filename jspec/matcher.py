@@ -14,9 +14,7 @@ from .component import (
     JSPECNull,
     JSPECWildcard,
     JSPECConditional,
-    JSPECArrayCaptureElement,
-    JSPECObjectCaptureKey,
-    JSPECObjectCaptureValue,
+    JSPECArrayCaptureGroup,
 )
 
 class Result:
@@ -163,7 +161,7 @@ def match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx, capture_li
 
     if not spec_terminated:
         spec = spec_list[spec_idx]
-        if isinstance(spec, JSPECArrayCaptureElement):
+        if isinstance(spec, JSPECArrayCaptureGroup):
             capture_list.append(spec)
             return match_array_traverse(loc, spec_list, spec_idx+1, obj_list, obj_idx, capture_list[:])
 
