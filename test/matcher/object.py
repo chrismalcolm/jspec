@@ -60,5 +60,4 @@ class JSPECTestMatcherObject(JSPECTestMatcher):
                 "want": 'At location $ - the following object keys were unmatched: "x"',
             },
         ]
-        # TODO uncomment and add tests once code works for matching objects
-        #self._bad_match(test_cases)
+        self._bad_match(test_cases)

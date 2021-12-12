@@ -47,7 +47,7 @@ class JSPECTestScannerConditional(JSPECTestScanner):
                 "doc": '(int & !5)',
                 "want": JSPEC(
                     JSPECConditional([
-                        JSPECIntPlaceholder(),
+                        JSPECIntPlaceholder(None),
                         JSPECLogicalOperatorAnd(),
                         JSPECNegation(JSPECInt(5)),
                     ]),
@@ -58,7 +58,7 @@ class JSPECTestScannerConditional(JSPECTestScanner):
                 "doc": '(int | "hello")',
                 "want": JSPEC(
                     JSPECConditional([
-                        JSPECIntPlaceholder(),
+                        JSPECIntPlaceholder(None),
                         JSPECLogicalOperatorOr(),
                         JSPECString("hello"),
                     ]),
@@ -69,7 +69,7 @@ class JSPECTestScannerConditional(JSPECTestScanner):
                 "doc": '(int ^ "hello")',
                 "want": JSPEC(
                     JSPECConditional([
-                        JSPECIntPlaceholder(),
+                        JSPECIntPlaceholder(None),
                         JSPECLogicalOperatorXor(),
                         JSPECString("hello"),
                     ]),
@@ -80,7 +80,7 @@ class JSPECTestScannerConditional(JSPECTestScanner):
                 "doc": '(!int & !"hello" ^ "abc" | "okay")',
                 "want": JSPEC(
                     JSPECConditional([
-                        JSPECNegation(JSPECIntPlaceholder()),
+                        JSPECNegation(JSPECIntPlaceholder(None)),
                         JSPECLogicalOperatorAnd(),
                         JSPECNegation(JSPECString("hello")),
                         JSPECLogicalOperatorXor(),

@@ -1,5 +1,5 @@
 """JSPEC Testing Module for scanning JSPEC documents for
-``JSPECTestScannerConditional``.
+``JSPECTestScannerNegation``.
 """
 
 from test.scanner import JSPECTestScanner

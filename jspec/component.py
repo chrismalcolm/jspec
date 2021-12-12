@@ -4,6 +4,8 @@ own dedicated class. This module defines the JSPEC class and all of the JSPEC
 entity classes
 """
 
+#TODO finish documentation
+
 class JSPEC:
     """This class represents a JSPEC.
 
@@ -338,7 +340,7 @@ class JSPECConditional(JSPECElement):
 
     Args:
         value (list): A list of alternating instances of the form:
-            elements = [
+            entities = [
                 element_1,
                 operator_1,
                 element_2,
@@ -352,14 +354,28 @@ class JSPECConditional(JSPECElement):
         JSPECLogicalOperator.
     """
 
-    GENERATOR = lambda x: x
-    """func: Returns the value tuple.
+    GENERATOR = lambda entities: entities
+    """func: Returns the entities.
     """
 
-    SERIALIZER = lambda x: "(" + " ".join(str(v) for v in x) + ")"
-    """func: Returns the elements and operators alternating.
+    SERIALIZER = lambda entities: "(" + " ".join(str(e) for e in entities) + ")"
+    """func: Returns the entities and operators alternating.
     """
 
+class JSPECEvaluation(JSPECElement):
+    """This class represents a JSPEC evaluation.
+
+    Args:
+        eval_string (string): String of code to be evaluted.
+    """
+
+    GENERATOR = lambda eval_string: eval_string
+    """func: Returns the eval_string.
+    """
+
+    SERIALIZER = lambda eval_string: "<%s>" % eval_string
+    """func: Returns the evaluation string enclosed in angled parentheses.
+    """
 
 """
 *-----------------------------------------------------------------------------*
@@ -375,15 +391,19 @@ class JSPECObjectPlaceholder(JSPECObject):
     """
 
     SERIALIZER = lambda _: "object"
+    """func: Function which returns the placeholder string for JSPEC objects.
+    """
 
     def __init__(self):
-        super().__init__(dict())
+        super().__init__(set())
 
 class JSPECArrayPlaceholder(JSPECArray):
     """This class represents a JSPEC array placeholder. Matches any array.
     """
 
     SERIALIZER = lambda _: "array"
+    """func: Function which returns the placeholder string for JSPEC arrays.
+    """
 
     def __init__(self):
         super().__init__(list())
@@ -393,27 +413,11 @@ class JSPECStringPlaceholder(JSPECString):
     """
 
     SERIALIZER = lambda _: "string"
+    """func: Function which returns the placeholder string for JSPEC strings.
+    """
 
     def __init__(self):
         super().__init__("")
-
-class JSPECIntPlaceholder(JSPECInt):
-    """This class represents a JSPEC int placeholder. Matches any int.
-    """
-
-    SERIALIZER = lambda _: "int"
-
-    def __init__(self):
-        super().__init__(0)
-
-class JSPECRealPlaceholder(JSPECReal):
-    """This class represents a JSPEC real placeholder. Matches any real.
-    """
-
-    SERIALIZER = lambda _: "real"
-
-    def __init__(self):
-        super().__init__(0.0)
 
 class JSPECBooleanPlaceholder(JSPECBoolean):
     """This class represents a JSPEC boolean placeholder. Matches any
@@ -421,20 +425,142 @@ class JSPECBooleanPlaceholder(JSPECBoolean):
     """
 
     SERIALIZER = lambda _: "boolean"
+    """func: Function which returns the placeholder string for JSPEC boolean.
+    """
 
     def __init__(self):
         super().__init__(False)
 
-class JSPECNumberPlaceholder(JSPECConditional):
-    """This class represents a JSPEC number placeholder. Matches ant int or
-    real.
+class JSPECIntPlaceholder(JSPECInt):
+    """This class represents a JSPEC int placeholder. Matches an int that
+    satisfies a given basic inequality, or any int.
+
+    Args:
+        value (tuple/None): Tuple of the form:
+            entities = (
+                symbol,
+                value,
+            )
+            where symbol is a JSPECInequality and value is a number.
+            or None for no inequality.
     """
 
-    SERIALIZER = lambda _: "number"
+    GENERATOR = lambda entities: entities
+    """func: Returns the entities.
+    """
+
+    SERIALIZER = lambda entities: "int" if entities is None else (
+        "int %s %s" % (str(entities[0]), str(entities[1]))
+    )
+    """func: Function which converts the symbol and value into a serialized
+    string for an int inequality.
+    """
+
+class JSPECRealPlaceholder(JSPECReal):
+    """This class represents a JSPEC real placeholder. Matches any real that
+    satisfies a given basic inequality, or any real.
+
+    Args:
+        value (tuple/None): Tuple of the form:
+            entities = (
+                symbol,
+                value,
+            )
+            where symbol is a JSPECInequality and value is a number.
+            or None for no inequality.
+    """
+
+    GENERATOR = lambda entities: entities
+    """func: Returns the entities.
+    """
+
+    SERIALIZER = lambda entities: "real" if entities is None else (
+        "real %s %s" % (str(entities[0]), str(entities[1]))
+    )
+    """func: Function which converts the symbol and value into a serialized
+    string for an real inequality.
+    """
+
+class JSPECNumberPlaceholder(JSPECConditional):
+    """This class represents a JSPEC number placeholder. Matches ant int or
+    real that satisfies a given basic inequality, or any int or real.
+
+    Args:
+        value (tuple/None): Tuple of the form:
+            entities = (
+                symbol,
+                value,
+            )
+            where symbol is a JSPECInequality and value is a number.
+            or None for no inequality.
+    """
+
+    GENERATOR = lambda entities: entities
+    """func: Returns the entities.
+    """
+
+    SERIALIZER = lambda entities: "number" if entities is None else (
+        "number %s %s" % (str(entities[0]), str(entities[1]))
+    )
+    """func: Function which converts the symbol and value into a serialized
+    string for an number inequality.
+    """
+
+class JSPECInequality():
+    """This class is the base class that represents a JSPEC inequality.
+    """
+    
+    SYMBOL = ""
+    """string: Symbol to represent the inequality symbol. 
+    """
 
     def __init__(self):
-        super().__init__([JSPECIntPlaceholder(), JSPECLogicalOperatorOr(), JSPECRealPlaceholder()])
+        self.string = self.__class__.SYMBOL
 
+    def __str__(self):
+        return self.string
+
+    def __repr__(self):
+        return self.string
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+class JSPECInequalityLessThan(JSPECInequality):
+    """This class is the base class that represents a JSPEC less than
+    inequality.
+    """
+    
+    SYMBOL = "<"
+    """string: Symbol to represent the less than inequality symbol. 
+    """
+
+class JSPECInequalityLessThanOrEqualTo(JSPECInequality):
+    """This class is the base class that represents a JSPEC less than or equal
+    to inequality.
+    """
+    
+    SYMBOL = "<="
+    """string: Symbol to represent the less than or equal to inequality symbol. 
+    """
+
+class JSPECInequalityMoreThan(JSPECInequality):
+    """This class is the base class that represents a JSPEC more than
+    inequality.
+    """
+    
+    SYMBOL = ">"
+    """string: Symbol to represent the more than inequality symbol. 
+    """
+
+class JSPECInequalityMoreThanOrEqualTo(JSPECInequality):
+    """This class is the base class that represents a JSPEC less more or equal
+    to inequality.
+    """
+    
+    SYMBOL = ">="
+    """string: Symbol to represent the more than or equal to inequality symbol. 
+    """
 
 """
 *-----------------------------------------------------------------------------*
@@ -601,10 +727,6 @@ class JSPECCaptureMultiplier():
     def __eq__(self, other):
         return self.minimum == other.minimum and self.maximum == other.maximum
 
-# TODO change to rounded brackets
-# TODO add < > constant macro
-# TODO create equality operators
-
 class JSPECArrayCaptureGroup(JSPECCapture):
     """This class represents a JSPEC capture for arrays.
 
@@ -625,10 +747,10 @@ class JSPECArrayCaptureGroup(JSPECCapture):
     """
 
     SERIALIZER = lambda entities, multiplier: (
-        "<%s>" % " ".join(str(e) for e in entities) + str(multiplier)
+        "(%s)" % " ".join(str(e) for e in entities) + str(multiplier)
     )
     """func: Returns the entities and operators alternating, enclosed in
-    angled parentheses, with a optional x and multiplier."""
+    round parentheses, with a optional x and multiplier."""
 
 class JSPECObjectCaptureGroup(JSPECCapture):
     """This class represents a JSPEC capture pair for objects.
@@ -650,10 +772,10 @@ class JSPECObjectCaptureGroup(JSPECCapture):
     """
 
     SERIALIZER = lambda entities, multiplier: (
-        "<%s>" % " ".join([str(v) for v in entities]) + str(multiplier)
+        "(%s)" % " ".join([str(v) for v in entities]) + str(multiplier)
     )
     """func: Returns the key-value pairs and operators alternating, enclosed in
-    angled parentheses, with a optional x and multiplier.
+    round parentheses, with a optional x and multiplier.
     """
 
 

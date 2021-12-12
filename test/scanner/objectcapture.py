@@ -37,8 +37,21 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
         """
         test_cases = [
             {
+                "name": "Basic object capture without multiplier",
+                "doc": '{("a\d":"b")}',
+                "want": JSPEC(
+                    JSPECObject({
+                        JSPECObjectCaptureGroup([
+                            JSPECObjectPair(
+                                (JSPECString("a\d"), JSPECString("b"))
+                            ),
+                        ], JSPECCaptureMultiplier(1, 1)),
+                    }),
+                )
+            },
+            {
                 "name": "Basic object capture (1)",
-                "doc": '{<"a\d":"b">x?}',
+                "doc": '{("a\d":"b")x?}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -51,7 +64,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic object capture (2)",
-                "doc": '{<"a\d":"b">x2}',
+                "doc": '{("a\d":"b")x2}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -64,7 +77,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic object capture (3)",
-                "doc": '{<"a\d":"b">x?}',
+                "doc": '{("a\d":"b")x?}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -77,7 +90,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic object capture (4)",
-                "doc": '{<"a\d":"b">x2-?}',
+                "doc": '{("a\d":"b")x2-?}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -90,7 +103,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic object capture (5)",
-                "doc": '{<"a\d":"b">x?-?}',
+                "doc": '{("a\d":"b")x?-?}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -103,7 +116,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic object capture (6)",
-                "doc": '{<"a\d":"b">x?-4}',
+                "doc": '{("a\d":"b")x?-4}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -116,7 +129,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic object capture (7)",
-                "doc": '{<"a\d":"b">x1-7}',
+                "doc": '{("a\d":"b")x1-7}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -129,7 +142,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic object capture with paris",
-                "doc": '{<"a\d":"b">x?,"c":"d"}',
+                "doc": '{("a\d":"b")x?,"c":"d"}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -145,7 +158,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic object capture with multiplier",
-                "doc": '{<"a\d":"b">x4}',
+                "doc": '{("a\d":"b")x4}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup(
@@ -160,7 +173,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic object capture with pairs with multiplier",
-                "doc": '{<"a\d":"b">x20,"c":"d"}',
+                "doc": '{("a\d":"b")x20,"c":"d"}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup(
@@ -187,7 +200,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Object ellipsis (2)",
-                "doc": '{<string:*>x?}',
+                "doc": '{(string:*)x?}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -200,7 +213,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Object capture with paris and ellipsis (1)",
-                "doc": '{<"a\d":"b">x?,"c":"d", ... }',
+                "doc": '{("a\d":"b")x?,"c":"d", ... }',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -217,7 +230,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Object capture with paris and ellipsis (2)",
-                "doc": '{..., <"a\d":"b">x?,"c":"d"}',
+                "doc": '{..., ("a\d":"b")x?,"c":"d"}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -234,7 +247,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Object capture with logical operators (1)",
-                "doc": '{<"a\d":1 & "b\d":2>x?}',
+                "doc": '{("a\d":1 & "b\d":2)x?}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -251,7 +264,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Object capture with logical operators (2)",
-                "doc": '{<"a\d":1 ^ "b\d":2 | "c\d":3>x?}',
+                "doc": '{("a\d":1 ^ "b\d":2 | "c\d":3)x?}',
                 "want": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -282,7 +295,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
         test_cases = [
             {
                 "name": "Wrong key",
-                "doc": '{<"a":"b">x?}',
+                "doc": '{("a":"b")x?}',
                 "notwant": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -295,7 +308,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             },
             {
                 "name": "Wrong value",
-                "doc": '{<"a":"b">x?}',
+                "doc": '{("a":"b")x?}',
                 "notwant": JSPEC(
                     JSPECObject({
                         JSPECObjectCaptureGroup([
@@ -318,38 +331,38 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
         test_cases = [
             {
                 "name": "Redundant object pair capture",
-                "doc": '{<"a":"b">x?,<"a":"b">x?}',
+                "doc": '{("a":"b")x?,("a":"b")x?}',
                 "errmsg": "Redundant object pair capture",
                 "errpos": 24,
             },
             {
                 "name": "Redundant object pair capture",
-                "doc": '{<"a":"b" | "c": 4>x?,<"a":"b" | "c": 4>x?}',
+                "doc": '{("a":"b" | "c": 4)x?,("a":"b" | "c": 4)x?}',
                 "errmsg": "Redundant object pair capture",
                 "errpos": 42,
             },
             {
                 "name": "Expecting property",
-                "doc": '{<1:"b">x?}',
+                "doc": '{(1:"b")x?}',
                 "errmsg": "Expecting property name enclosed in double quotes as key in object capture pair",
                 "errpos": 2,
             },
             {
                 "name": "Expecting conditional or colon",
-                "doc": '{<"a","b">x?}',
+                "doc": '{("a","b")x?}',
                 "errmsg": "Expecting key-value delimiter ':' in object capture",
                 "errpos": 5
             },
             {
                 "name": "Expecting element value",
-                "doc": '{<"a":X>x?}',
+                "doc": '{("a":X)x?}',
                 "errmsg": "Expecting element as value in object capture pair",
                 "errpos": 6
             },
             {
                 "name": "Expecting capture termination",
-                "doc": '{<"a": "b"}',
-                "errmsg": "Expecting object capture termination '>'",
+                "doc": '{("a": "b"}',
+                "errmsg": "Expecting object capture termination ')'",
                 "errpos": 10
             },
             {
@@ -377,12 +390,10 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
                 "errpos": 9
             },
             {
-                "name": "Min > Max",
-                "doc": '{<"a":1>x5-4}',
+                "name": "Min ) Max",
+                "doc": '{("a":1)x5-4}',
                 "errmsg": "Minimum for object capture multiplier is larger than the maximum",
-                "errpos": 12,
-
-                
+                "errpos": 12,    
             }
         ]
         self._error_match(test_cases)

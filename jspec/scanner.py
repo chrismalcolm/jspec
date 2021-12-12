@@ -1,6 +1,6 @@
 """Module for scanning JSPEC documents.
 """
-#TODO finise docs
+#TODO finish documentation
 
 import re
 
@@ -32,6 +32,11 @@ from .component import (
     JSPECArrayEllipsis,
     JSPECObjectEllipsis,
     JSPECCaptureMultiplier,
+    JSPECEvaluation,
+    JSPECInequalityLessThan,
+    JSPECInequalityLessThanOrEqualTo,
+    JSPECInequalityMoreThan,
+    JSPECInequalityMoreThanOrEqualTo,
 )
 
 class JSPECDecodeError(ValueError):
@@ -75,6 +80,12 @@ NUMBER_MATCH = re.compile(r"""
     (\.\d+)?           # fractional part, digit string preceded by a decimal point
     ([eE][-+]?\d+)?    # exponent, eE followed by a signed digit string""", re.VERBOSE).match
 """_sre.SRE_Pattern: Pattern to match a JSPEC int or real."""
+
+EVALUATION_MATCH = re.compile(r"""
+    <     # preceded by a opening angled parenthesis
+    (.*?) # any character except \n, zero or more times (not greedy)
+    >     # terminated by a closing angled parenthesis""", re.VERBOSE).match
+"""_sre.SRE_Pattern: Pattern to match a JSPEC evaluation."""
 
 WHITESPACE_CHARACTERS = ' \t\n\r'
 """string: Whitespace characters."""
@@ -136,7 +147,7 @@ def scan_object(doc, idx):
     while True:
         nextchar = doc[idx:idx + 1]
 
-        if nextchar == '<':
+        if nextchar == '(':
             pair, idx = scan_object_capture(doc, idx)
             if pair in pairs:
                 raise JSPECDecodeError("Redundant object pair capture", doc, idx)
@@ -192,7 +203,7 @@ def scan_object_capture(doc, idx):
             valid JSPEC object capture.
     """
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
-    if nextchar == '>':
+    if nextchar == ')':
         raise JSPECDecodeError("Empty capture", doc, idx)
     
     entities = list()
@@ -224,12 +235,13 @@ def scan_object_capture(doc, idx):
             break
         nextchar, idx = skip_any_whitespace(doc, idx + 1)
 
-    if nextchar != '>':
-        raise JSPECDecodeError("Expecting object capture termination '>'", doc, idx) 
+    if nextchar != ')':
+        raise JSPECDecodeError("Expecting object capture termination ')'", doc, idx) 
     idx += 1
     m = MULTIPLIER_MATCH(doc, idx)
     if m is None:
-        raise JSPECDecodeError("Expecting object capture multiplier", doc, idx)
+        multiplier = JSPECCaptureMultiplier(1, 1)
+        return JSPECObjectCaptureGroup(entities, multiplier), idx
     x, y = m.groups()[0], m.groups()[1]
     minimum = int(x) if x != '?' else None
     if y is None:
@@ -289,7 +301,7 @@ def scan_array(doc, idx):
 
     while True:
         
-        if nextchar == '<':
+        if nextchar == '(':
             value, idx = scan_array_capture(doc, idx)
         elif nextchar == '.':
             value, idx = scan_array_ellipsis(doc, idx)
@@ -329,7 +341,7 @@ def scan_array_capture(doc, idx):
             valid JSPEC array capture.
     """
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
-    if nextchar == '>':
+    if nextchar == ')':
         raise JSPECDecodeError("Empty array capture", doc, idx)
     entities = list()
     while True:
@@ -348,12 +360,13 @@ def scan_array_capture(doc, idx):
         else:
             break
         _, idx = skip_any_whitespace(doc, idx + 1)
-    if nextchar != '>':
-        raise JSPECDecodeError("Expecting array capture termination '>'", doc, idx)
+    if nextchar != ')':
+        raise JSPECDecodeError("Expecting array capture termination ')'", doc, idx)
     idx += 1
     m = MULTIPLIER_MATCH(doc, idx)
     if m is None:
-        raise JSPECDecodeError("Expecting array capture multiplier", doc, idx)
+        multiplier = JSPECCaptureMultiplier(1, 1)
+        return JSPECArrayCaptureGroup(entities, multiplier), idx
     x, y = m.groups()[0], m.groups()[1]
     minimum = int(x) if x != '?' else None
     if y is None:
@@ -505,6 +518,154 @@ def scan_conditional(doc, idx):
         raise JSPECDecodeError("Expecting conditional termination ')'", doc, idx)
     return JSPECConditional(values), idx + 1
 
+def scan_evaluation(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC evaluation.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECEvaluation: The JSPECElement that represents the valid JSPEC
+            evaluation
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC evaluation
+
+    Raises:
+        JSPECDecodeError: Raised if the evaluation scanned cannot represent a
+            valid JSPEC evaluation.
+    """
+    m = EVALUATION_MATCH(doc, idx)
+    if m is None:
+        raise JSPECDecodeError("Unterminated evaluation", doc, idx)
+    s, = m.groups()
+    value = JSPECEvaluation(s)
+    return value, m.end()
+
+def scan_int_placeholder(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC int placeholder.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECIntPlaceholder: The JSPECElement that represents the valid JSPEC
+            int placeholder.
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC int placeholder.
+
+    Raises:
+        JSPECDecodeError: Raised if the int placeholder scanned cannot
+            represent a valid JSPEC int placeholder.
+    """
+    nextchar, newidx = skip_any_whitespace(doc, idx + 3)
+    if nextchar != "<" and nextchar != ">":
+        return JSPECIntPlaceholder(None), idx + 3
+    symbol, idx = scan_inequality_symbol(doc, newidx)
+    _, idx = skip_any_whitespace(doc, idx + 1)
+    m = NUMBER_MATCH(doc, idx)
+    if m is None:
+        raise JSPECDecodeError("Invalid number", doc, idx)
+    integer, frac, exp = m.groups()
+    if frac is None and exp is None:
+        value = int(integer)
+    else:
+        value = float(integer + (frac or '') + (exp or ''))
+    return JSPECIntPlaceholder((symbol, value)), m.end()
+
+def scan_real_placeholder(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC real placeholder.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECRealPlaceholder: The JSPECElement that represents the valid JSPEC
+            real placeholder.
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC real placeholder.
+
+    Raises:
+        JSPECDecodeError: Raised if the real placeholder scanned cannot
+            represent a valid JSPEC real placeholder.
+    """
+    nextchar, newidx = skip_any_whitespace(doc, idx + 4)
+    if nextchar != "<" and nextchar != ">":
+        return JSPECRealPlaceholder(None), idx + 4
+    symbol, idx = scan_inequality_symbol(doc, newidx)
+    _, idx = skip_any_whitespace(doc, idx + 1)
+    m = NUMBER_MATCH(doc, idx)
+    if m is None:
+        raise JSPECDecodeError("Invalid number", doc, idx)
+    integer, frac, exp = m.groups()
+    if frac is None and exp is None:
+        value = int(integer)
+    else:
+        value = float(integer + (frac or '') + (exp or ''))
+    return JSPECRealPlaceholder((symbol, value)), m.end()
+
+def scan_number_placeholder(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC number placeholder.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECNumberPlaceholder: The JSPECElement that represents the valid JSPEC
+            number placeholder.
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC number placeholder.
+
+    Raises:
+        JSPECDecodeError: Raised if the number placeholder scanned cannot
+            represent a valid JSPEC number placeholder.
+    """
+    nextchar, newidx = skip_any_whitespace(doc, idx + 6)
+    if nextchar != "<" and nextchar != ">":
+        return JSPECNumberPlaceholder(None), idx + 6
+    symbol, idx = scan_inequality_symbol(doc, newidx)
+    _, idx = skip_any_whitespace(doc, idx + 1)
+    m = NUMBER_MATCH(doc, idx)
+    if m is None:
+        raise JSPECDecodeError("Invalid number", doc, idx)
+    integer, frac, exp = m.groups()
+    if frac is None and exp is None:
+        value = int(integer)
+    else:
+        value = float(integer + (frac or '') + (exp or ''))
+    return JSPECNumberPlaceholder((symbol, value)), m.end()
+
+def scan_inequality_symbol(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represeting a valid JSPEC inequality symbol.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECInequality: The JSPECElement that represents the valid JSPEC
+            inequality symbol.
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC inequality symbol.
+    """
+    sign_char, equal_char = doc[idx:idx+1], doc[idx+1:idx+2]
+    if sign_char == '<':
+        if equal_char == '=':
+            return JSPECInequalityLessThanOrEqualTo(), idx + 1
+        return JSPECInequalityLessThan(), idx
+    if equal_char == '=':
+        return JSPECInequalityMoreThanOrEqualTo(), idx + 1
+    return JSPECInequalityMoreThan(), idx
+
+
 def scan_element(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
     characters scanned represeting a valid JSPEC element.
@@ -545,6 +706,9 @@ def scan_element(doc, idx):
     if nextchar == '(':
         return scan_conditional(doc, idx)
 
+    if nextchar == '<':
+        return scan_evaluation(doc, idx)
+
     if nextchar == 't' and doc[idx:idx+4] == 'true':
         return JSPECBoolean(True), idx + 4
     
@@ -567,16 +731,16 @@ def scan_element(doc, idx):
         return JSPECStringPlaceholder(), idx + 6
 
     if nextchar == 'i' and doc[idx:idx+3] == 'int':
-        return JSPECIntPlaceholder(), idx + 3
+        return scan_int_placeholder(doc, idx)
 
     if nextchar == 'r' and doc[idx:idx+4] == 'real':
-        return JSPECRealPlaceholder(), idx + 4
+        return scan_real_placeholder(doc, idx)
 
     if nextchar == 'b' and doc[idx:idx+4] == 'bool':
         return JSPECBooleanPlaceholder(), idx + 4
 
     if nextchar == 'n' and doc[idx:idx+6] == 'number':
-        return JSPECNumberPlaceholder(), idx + 6
+        return scan_number_placeholder(doc, idx)
 
     raise StopIteration(idx)
 

@@ -148,7 +148,7 @@ r2 result: False r2 message: Cannot match key regex at position '$'. Want other,
 to run test
 python3 -m unittest test/test.py
 
-Look at TODOs for work to finish
+TODO update docs here 
 
 ! negation
 !4
@@ -184,12 +184,11 @@ Look at TODOs for work to finish
     (("a": 4)x4 | ("b": 5)x4),
 }
 
-- negation class
-- pair object
+[int < 5, <5, int >= 6, >= 6]
 
-- conditional logic
-- capture logic
+[< 5, <5, >= 6, >= 6]
 
+[int < 5, int<5, int >= 6, int>= 6]
 construct error message
 
 Error message must be of the form

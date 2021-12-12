@@ -33,8 +33,22 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
         """
         test_cases = [
             {
+                "name": "Basic array capture no multiplier",
+                "doc": '[(1)]',
+                "want": JSPEC(
+                    JSPECArray([
+                        JSPECArrayCaptureGroup(
+                            [
+                                JSPECInt(1),
+                            ],
+                            JSPECCaptureMultiplier(1, 1),
+                        ),
+                    ]),
+                )
+            },
+            {
                 "name": "Basic array capture (1)",
-                "doc": '[<1>x?]',
+                "doc": '[(1)x?]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -48,7 +62,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic array capture (2)",
-                "doc": '[<1>x2]',
+                "doc": '[(1)x2]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -62,7 +76,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic array capture (3)",
-                "doc": '[<1>x?]',
+                "doc": '[(1)x?]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -76,7 +90,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic array capture (4)",
-                "doc": '[<1>x2-?]',
+                "doc": '[(1)x2-?]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -90,7 +104,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic array capture (5)",
-                "doc": '[<1>x?-4]',
+                "doc": '[(1)x?-4]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -104,7 +118,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic array capture (6)",
-                "doc": '[<1>x3-5]',
+                "doc": '[(1)x3-5]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -118,7 +132,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic array capture with condition",
-                "doc": '[<1 ^ 3>x?]',
+                "doc": '[(1 ^ 3)x?]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -134,7 +148,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Array capture with elements",
-                "doc": '[5,<1>x?,4]',
+                "doc": '[5,(1)x?,4]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECInt(5),
@@ -150,7 +164,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Array capture with elements and condition",
-                "doc": '[5,<!1 & !2>x?,4]',
+                "doc": '[5,(!1 & !2)x?,4]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECInt(5),
@@ -168,7 +182,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Basic array capture with multiplier",
-                "doc": '[<1>x5]',
+                "doc": '[(1)x5]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -182,7 +196,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Array capture with elements with multiplier",
-                "doc": '[5,<1>x17,4]',
+                "doc": '[5,(1)x17,4]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECInt(5),
@@ -198,7 +212,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Array capture with elements with multiplier and condition",
-                "doc": '[5,<1 | 2>x17,4]',
+                "doc": '[5,(1 | 2)x17,4]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECInt(5),
@@ -225,7 +239,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Array ellipsis (2)",
-                "doc": '[<*>x?]',
+                "doc": '[(*)x?]',
                 "want": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -259,7 +273,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
         test_cases = [
             {
                 "name": "Wrong value in capture (1)",
-                "doc": '[<2>x?]',
+                "doc": '[(2)x?]',
                 "notwant": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -273,7 +287,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Wrong value in capture (2)",
-                "doc": '[1,<1>x?,1]',
+                "doc": '[1,(1)x?,1]',
                 "notwant": JSPEC(
                     JSPECArray([
                         JSPECInt(1),
@@ -289,7 +303,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Wrong multiplier",
-                "doc": '[<1>x5]',
+                "doc": '[(1)x5]',
                 "notwant": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -303,7 +317,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "No multiplier",
-                "doc": '[5,<1>x?,4]',
+                "doc": '[5,(1)x?,4]',
                 "notwant": JSPEC(
                     JSPECArray([
                         JSPECInt(5),
@@ -319,7 +333,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             },
             {
                 "name": "Unwanted multiplier",
-                "doc": '[<1>x5]',
+                "doc": '[(1)x5]',
                 "notwant": JSPEC(
                     JSPECArray([
                         JSPECArrayCaptureGroup(
@@ -342,32 +356,32 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
         test_cases = [
             {
                 "name": "Redundant array capture",
-                "doc": '[<1>x?,<1>x?]',
+                "doc": '[(1)x?,(1)x?]',
                 "errmsg": "Redundant array capture",
                 "errpos": 12,
             },
             {
                 "name": "Empty capture",
-                "doc": '[<>x?]',
+                "doc": '[()x?]',
                 "errmsg": "Empty array capture",
                 "errpos": 2,
             },
             {
                 "name": "Bad element in X",
-                "doc": '[<X>x?]',
+                "doc": '[(X)x?]',
                 "errmsg": "Expecting element in array capture",
                 "errpos": 2,
             },
             {
                 "name": "No value after operator",
-                "doc": '[<1&>x?]',
+                "doc": '[(1&)x?]',
                 "errmsg": "Expecting element in array capture",
                 "errpos": 4,
             },
             {
                 "name": "Expecting capture termination",
-                "doc": '[<1)]',
-                "errmsg": "Expecting array capture termination '>'",
+                "doc": '[(1>]',
+                "errmsg": "Expecting array capture termination ')'",
                 "errpos": 3,
             },
             {
@@ -389,8 +403,8 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
                 "errpos": 4,
             },
              {
-                "name": "Min > Max",
-                "doc": '[<1>x5-4]',
+                "name": "Min ) Max",
+                "doc": '[(1)x5-4]',
                 "errmsg": "Minimum for array capture multiplier is larger than the maximum",
                 "errpos": 8,
             },
