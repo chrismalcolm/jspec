@@ -1,4 +1,4 @@
-"""JSPEC Testing Module for matchning JSPEC documents for
+"""JSPEC Testing Module for matching JSPEC documents for
 ``JSPECTestMatcherBoolean``.
 """
 
@@ -40,13 +40,19 @@ class JSPECTestMatcherBoolean(JSPECTestMatcher):
                 "name": "True not false",
                 "doc": "false",
                 "obj": True,
-                "want": "At location $ - expected 'False', got 'True'",
+                "want": "At location $ - expected 'False', got 'true'",
             },
             {
                 "name": "False not true",
                 "doc": "true",
                 "obj": False,
-                "want": "At location $ - expected 'True', got 'False'",
+                "want": "At location $ - expected 'True', got 'false'",
+            },
+            {
+                "name": "Int not boolean",
+                "doc": "true",
+                "obj": 1,
+                "want": "At location $ - expected a boolean, got '1'",
             },
         ]
         self._bad_match(test_cases)

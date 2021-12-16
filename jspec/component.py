@@ -5,6 +5,10 @@ entity classes
 """
 
 #TODO finish documentation
+# TODO change terminology
+# JSPECElement -> JSPECTerm
+# .term -> spec
+
 
 class JSPEC:
     """This class represents a JSPEC.
@@ -48,27 +52,28 @@ class JSPECElement:
     single JSON element. When a JSPEC element is compared against a JSON
     element, whether the JSON element is a good match or a bad match should be
     able to be determined. Generally JSON element is a good match if it is
-    equivalent to the JSPEC Element's ``specification``.
+    equivalent to the JSPEC Element's ``term``.
     
     This JSPEC element class must have functionality for the following:
-    - Ability to create its ``specification`` from a given value (GENERATOR)
+    - Ability to create its ``term`` from a given value (COVERTER)
     - Ability to create its ``string`` from a given value (SERIALIZER)
     - Ability to serialize itself as a string (__str__)
     - Ability to know if it is equivalent to another JSPEC (__eq__)
     - Ability to have its own hash for mappings (__hash__)
 
     Attributes:
-        spec (obj): The Python native JSON element instance to match with
+        term (obj): The Python native JSON element instance to match
+            with
         string (string): The serialization of the JSPEC element
         hash (int): The hash of the JSPEC element, required for mappings
 
     Args:
         value (obj): Python native instance used to generate the
-        ``specification`` and the serialization to make ``string``
+        ``term`` and the serialization to make ``string``
     """
 
-    GENERATOR = lambda x: None
-    """func: Convert the ``value`` into the ``specification``.
+    COVERTER = lambda x: None
+    """func: Convert the ``value`` into the ``term``.
     """
 
     SERIALIZER = lambda x: ""
@@ -76,7 +81,7 @@ class JSPECElement:
     """
     
     def __init__(self, value):
-        self.specification = self._generator(value)
+        self.term = self._generator(value)
         self.string = self._serializer(value)
         self.hash = self.string.__hash__()
 
@@ -92,10 +97,10 @@ class JSPECElement:
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        return self.specification == other.specification
+        return self.term == other.term
 
     def _generator(self, value):
-        return self.__class__.GENERATOR(value)
+        return self.__class__.COVERTER(value)
 
     def _serializer(self, value):
         return self.__class__.SERIALIZER(value)
@@ -107,24 +112,25 @@ class JSPECObjectPair:
     string and the value is a JSPEC element.
     
     This JSPEC element pair class must have functionality for the following:
-    - Ability to create its ``specification`` from a given value (GENERATOR)
+    - Ability to create its ``term`` from a given value (COVERTER)
     - Ability to create its ``string`` from a given value (SERIALIZER)
     - Ability to serialize itself as a string (__str__)
     - Ability to know if it is equivalent to another JSPEC (__eq__)
     - Ability to have its own hash for mappings (__hash__)
 
     Attributes:
-        spec (obj): The Python native JSON element instance to match with
+        term (obj): The Python native JSON element instance to match
+            with
         string (string): The serialization of the JSPEC element
         hash (int): The hash of the JSPEC element, required for mappings
 
     Args:
         value (obj): Python native instance used to generate the
-        ``specification`` and the serialization to make ``string``
+        ``term`` and the serialization to make ``string``
     """
 
-    GENERATOR = lambda x: x
-    """func: Convert the ``value`` into the ``specification``.
+    COVERTER = lambda x: x
+    """func: Convert the ``value`` into the ``term``.
     """
 
     SERIALIZER = lambda x: str(x[0]) + ": " + str(x[1])
@@ -132,7 +138,7 @@ class JSPECObjectPair:
     """
     
     def __init__(self, value):
-        self.specification = self._generator(value)
+        self.term = self._generator(value)
         self.string = self._serializer(value)
         self.hash = self.string.__hash__()
 
@@ -148,19 +154,19 @@ class JSPECObjectPair:
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        return self.specification == other.specification
+        return self.term == other.term
 
     def _generator(self, value):
-        return self.__class__.GENERATOR(value)
+        return self.__class__.COVERTER(value)
 
     def _serializer(self, value):
         return self.__class__.SERIALIZER(value)
 
     def key(self):
-        return self.specification[0]
+        return self.term[0]
 
     def value(self):
-        return self.specification[1]
+        return self.term[1]
 
 class JSPECObject(JSPECElement):
     """This class represents a JSPEC object.
@@ -177,7 +183,7 @@ class JSPECObject(JSPECElement):
             JSPECObjectCaptureGroup.
     """
 
-    GENERATOR = lambda pairs: pairs
+    COVERTER = lambda pairs: pairs
     """func: Identity on pairs.
     """
 
@@ -198,7 +204,7 @@ class JSPECObjectPair(JSPECObjectPair):
             where key is a JSPECString and value is a JSPECElement.
     """
 
-    GENERATOR = lambda pair: pair
+    COVERTER = lambda pair: pair
     """func: Identity on pair.
     """
 
@@ -219,7 +225,7 @@ class JSPECArray(JSPECElement):
             where each value_x is a JSPECElement or a JSPECArrayCaptureGroup.
     """
 
-    GENERATOR = list
+    COVERTER = list
     """func: Convert values into a Python list.
     """
 
@@ -234,7 +240,7 @@ class JSPECString(JSPECElement):
         value (string): A regex string to be matched.
     """
 
-    GENERATOR = str
+    COVERTER = str
     """func: Convert the value into a Python string.
     """
 
@@ -249,7 +255,7 @@ class JSPECInt(JSPECElement):
         value (int): An integer.
     """
 
-    GENERATOR = int
+    COVERTER = int
     """func: Convert the value into a Python int.
     """
 
@@ -264,7 +270,7 @@ class JSPECReal(JSPECElement):
         value (float): A real.
     """
 
-    GENERATOR = float
+    COVERTER = float
     """func: Convert the value into a Python float.
     """
 
@@ -279,7 +285,7 @@ class JSPECBoolean(JSPECElement):
         value (bool): A boolean.
     """
 
-    GENERATOR = bool
+    COVERTER = bool
     """func: Convert the value into a Python bool.
     """
 
@@ -294,7 +300,7 @@ class JSPECNull(JSPECElement):
         value (None): None.
     """
 
-    GENERATOR = lambda val: None
+    COVERTER = lambda val: None
     """func: Convert the value into a Python None.
     """
 
@@ -309,7 +315,7 @@ class JSPECWildcard(JSPECElement):
         value (None): None.
     """
 
-    GENERATOR = lambda val: None
+    COVERTER = lambda val: None
     """func: Returns None.
     """
 
@@ -327,7 +333,7 @@ class JSPECNegation(JSPECElement):
         value (JSPECElement): The JSPEC element to negate.
     """
 
-    GENERATOR = lambda val: val
+    COVERTER = lambda val: val
     """func: Returns the value.
     """
 
@@ -354,7 +360,7 @@ class JSPECConditional(JSPECElement):
         JSPECLogicalOperator.
     """
 
-    GENERATOR = lambda entities: entities
+    COVERTER = lambda entities: entities
     """func: Returns the entities.
     """
 
@@ -369,7 +375,7 @@ class JSPECEvaluation(JSPECElement):
         eval_string (string): String of code to be evaluted.
     """
 
-    GENERATOR = lambda eval_string: eval_string
+    COVERTER = lambda eval_string: eval_string
     """func: Returns the eval_string.
     """
 
@@ -445,7 +451,7 @@ class JSPECIntPlaceholder(JSPECInt):
             or None for no inequality.
     """
 
-    GENERATOR = lambda entities: entities
+    COVERTER = lambda entities: entities
     """func: Returns the entities.
     """
 
@@ -470,7 +476,7 @@ class JSPECRealPlaceholder(JSPECReal):
             or None for no inequality.
     """
 
-    GENERATOR = lambda entities: entities
+    COVERTER = lambda entities: entities
     """func: Returns the entities.
     """
 
@@ -495,7 +501,7 @@ class JSPECNumberPlaceholder(JSPECConditional):
             or None for no inequality.
     """
 
-    GENERATOR = lambda entities: entities
+    COVERTER = lambda entities: entities
     """func: Returns the entities.
     """
 

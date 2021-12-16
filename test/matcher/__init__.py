@@ -22,7 +22,7 @@ class JSPECTestMatcher(unittest.TestCase):
             result, got = jspec.matcher.match(j, obj)
             self.assertFalse(
                 result,
-                msg="Unexpected good match",
+                msg="(%s) Unexpected good match" % name,
             )
             self.assertEqual(
                 want,

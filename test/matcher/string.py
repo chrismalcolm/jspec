@@ -1,4 +1,4 @@
-"""JSPEC Testing Module for matchning JSPEC documents for
+"""JSPEC Testing Module for matching JSPEC documents for
 ``JSPECTestMatcherString``.
 """
 
@@ -61,25 +61,25 @@ class JSPECTestMatcherString(JSPECTestMatcher):
                 "name": "Bad match",
                 "doc": '"basic"',
                 "obj": "complex",
-                "want": "At location $ - regex pattern 'basic' failed to match 'complex'",
+                "want": "At location $ - regex pattern 'basic' failed to match '\"complex\"'",
             },
             {
                 "name": "Bad regex match",
                 "doc": '"gray|grey"',
                 "obj": "grxy",
-                "want": "At location $ - regex pattern 'gray|grey' failed to match 'grxy'",
+                "want": "At location $ - regex pattern 'gray|grey' failed to match '\"grxy\"'",
             },
             {
                 "name": "No empty string",
                 "doc": '""',
                 "obj": "not empty",
-                "want": "At location $ - regex pattern '' failed to match 'not empty'",
+                "want": "At location $ - regex pattern '' failed to match '\"not empty\"'",
             },
             {
                 "name": "Escape character",
                 "doc": '"gray\|grey"',
                 "obj": "gray",
-                "want": "At location $ - regex pattern 'gray\|grey' failed to match 'gray'",
+                "want": "At location $ - regex pattern 'gray\|grey' failed to match '\"gray\"'",
             },
         ]
         self._bad_match(test_cases)

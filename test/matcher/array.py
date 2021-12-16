@@ -1,4 +1,4 @@
-"""JSPEC Testing Module for matchning JSPEC documents for
+"""JSPEC Testing Module for matching JSPEC documents for
 ``JSPECTestMatcherArray``.
 """
 
@@ -45,7 +45,7 @@ class JSPECTestMatcherArray(JSPECTestMatcher):
                 "name": "Empty array not object",
                 "doc": "[]",
                 "obj": {},
-                "want": "At location $ - expected an array",
+                "want": "At location $ - expected an array, got '{}'",
             },
             {
                 "name": "Incorrect values",
@@ -63,13 +63,25 @@ class JSPECTestMatcherArray(JSPECTestMatcher):
                 "name": "Embedded incorrect (1)",
                 "doc": '[[[["a", "b", "c"]]]]',
                 "obj": [[["a", "b", "c"]]],
-                "want": "At location $[0][0][0] - expected an array",
+                "want": "At location $[0][0][0] - expected an array, got '\"a\"'",
             },
             {
                 "name": "Embedded incorrect (2)",
                 "doc": '[["a", "b", "c"]]',
                 "obj": [[["a", "b", "c"]]],
-                "want": "At location $[0][0] - expected a string",
+                "want": "At location $[0][0] - expected a string, got '[\"a\", \"b\", \"c\"]'",
+            },
+            {
+                "name": "Exhausted JSON array",
+                "doc": "[1, 2, 3]",
+                "obj": [1, 2],
+                "want": "At location $ - exhausted JSON array, no JSON element left to match '3'",
+            },
+            {
+                "name": "Exhausted JSPEC array",
+                "doc": "[1, 2]",
+                "obj": [1, 2, 3],
+                "want": "At location $ - exhausted JSPEC array, no JSPEC element left to match '3'",
             },
         ]
         self._bad_match(test_cases)

@@ -51,13 +51,25 @@ class JSPECTestMatcherObject(JSPECTestMatcher):
                 "name": "Incorrect values by unmatched key",
                 "doc": '{"a": 1, "b": 2, "c": 3}',
                 "obj": {"a": 1, "b": 2, "x": 3},
-                "want": 'At location $ - the following object keys were unmatched: "x"',
+                "want": 'At location $ - the following JSON object keys were unmatched: "x"',
             },
             {
                 "name": "Wrong order embedded",
                 "doc": '{"a": {"b": {"c": 3}}}',
                 "obj": {"a": {"c": {"b": 3}}},
-                "want": 'At location $ - the following object keys were unmatched: "x"',
+                "want": 'At location $ - the following JSON object keys were unmatched: "a"',
+            },
+            {
+                "name": "Incorrect values by unmatched key",
+                "doc": '{"a": 1, "b": 2}',
+                "obj": {"a": 1, "b": 2, "c": 3},
+                "want": "At location $ - exhausted JSPEC object, the following JSON keys are unmatched: \"c\"",
+            },
+            {
+                "name": "Incorrect values by unmatched key",
+                "doc": '{"a": 1, "b": 2, "c": 3}',
+                "obj": {"a": 1, "b": 2},
+                "want": "At location $ - exhausted JSON object, the following JSPEC keys are unmatched: \"c\"",
             },
         ]
         self._bad_match(test_cases)

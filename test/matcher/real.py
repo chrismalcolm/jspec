@@ -1,4 +1,4 @@
-"""JSPEC Testing Module for matchning JSPEC documents for
+"""JSPEC Testing Module for matching JSPEC documents for
 ``JSPECTestMatcherReal``.
 """
 

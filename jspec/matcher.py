@@ -3,9 +3,13 @@
 # TODO add documentation
 
 import re
+import json
 
 from .component import (
+    JSPECCaptureMultiplier,
+    JSPECElement,
     JSPECObject,
+    JSPECObjectPair,
     JSPECArray,
     JSPECString,
     JSPECInt,
@@ -13,8 +17,25 @@ from .component import (
     JSPECBoolean,
     JSPECNull,
     JSPECWildcard,
+    JSPECNegation,
     JSPECConditional,
+    JSPECEvaluation,
+    JSPECObjectPlaceholder,
+    JSPECArrayPlaceholder,
+    JSPECStringPlaceholder,
+    JSPECIntPlaceholder,
+    JSPECRealPlaceholder,
+    JSPECBooleanPlaceholder,
+    JSPECNumberPlaceholder,
     JSPECArrayCaptureGroup,
+    JSPECObjectCaptureGroup,
+    JSPECLogicalOperatorAnd,
+    JSPECLogicalOperatorOr,
+    JSPECLogicalOperatorXor,
+    JSPECInequalityLessThan,
+    JSPECInequalityLessThanOrEqualTo,
+    JSPECInequalityMoreThan,
+    JSPECInequalityMoreThanOrEqualTo,
 )
 
 class Result:
@@ -38,269 +59,342 @@ def GoodMatch():
 def BadMatch(loc, msg):
     return Result(False, loc, msg)
 
-def captures_are_filled(captures):
-    return not any([capture.multiplier > 0 for capture in captures])
-
-def remove_key(d, r):
-    return dict((k, v) for k, v in d.items() if k != r)
-
-def match_object(loc, spec, obj):
-    capture_dict = {}
-    spec_without_captures = {}
-    for k, v in spec.items():
-        if isinstance(k, JSPECObjectCaptureKey) and isinstance(v, JSPECObjectCaptureValue):
-            capture_dict[k] = v
-        else:
-            spec_without_captures[k] = v
-    return match_object_traverse(loc, spec_without_captures, obj, capture_dict)
-
-def match_object_traverse(loc, spec, obj, capture_dict):
-
-    spec_terminated = len(spec) == 0
-    obj_terminated = len(obj) == 0
-    captures_terminated = captures_are_filled(capture_dict.keys())
-
-    if obj_terminated:
-        if not spec_terminated:
-            return BadMatch(loc, "the following jspec keys were unmatched: %s" % ", ".join([str(k) for k in spec.keys()]))
-        if not captures_terminated:
-            return BadMatch(loc, "the following captures have not been fully matched: %s" % capture_dict)
-        return GoodMatch()
-
-    #for obj_key, obj_val in obj.items():
-    #    for capture_key, capture_val in capture_dict.items():
-    #        if (
-    #                bool(match_object_capture(loc, capture_key, capture_val, obj_key, obj_val)) and 
-    #                bool(match_object_traverse(loc, spec, remove_key(obj, obj_key), capture_dict))
-    #            ):
-    #                return GoodMatch()
-    #    for spec_key, spec_val in spec.items():
-    #        if (
-    #                bool(match_element(loc, spec_key, obj_key)) and
-    #                bool(match_element(loc + '.%s' % obj_key, spec_val, obj_val))
-    #            ):
-    #                return match_object_traverse(loc, remove_key(spec, spec_key), remove_key(obj, obj_key), capture_dict)
-
-    #for obj_key, obj_val in obj.items():
-    #    for capture_key, capture_val in capture_dict.items():
-    #        capture_key_elements = set([capture_key.element]) if capture_key.element is not None else capture_key.elements
-    #        for capture_key_element in capture_key_elements:
-    #            capture_key.element = capture_key_element
-    #            capture_val_elements = set([capture_val.element]) if capture_val.element is not None else capture_val.elements
-    #            for capture_val_element in capture_val_elements:
-    #                capture_val.element = capture_val_element
-    #                if (
-    #                        bool(match_object_capture(loc, capture_key, capture_val, obj_key, obj_val)) and 
-    #                        bool(match_object_traverse(loc, spec, remove_key(obj, obj_key), capture_dict))
-    #                ):
-    #                    return GoodMatch()
-
-    for obj_key, obj_val in obj.items():
-        for key, val in capture_dict.items():
-            for split_capture_key in key.split():
-                for split_capture_val in val.split():
-                    split_capture_dict = remove_key(capture_dict, key)
-                    split_capture_dict[split_capture_key] = split_capture_val
-                    if (
-                            bool(match_object_capture(loc, split_capture_key, split_capture_val, obj_key, obj_val)) and 
-                            bool(match_object_traverse(loc, spec, remove_key(obj, obj_key), split_capture_dict))
-                    ):
-                        return GoodMatch()
-
-        for spec_key, spec_val in spec.items():
-            if (
-                    bool(match_element(loc, spec_key, obj_key)) and
-                    bool(match_element(loc + '.%s' % obj_key, spec_val, obj_val))
-                ):
-                    return match_object_traverse(loc, remove_key(spec, spec_key), remove_key(obj, obj_key), capture_dict) 
-
-    return BadMatch(loc, "the following object keys were unmatched: %s" % ", ".join(['"%s"' % k for k in obj.keys()]))
-
-#def match_object_capture(loc, capture_key, capture_val, obj_key, obj_val):
-#    if capture_key.multiplier == 0:
-#        return BadMatch(loc, "exhausted capture")
-#    if len(capture_key.elements) == 0:
-#        return BadMatch(loc, "no elements in capture")
-#    for element in capture_key.elements:
-#        result = match_element(loc, element, obj_key)
-#        if bool(result):
-#            break
-#    else:
-#        return result
-#    for element in capture_val.elements:
-#        result = match_element(loc + '.%s' % obj_key, element, obj_val)
-#        if bool(result):
-#            break
-#    else:
-#        return result
-#    capture_key.multiplier -= 1
-#    capture_val.multiplier -= 1
-#    return result
-
-def match_object_capture(loc, capture_key, capture_val, obj_key, obj_val):
-    if capture_key.multiplier == 0:
-        return BadMatch(loc, "exhausted capture")
-    result = match_element(loc, capture_key.element, obj_key)
-    if not bool(result):
-        return result
-    result = match_element(loc + '.%s' % obj_key, capture_val.element, obj_val)
-    if not bool(result):
-        return result
-    capture_key.multiplier -= 1
-    capture_val.multiplier -= 1
-    return result
-
-def match_array(loc, spec, obj):
-    return match_array_traverse(loc, spec, 0, obj, 0, [])
-
-def match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx, capture_list):
-    
-    spec_terminated = spec_idx >= len(spec_list)
-    obj_terminated = obj_idx >= len(obj_list)
-    captures_terminated = captures_are_filled(capture_list)
-
-    if not spec_terminated:
-        spec = spec_list[spec_idx]
-        if isinstance(spec, JSPECArrayCaptureGroup):
-            capture_list.append(spec)
-            return match_array_traverse(loc, spec_list, spec_idx+1, obj_list, obj_idx, capture_list[:])
-
-    if obj_terminated:
-        if not spec_terminated:
-            return BadMatch(loc, "exhausted array elements for matching jspec elements at index %i" % spec_idx)
-        if not captures_terminated:
-            BadMatch(loc, "the following captures have not been fully matched: %s" % capture_list)
-        return GoodMatch()
-    
-    obj = obj_list[obj_idx]
-
-    #while capture_list:
-    #    if (
-    #            bool(match_array_capture(loc + '[%i]' % obj_idx, capture_list[0], obj)) and 
-    #            bool(match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx+1, capture_list[:]))
-    #        ):
-    #        return GoodMatch()
-    #    capture_list.pop(0)
-
-    #while capture_list:
-    #    elements = set([capture_list[0].element]) if capture_list[0].element is not None else capture_list[0].elements
-    #    for element in elements:
-    #        capture_list[0].element = element
-    #        if (
-    #                bool(match_array_capture(loc + '[%i]' % obj_idx, capture_list[0], obj)) and 
-    #                bool(match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx+1, capture_list[:]))
-    #            ):
-    #            return GoodMatch()
-    #    capture_list.pop(0)
-
-    while capture_list:
-        for capture in capture[0].split():
-            capture_list[0] = capture
-            if (
-                    bool(match_array_capture(loc + '[%i]' % obj_idx, capture, obj)) and 
-                    bool(match_array_traverse(loc, spec_list, spec_idx, obj_list, obj_idx+1, capture_list[:]))
-                ):
-                return GoodMatch()
-        capture_list.pop(0)
-
-    if spec_terminated:
-        return BadMatch(loc, "exhausted jspec elements for matching array at index %i" % obj_idx)
-    result = match_element(loc + '[%i]' % obj_idx, spec, obj)
-    if not bool(result):
-        return result
-    return match_array_traverse(loc, spec_list, spec_idx+1, obj_list, obj_idx+1, capture_list[:])
-
-def match_array_capture(loc, capture, obj):
-    if capture.multiplier == 0:
-        return BadMatch(loc, "exhausted capture")
-    result = match_element(loc, capture.element, obj)
-    if not bool(result):
-        return result
-    capture.multiplier -= 1
-    return result
-
-#def match_array_capture(loc, capture, obj):
-#    if capture.multiplier == 0:
-#        return BadMatch(loc, "exhausted capture")
-#    if len(capture.elements) == 0:
-#        return BadMatch(loc, "no elements in capture")
-#    for element in capture.elements:
-#        result = match_element(loc, element, obj)
-#        if bool(result):
-#            break
-#    else:
-#        return result
-#    capture.multiplier -= 1
-#    return result
-
-def match_string(loc, spec, obj):
-    return GoodMatch() if re.compile(r'%s' % spec).fullmatch(obj) is not None else BadMatch(loc, "regex pattern '%s' failed to match '%s'" % (spec, obj))
-
-def match_int(loc, spec, obj):
-    return GoodMatch() if spec == obj else BadMatch(loc, "expected '%s', got '%s'" % (spec, obj))
-
-def match_real(loc, spec, obj):
-    return GoodMatch() if spec == obj else BadMatch(loc, "expected '%s', got '%s'" % (spec, obj))
-
-def match_boolean(loc, spec, obj):
-    return GoodMatch() if spec == obj else BadMatch(loc, "expected '%s', got '%s'" % (spec, obj))
-
 def match_conditional(loc, spec, obj):
-    for element in spec:
-        result = match_element(loc, element, obj)
-        if bool(result):
+    result = match_element(loc, spec.specification[0], obj)
+    value = bool(result)
+    i = 1
+    while i < len(spec.specification):
+        operator = spec.specification[i]
+        spec = spec.specification[i+1]
+        i += 2
+        result = match_element(loc, spec, obj)
+        if operator.__class__ == JSPECLogicalOperatorAnd:
+            value = value and bool(result)
+        elif operator.__class__ == JSPECLogicalOperatorOr:
+            value = value or bool(result)
+        elif operator.__class__ == JSPECLogicalOperatorXor:
+            value = (value or bool(result)) and not (value and bool(result))
+    if value:
+        return GoodMatch()
+    return BadMatch(loc, "conditional elements %s do not match the element '%s'" % (spec, obj))
+
+def match_evaluation(loc, spec, obj):
+
+    pass
+
+def match_placeholder(loc, spec, obj):
+    if isinstance(spec, JSPECObjectPlaceholder):
+        if isinstance(obj, dict):
+            return GoodMatch()
+        return BadMatch(loc, "")
+    if isinstance(spec, JSPECArrayPlaceholder):
+        if isinstance(obj, list):
+            return GoodMatch()
+        return BadMatch(loc, "")
+    if isinstance(spec, JSPECStringPlaceholder):
+        if isinstance(obj, str):
+            return GoodMatch()
+        return BadMatch(loc, "")
+    if isinstance(spec, JSPECBooleanPlaceholder):
+        if isinstance(obj, bool):
+            return GoodMatch()
+        return BadMatch(loc, "")
+    if isinstance(spec, JSPECIntPlaceholder):
+        if isinstance(obj, int):
+            symbol, value, = spec.entities
+            if isinstance(symbol, JSPECInequalityLessThan) and obj < value:
+                return GoodMatch()
+            elif isinstance(symbol, JSPECInequalityLessThanOrEqualTo) and obj <= value:
+                return GoodMatch()
+            elif isinstance(symbol, JSPECInequalityMoreThan) and obj > value:
+                return GoodMatch()
+            elif isinstance(symbol, JSPECInequalityMoreThanOrEqualTo) and obj >= value:
+                return GoodMatch()
+            return BadMatch(loc, "")
+        return BadMatch(loc, "")
+    if isinstance(spec, JSPECRealPlaceholder):
+        if isinstance(obj, float):
+            symbol, value, = spec.entities
+            if isinstance(symbol, JSPECInequalityLessThan) and obj < value:
+                return GoodMatch()
+            elif isinstance(symbol, JSPECInequalityLessThanOrEqualTo) and obj <= value:
+                return GoodMatch()
+            elif isinstance(symbol, JSPECInequalityMoreThan) and obj > value:
+                return GoodMatch()
+            elif isinstance(symbol, JSPECInequalityMoreThanOrEqualTo) and obj >= value:
+                return GoodMatch()
+            return BadMatch(loc, "")
+        return BadMatch(loc, "")
+    if isinstance(spec, JSPECNumberPlaceholder):
+        if isinstance(obj, (int, float)):
+            symbol, value, = spec.entities
+            if isinstance(symbol, JSPECInequalityLessThan) and obj < value:
+                return GoodMatch()
+            elif isinstance(symbol, JSPECInequalityLessThanOrEqualTo) and obj <= value:
+                return GoodMatch()
+            elif isinstance(symbol, JSPECInequalityMoreThan) and obj > value:
+                return GoodMatch()
+            elif isinstance(symbol, JSPECInequalityMoreThanOrEqualTo) and obj >= value:
+                return GoodMatch()
+            return BadMatch(loc, "")
+        return BadMatch(loc, "")
+    return BadMatch(loc, "")
+
+PYTHON_NATIVE = (
+    dict, 
+    list, 
+    str, 
+    int, 
+    float, 
+    bool,
+)
+
+PLACEHOLDERS = (
+    JSPECObjectPlaceholder,
+    JSPECArrayPlaceholder,
+    JSPECStringPlaceholder,
+    JSPECIntPlaceholder,
+    JSPECRealPlaceholder,
+    JSPECBooleanPlaceholder,
+    JSPECNumberPlaceholder,
+)
+
+def match_negation(loc, spec, obj):
+    element = spec.element
+    result = match_element(loc, element, obj)
+    if bool(result):
+        return BadMatch(loc, "n")
+    return GoodMatch()
+
+def match_object(loc, term, obj):
+
+    bad_results = list()
+
+    exhausted_spec = (
+        all(isinstance(pair, JSPECObjectCaptureGroup) for pair in term)
+        and all((pair.multiplier.minimum == None or pair.multiplier.minimum == 0) for pair in term)
+    )
+    exhausted_obj = len(obj) == 0
+
+    if exhausted_spec:
+        if exhausted_obj:
+            return GoodMatch()
+        return BadMatch(loc, "exhausted JSPEC object, the following JSON keys are unmatched: %s" % ", ".join(['"%s"' % k for k in obj.keys()]))
+    elif exhausted_obj:
+        return BadMatch(loc, "exhausted JSON object, the following JSPEC keys are unmatched: %s" % ", ".join([str(pair.key()) for pair in term]))
+
+    for obj_pair in obj.items():
+        reduced_obj = dict(
+            pair for pair in obj.items() 
+            if pair != obj_pair
+        )
+        for spec_pair in term:
+            if isinstance(spec_pair, JSPECObjectPair):
+                reduced_spec = JSPECObject([
+                    JSPECObjectPair((pair.key(), pair.value())) for pair in term 
+                    if pair != spec_pair
+                ])
+                result = match_object_pair(loc, spec_pair, obj_pair)
+            elif spec_pair.__class__ == JSPECObjectCaptureGroup:
+                reduced_group = JSPECObjectCaptureGroup(
+                    spec_pair.entities,
+                    JSPECCaptureMultiplier(
+                        spec_pair.multiplier.minimum - 1 if spec_pair.multiplier.minimum is not None else None,
+                        spec_pair.multiplier.maximum - 1 if spec_pair.multiplier.maximum is not None else None,
+                    )
+                )
+                reduced_spec = JSPECObject([
+                    (pair if pair != spec_pair else reduced_group) 
+                    for pair in term
+                ])
+                result = match_object_capture_group(loc, spec_pair, obj_pair)
+            if not bool(result):
+                bad_results.append(result)
+                continue
+            return match_object(loc, reduced_spec.term, reduced_obj)
+
+    # TODO add logic to get best bad result
+    return BadMatch(loc, "the following JSON object keys were unmatched: %s" % ", ".join(['"%s"' % k for k in obj.keys()]))
+
+def match_object_pair(loc, spec_pair, obj_pair):
+    key_result = match_element(loc, spec_pair.key(), obj_pair[0])
+    if not bool(key_result):
+        return key_result
+    value_result = match_element(loc + "." + obj_pair[0], spec_pair.value(), obj_pair[1])
+    if not bool(value_result):
+        return value_result
+    return GoodMatch()
+
+def match_object_capture_group(loc, spec_capture_group, obj_pair):
+    result = match_object_pair(loc, spec_capture_group.entities[0], obj_pair)
+    value = bool(result)
+    i = 1
+    while i < len(spec_capture_group.entities):
+        operator = spec_capture_group.entities[i]
+        spec_pair = spec_capture_group.entities[i+1]
+        i += 2
+        result = match_object_pair(loc, spec_pair, obj_pair)
+        if operator.__class__ == JSPECLogicalOperatorAnd:
+            value = value and bool(result)
+        elif operator.__class__ == JSPECLogicalOperatorOr:
+            value = value or bool(result)
+        elif operator.__class__ == JSPECLogicalOperatorXor:
+            value = (value or bool(result)) and not (value and bool(result))
+    if value:
+        return GoodMatch()
+    return BadMatch(loc, "failed capture")
+        
+
+
+def match_array(loc, term, obj):
+    if not isinstance(obj, list):
+        return BadMatch(loc, "expected an array, got '%s'" % json.dumps(obj))
+    return match_array_traverse(loc, term, obj, 0)
+
+def match_array_traverse(loc, term, obj, idx):
+
+    exhausted_spec = (
+        all(isinstance(element, JSPECArrayCaptureGroup) for element in term)
+        and all((pair.multiplier.minimum == None or pair.multiplier.minimum == 0) for pair in term)
+    )
+    exhausted_obj = len(obj) == 0
+
+    if exhausted_spec:
+        if exhausted_obj:
+            return GoodMatch()
+        return BadMatch(loc, "exhausted JSPEC array, no JSPEC element left to match '%s'" % obj[0])
+    elif exhausted_obj:
+        return BadMatch(loc, "exhausted JSON array, no JSON element left to match '%s'" % term[0])
+
+    reduced_obj = obj[1:]
+    if isinstance(term[0], JSPECElement):
+        reduced_spec = term[1:]
+        result = match_element("%s[%s]" % (loc, idx), term[0], obj[0])
+        if not bool(result):
             return result
-    sorted_elements = sorted([str(e) for e in spec])
-    return BadMatch(loc, "conditional elements %s do not match the element '%s'" % (sorted_elements, obj))
+        return match_array_traverse(loc, reduced_spec, reduced_obj, idx+1)
+    elif isinstance(term[0], JSPECArrayCaptureGroup):
+        reduced_group = JSPECArrayCaptureGroup(
+            term[0].entities,
+            JSPECCaptureMultiplier(
+                term[0].multiplier.minimum - 1 if term[0].multiplier.minimum is not None else None,
+                term[0].multiplier.maximum - 1 if term[0].multiplier.maximum is not None else None,
+            )
+        )
+        result = match_array_capture_group(loc, term[0], obj[0])
+        if not bool(result):
+            return result
+        return match_array_traverse(loc, reduced_group, reduced_obj, idx+1)
 
-def match_element(loc, element, obj):
-    spec = element.spec
-    is_placeholder = element.is_placeholder
+    raise ValueError("JSPEC arrays do not support elements of class %s" % term[0].__class__)
+    
+def match_array_capture_group(loc, spec_capture_group, element):
+    result = match_element(loc, spec_capture_group.entities[0], element)
+    value = bool(result)
+    i = 1
+    while i < len(spec_capture_group.entities):
+        operator = spec_capture_group.entities[i]
+        spec_element = spec_capture_group.entities[i+1]
+        i += 2
+        result = match_element(loc, spec_element, element)
+        if operator.__class__ == JSPECLogicalOperatorAnd:
+            value = value and bool(result)
+        elif operator.__class__ == JSPECLogicalOperatorOr:
+            value = value or bool(result)
+        elif operator.__class__ == JSPECLogicalOperatorXor:
+            value = (value or bool(result)) and not (value and bool(result))
+    if value:
+        return GoodMatch()
+    return BadMatch(loc, "failed capture")
 
-    if isinstance(element, JSPECObject):
+
+def match_element(loc, spec, obj):
+    """.
+
+    Args:
+        spec (JSPECElement): The JSPEC element.
+        obj (obj): The python native object.
+
+    """
+    term = spec.term
+
+    if isinstance(spec, JSPECObject):
         if not isinstance(obj, dict):
             return BadMatch(loc, "expected an object")
-        return GoodMatch() if is_placeholder else match_object(loc, spec, obj)
+        return match_object(loc, term, obj)
    
-    if isinstance(element, JSPECArray):
-        if not isinstance(obj, list):
-            return BadMatch(loc, "expected an array")
-        return GoodMatch() if is_placeholder else match_array(loc, spec, obj)
+    if isinstance(spec, JSPECArray):
+        return match_array(loc, term, obj)
     
-    if isinstance(element, JSPECString):
-        if not isinstance(obj, str):
-            return BadMatch(loc, "expected a string")
-        return GoodMatch() if is_placeholder else match_string(loc, spec, obj)
+    if isinstance(spec, JSPECString):
+        return match_string(loc, term, obj)
 
-    if isinstance(element, JSPECInt):
-        if not isinstance(obj, int):
-            return BadMatch(loc, "expected an int")
-        return GoodMatch() if is_placeholder else match_int(loc, spec, obj)
+    if isinstance(spec, JSPECInt):
+        return match_int(loc, term, obj)
 
-    if isinstance(element, JSPECReal):
-        if not isinstance(obj, float):
-            return BadMatch(loc, "expected a real")
-        return GoodMatch() if is_placeholder else match_real(loc, spec, obj)
+    if isinstance(spec, JSPECReal):
+        return match_real(loc, term, obj)
 
-    if isinstance(element, JSPECBoolean):
-        if not isinstance(obj, bool):
-            return BadMatch(loc, "expected a boolean")
-        return GoodMatch() if is_placeholder else match_boolean(loc, spec, obj)
+    if isinstance(spec, JSPECBoolean):
+        return match_boolean(loc, term, obj)
 
-    if isinstance(element, JSPECNull):
-        if obj is not None:
-            return BadMatch(loc, "expected '%s', got '%s'" % (spec, obj))
-        return GoodMatch()  
+    if isinstance(spec, JSPECNull):
+        return match_null(loc, term, obj)  
 
-    if isinstance(element, JSPECWildcard):
-        if not isinstance(obj, (dict, list, str, int, float, bool)) and obj is not None:
-            return BadMatch(loc, "expected a Python native JSON element, not %s" % obj.__class__)
-        return GoodMatch()
+    if isinstance(spec, JSPECWildcard):
+        return match_wildcard(loc, term, obj)
 
-    if isinstance(element, JSPECConditional):
+    if isinstance(spec, JSPECNegation):
+        return match_negation(loc, spec, obj)
+
+    if isinstance(spec, JSPECConditional):
         return match_conditional(loc, spec, obj)
 
-    raise ValueError("JSPEC does not support elements of class %s" % element.__class__)
+    if isinstance(spec, JSPECEvaluation):
+        return match_evaluation(loc, spec, obj)
+
+    if isinstance(spec, PLACEHOLDERS):
+        return match_placeholder(loc, spec, obj)
+
+    raise ValueError("JSPEC does not support elements of class %s" % spec.__class__)
+
+def match_null(loc, term, obj):
+    if obj is not None:
+        return BadMatch(loc, "expected '%s', got '%s'" % (term, json.dumps(obj)))
+    return GoodMatch()
+
+def match_boolean(loc, term, obj):
+    if not isinstance(obj, bool):
+        return BadMatch(loc, "expected a boolean, got '%s'" % json.dumps(obj))
+    if term != obj:
+        return BadMatch(loc, "expected '%s', got '%s'" % (term, json.dumps(obj)))
+    return GoodMatch()
+
+def match_int(loc, term, obj):
+    if not isinstance(obj, int):
+        return BadMatch(loc, "expected a int, got '%s'" % json.dumps(obj))
+    if term != obj:
+        return BadMatch(loc, "expected '%s', got '%s'" % (term, json.dumps(obj)))
+    return GoodMatch()
+
+def match_real(loc, term, obj):
+    if not isinstance(obj, float):
+        return BadMatch(loc, "expected a real, got '%s'" % json.dumps(obj))
+    if term != obj:
+        return BadMatch(loc, "expected '%s', got '%s'" % (term, json.dumps(obj)))
+    return GoodMatch()
+
+def match_string(loc, term, obj):
+    if not isinstance(obj, str):
+        return BadMatch(loc, "expected a string, got '%s'" % json.dumps(obj))
+    if re.compile(r'%s' % term).fullmatch(obj) is None:
+        return BadMatch(loc, "regex pattern '%s' failed to match '%s'" % (term, json.dumps(obj)))
+    return GoodMatch()
+
+def match_wildcard(loc, term, obj):
+    if not isinstance(obj, PYTHON_NATIVE) and obj is not None:
+        return BadMatch(loc, "expected a Python native JSON element, not %s" % obj.__class__)
+    return GoodMatch()
 
 def match(jspec, obj):
     element = jspec.element

@@ -1,4 +1,4 @@
-"""JSPEC Testing Module for matchning JSPEC documents for
+"""JSPEC Testing Module for matching JSPEC documents for
 ``JSPECTestMatcherNull``.
 """
 
@@ -35,7 +35,7 @@ class JSPECTestMatcherNull(JSPECTestMatcher):
                 "name": "Not null",
                 "doc": "null",
                 "obj": False,
-                "want": "At location $ - expected 'None', got 'False'",
+                "want": "At location $ - expected 'None', got 'false'",
             },
         ]
         self._bad_match(test_cases)

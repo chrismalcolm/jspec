@@ -16,22 +16,22 @@ from test.scanner.string import JSPECTestScannerString
 from test.scanner.wildcard import JSPECTestScannerWildcard
 
 # TODO Leaving this out until matcher ready to be tested
-"""
+
 from test.matcher.array import JSPECTestMatcherArray
-from test.matcher.arraycapture import JSPECTestMatcherArrayCapture
+#from test.matcher.arraycapture import JSPECTestMatcherArrayCapture
 from test.matcher.boolean import JSPECTestMatcherBoolean
-from test.matcher.conditional import JSPECTestMatcherConditional
-from test.matcher.evaluation import JSPECTestMatcherEvaluation
+#from test.matcher.conditional import JSPECTestMatcherConditional
+#from test.matcher.evaluation import JSPECTestMatcherEvaluation
 from test.matcher.int import JSPECTestMatcherInt
 from test.matcher.null import JSPECTestMatcherNull
-from test.matcher.negation import JSPECTestMatcherNull
+#from test.matcher.negation import JSPECTestMatcherNull
 from test.matcher.object import JSPECTestMatcherObject
-from test.matcher.objectcapture import JSPECTestMatcherObjectCapture
-from test.matcher.placeholder import JSPECTestMatcherPlaceholder
+#from test.matcher.objectcapture import JSPECTestMatcherObjectCapture
+#from test.matcher.placeholder import JSPECTestMatcherPlaceholder
 from test.matcher.real import JSPECTestMatcherReal
 from test.matcher.string import JSPECTestMatcherString
 from test.matcher.wildcard import JSPECTestMatcherWildcard
-"""
+
 
 if __name__ == "__main__":
     unittest.main()
