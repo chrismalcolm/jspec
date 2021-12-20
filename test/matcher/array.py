@@ -81,7 +81,7 @@ class JSPECTestMatcherArray(JSPECTestMatcher):
                 "name": "Exhausted JSPEC array",
                 "doc": "[1, 2]",
                 "obj": [1, 2, 3],
-                "want": "At location $ - exhausted JSPEC array, no JSPEC element left to match '3'",
+                "want": "At location $[2] - exhausted JSPEC array, no JSPEC term left to match '3'",
             },
         ]
         self._bad_match(test_cases)

@@ -1,4 +1,4 @@
-"""JSPEC Testing Module for matchning JSPEC documents for
+"""JSPEC Testing Module for matching JSPEC documents for
 ``JSPECTestMatcherConditional``.
 """
 
@@ -49,6 +49,16 @@ class JSPECTestMatcherConditional(JSPECTestMatcher):
                 "obj": 465,
             },
             {
+                "name": "Simple conditional (6)",
+                "doc": "(int > 5 & int < 7)",
+                "obj": 6,
+            },
+            {
+                "name": "Simple conditional (7)",
+                "doc": "(int <= 5 ^ int >= 7)",
+                "obj": 8,
+            },
+            {
                 "name": "Embedded",
                 "doc": "(((bool)))",
                 "obj": True,
@@ -67,6 +77,11 @@ class JSPECTestMatcherConditional(JSPECTestMatcher):
                 "name": "Embedded multiple (3)",
                 "doc": '(((bool | ("abc" | 123))))',
                 "obj": 123,
+            },
+            {
+                "name": "Embedded multiple (4)",
+                "doc": '(((int < 7 & (int < 1 |int > 3))))',
+                "obj": 4,
             },
         ]
         test_cases = []

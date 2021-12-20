@@ -141,7 +141,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
                 )
             },
             {
-                "name": "Basic object capture with paris",
+                "name": "Basic object capture with pairs",
                 "doc": '{("a\d":"b")x?,"c":"d"}',
                 "want": JSPEC(
                     JSPECObject({

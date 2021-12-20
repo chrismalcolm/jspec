@@ -50,26 +50,44 @@ class JSPECTestMatcherObject(JSPECTestMatcher):
             {
                 "name": "Incorrect values by unmatched key",
                 "doc": '{"a": 1, "b": 2, "c": 3}',
-                "obj": {"a": 1, "b": 2, "x": 3},
-                "want": 'At location $ - the following JSON object keys were unmatched: "x"',
+                "obj": {"a": 1, "b": 2, "x": 3, "y":4},
+                "want": 'At location $ - failed to match the following JSON pairs: ["x": 3, "y": 4]'
+            },
+            {
+                "name": "Incorrect values by unmatched key (1)",
+                "doc": '{"a": 1, "b": 2, "c": 3}',
+                "obj": {"a": 1, "b": 2, "c": 4},
+                "want": "At location $.c - expected '3', got '4'",
+            },
+            {
+                "name": "Incorrect values by unmatched key (2)",
+                "doc": '{"a": 1, "b": 2, "c": 3}',
+                "obj": {"a": 1, "b": 2, "c": 3, "y":4},
+                "want": 'At location $ - exhausted JSPEC object, failed to match the following JSON pairs: ["y": 4]',
+            },
+            {
+                "name": "Incorrect values by unmatched key (3)",
+                "doc": '{"a": 1, "b": 2, "c": 3}',
+                "obj": {"a": 1, "b": 2, "c": 3, "y":4, "z": 5},
+                "want": 'At location $ - exhausted JSPEC object, failed to match the following JSON pairs: ["y": 4, "z": 5]',
             },
             {
                 "name": "Wrong order embedded",
                 "doc": '{"a": {"b": {"c": 3}}}',
                 "obj": {"a": {"c": {"b": 3}}},
-                "want": 'At location $ - the following JSON object keys were unmatched: "a"',
+                "want": "At location $.a - regex pattern 'b' failed to match '\"c\"'",
             },
             {
-                "name": "Incorrect values by unmatched key",
+                "name": "Incorrect values by unmatched key (1)",
                 "doc": '{"a": 1, "b": 2}',
                 "obj": {"a": 1, "b": 2, "c": 3},
-                "want": "At location $ - exhausted JSPEC object, the following JSON keys are unmatched: \"c\"",
+                "want": "At location $ - exhausted JSPEC object, failed to match the following JSON pairs: [\"c\": 3]",
             },
             {
-                "name": "Incorrect values by unmatched key",
+                "name": "Incorrect values by unmatched key (2)",
                 "doc": '{"a": 1, "b": 2, "c": 3}',
                 "obj": {"a": 1, "b": 2},
-                "want": "At location $ - exhausted JSON object, the following JSPEC keys are unmatched: \"c\"",
+                "want": "At location $ - exhausted JSON object, failed to match the following JSPEC pairs: [\"c\": 3]",
             },
         ]
         self._bad_match(test_cases)

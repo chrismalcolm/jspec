@@ -229,6 +229,31 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
                 )
             },
             {
+                "name": "Multiple Array capture with elements with multiplier and condition",
+                "doc": '[(1 | 2)x?,3, (5 | 4)x?]',
+                "want": JSPEC(
+                    JSPECArray([
+                        JSPECArrayCaptureGroup(
+                            [
+                                JSPECInt(1),
+                                JSPECLogicalOperatorOr(),
+                                JSPECInt(2),
+                            ],
+                            JSPECCaptureMultiplier(),
+                        ),
+                        JSPECInt(3),
+                        JSPECArrayCaptureGroup(
+                            [
+                                JSPECInt(5),
+                                JSPECLogicalOperatorOr(),
+                                JSPECInt(4),
+                            ],
+                            JSPECCaptureMultiplier(),
+                        ),
+                    ]),
+                )
+            },
+            {
                 "name": "Array ellipsis (1)",
                 "doc": '[...]',
                 "want": JSPEC(

@@ -32,7 +32,7 @@ from .component import (
     JSPECArrayEllipsis,
     JSPECObjectEllipsis,
     JSPECCaptureMultiplier,
-    JSPECEvaluation,
+    JSPECMacro,
     JSPECInequalityLessThan,
     JSPECInequalityLessThanOrEqualTo,
     JSPECInequalityMoreThan,
@@ -81,11 +81,11 @@ NUMBER_MATCH = re.compile(r"""
     ([eE][-+]?\d+)?    # exponent, eE followed by a signed digit string""", re.VERBOSE).match
 """_sre.SRE_Pattern: Pattern to match a JSPEC int or real."""
 
-EVALUATION_MATCH = re.compile(r"""
+MACRO_MATCH = re.compile(r"""
     <     # preceded by a opening angled parenthesis
     (.*?) # any character except \n, zero or more times (not greedy)
     >     # terminated by a closing angled parenthesis""", re.VERBOSE).match
-"""_sre.SRE_Pattern: Pattern to match a JSPEC evaluation."""
+"""_sre.SRE_Pattern: Pattern to match a JSPEC macro."""
 
 WHITESPACE_CHARACTERS = ' \t\n\r'
 """string: Whitespace characters."""
@@ -128,7 +128,7 @@ def scan_object(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECObject: The JSPECElement that represents the valid JSPEC object
+        JSPECObject: The JSPECTerm that represents the valid JSPEC object
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC object
 
@@ -283,7 +283,7 @@ def scan_array(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECArray: The JSPECElement that represents the valid JSPEC array
+        JSPECArray: The JSPECTerm that represents the valid JSPEC array
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC array
 
@@ -408,7 +408,7 @@ def scan_string(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECString: The JSPECElement that represents the valid JSPEC string
+        JSPECString: The JSPECTerm that represents the valid JSPEC string
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC string
 
@@ -432,7 +432,7 @@ def scan_number(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECInt/JSPECReal: The JSPECElement that represents the valid JSPEC
+        JSPECInt/JSPECReal: The JSPECTerm that represents the valid JSPEC
             number (i.e int or real)
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC number
@@ -460,7 +460,7 @@ def scan_negation(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECNegation: The JSPECElement that represents the valid JSPEC
+        JSPECNegation: The JSPECTerm that represents the valid JSPEC
             negation
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC negation
@@ -485,7 +485,7 @@ def scan_conditional(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECConditional: The JSPECElement that represents the valid JSPEC
+        JSPECConditional: The JSPECTerm that represents the valid JSPEC
             conditional
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC conditional
@@ -518,29 +518,29 @@ def scan_conditional(doc, idx):
         raise JSPECDecodeError("Expecting conditional termination ')'", doc, idx)
     return JSPECConditional(values), idx + 1
 
-def scan_evaluation(doc, idx):
+def scan_macro(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC evaluation.
+    characters scanned represeting a valid JSPEC macro.
 
     Args:
         doc (str): The JSPEC document.
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECEvaluation: The JSPECElement that represents the valid JSPEC
-            evaluation
+        JSPECMacro: The JSPECTerm that represents the valid JSPEC
+            macro
         int: The index of the character in ``doc`` after the last character
-            from the valid JSPEC evaluation
+            from the valid JSPEC macro
 
     Raises:
-        JSPECDecodeError: Raised if the evaluation scanned cannot represent a
-            valid JSPEC evaluation.
+        JSPECDecodeError: Raised if the macro scanned cannot represent a
+            valid JSPEC macro.
     """
-    m = EVALUATION_MATCH(doc, idx)
+    m = MACRO_MATCH(doc, idx)
     if m is None:
-        raise JSPECDecodeError("Unterminated evaluation", doc, idx)
+        raise JSPECDecodeError("Unterminated macro", doc, idx)
     s, = m.groups()
-    value = JSPECEvaluation(s)
+    value = JSPECMacro(s)
     return value, m.end()
 
 def scan_int_placeholder(doc, idx):
@@ -552,7 +552,7 @@ def scan_int_placeholder(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECIntPlaceholder: The JSPECElement that represents the valid JSPEC
+        JSPECIntPlaceholder: The JSPECTerm that represents the valid JSPEC
             int placeholder.
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC int placeholder.
@@ -585,7 +585,7 @@ def scan_real_placeholder(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECRealPlaceholder: The JSPECElement that represents the valid JSPEC
+        JSPECRealPlaceholder: The JSPECTerm that represents the valid JSPEC
             real placeholder.
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC real placeholder.
@@ -618,7 +618,7 @@ def scan_number_placeholder(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECNumberPlaceholder: The JSPECElement that represents the valid JSPEC
+        JSPECNumberPlaceholder: The JSPECTerm that represents the valid JSPEC
             number placeholder.
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC number placeholder.
@@ -651,7 +651,7 @@ def scan_inequality_symbol(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECInequality: The JSPECElement that represents the valid JSPEC
+        JSPECInequality: The JSPECTerm that represents the valid JSPEC
             inequality symbol.
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC inequality symbol.
@@ -675,7 +675,7 @@ def scan_element(doc, idx):
         idx (int): The starting index for the scan.
 
     Returns:
-        JSPECElement: The JSPECElement that represents the valid JSPEC element
+        JSPECTerm: The JSPECTerm that represents the valid JSPEC element
         int: The index of the character in ``doc`` after the last character
             from the valid JSPEC element
 
@@ -707,7 +707,7 @@ def scan_element(doc, idx):
         return scan_conditional(doc, idx)
 
     if nextchar == '<':
-        return scan_evaluation(doc, idx)
+        return scan_macro(doc, idx)
 
     if nextchar == 't' and doc[idx:idx+4] == 'true':
         return JSPECBoolean(True), idx + 4
