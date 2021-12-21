@@ -197,3 +197,7 @@ Error message must be of the form
 Use words to describe of subject, of what is odes not what it is.
 e.g. capture group terminator, not >
 you should be able to change the symbol for the subject and the error message still makes sense
+
+# TODO add dev deps for this documentation
+coverage run --source=jspec -m unittest test/test.py
+coverage report -m

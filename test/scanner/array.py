@@ -174,5 +174,11 @@ class JSPECTestScannerArray(JSPECTestScanner):
                 "errmsg": "Expecting element in array",
                 "errpos": 4,
             },
+            {
+                "name": "Unterminated array",
+                "doc": '[',
+                "errmsg": "Unterminated array",
+                "errpos": 0,
+            },
         ]
         self._error_match(test_cases)

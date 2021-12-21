@@ -66,9 +66,6 @@ class JSPECDecodeError(ValueError):
         self.lineno = lineno
         self.colno = colno
 
-    def __reduce__(self):
-        return self.__class__, (self.msg, self.doc, self.pos)
-
 STRING_MATCH = re.compile(r"""
     "     # preceded by a double quote
     (.*?) # any character except \n, zero or more times (not greedy)
@@ -140,7 +137,7 @@ def scan_object(doc, idx):
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
 
     if nextchar == '':
-        raise JSPECDecodeError("Unterminated object", doc, idx)
+        raise JSPECDecodeError("Unterminated object", doc, idx-1)
     if nextchar == '}':
         return JSPECObject(pairs), idx + 1
 
@@ -157,7 +154,7 @@ def scan_object(doc, idx):
                 raise JSPECDecodeError("Redundant object ellipsis", doc, idx)
         else:
             if nextchar == 's' and doc[idx:idx+6] == 'string':
-                key, idx = JSPECString("", is_placeholder=True), idx + 6
+                key, idx = JSPECStringPlaceholder(), idx + 6
             else:
                 if nextchar != '"':
                     raise JSPECDecodeError("Expecting property name enclosed in double quotes as key in object pair", doc, idx) 
@@ -204,7 +201,7 @@ def scan_object_capture(doc, idx):
     """
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar == ')':
-        raise JSPECDecodeError("Empty capture", doc, idx)
+        raise JSPECDecodeError("Empty object capture", doc, idx)
     
     entities = list()
     while True:
@@ -295,7 +292,7 @@ def scan_array(doc, idx):
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
 
     if nextchar == '':
-        raise JSPECDecodeError("Unterminated array", doc, idx)
+        raise JSPECDecodeError("Unterminated array", doc, idx-1)
     if nextchar == ']':
         return JSPECArray(values), idx + 1
 

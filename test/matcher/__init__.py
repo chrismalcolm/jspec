@@ -29,3 +29,18 @@ class JSPECTestMatcher(unittest.TestCase):
                 got,
                 msg="(%s) Expected an error to be raised - want: %s, got: %s" %  (name, want, got),
             )
+
+    def _error_match(self, test_cases):
+        for test_case in test_cases:
+            name, spec, obj, errmsg = test_case["name"], test_case["spec"], test_case["obj"], test_case["errmsg"]
+            err = ValueError(errmsg)
+            exc = None
+            try:
+                jspec.matcher.match(spec, obj)
+            except Exception as e:
+                exc = e
+            self.assertEqual(
+                str(err),
+                str(exc),
+                msg="(%s) Expected an error to be raised - want: %s, got: %s" %  (name, err, exc),
+            )

@@ -1,5 +1,4 @@
 # TODO Add documentation here
-# TODO Finish all unit tests
 # TODO Set as version 1.2.0 as beta
 # TODO See how to get github badges
 # TODO deploy as module
@@ -12,18 +11,18 @@ __version__ = "1.1.0"
 
 def _decode(document):
     if not isinstance(document, str):
-        raise TypeError("Object of type %s is not readbale as a JSPEC document" % document.__class__.__name__) 
+        raise TypeError("Expecting a string not %s" % document.__class__)
     return scanner.scan(document)
 
-def _encode(jspec):
-    if not isinstance(jspec, component.JSPEC):
-        raise TypeError("Object of type %s is not JSPEC serializable" % jspec.__class__.__name__)
-    return str(jspec)
+def _encode(spec):
+    if not isinstance(spec, component.JSPEC):
+        raise TypeError("Expecting a JSPEC not %s" % spec.__class__) 
+    return str(spec)
 
-def _match(jspec, obj):
-    if not isinstance(jspec, component.JSPEC):
-        raise TypeError("Object of type %s is not a JSPEC" % obj.__class__.__name__)
-    return matcher.match(jspec, obj)
+def _match(spec, element):
+    if not isinstance(spec, component.JSPEC):
+        raise TypeError("Expecting a JSPEC not %s" % spec.__class__) 
+    return matcher.match(spec, element)
 
 def load(f):
     return loads(f.read())
@@ -31,15 +30,15 @@ def load(f):
 def loads(document):
     return _decode(document)
 
-def dump(obj, f):
-    f.write(dumps(obj))
+def dump(spec, f):
+    f.write(dumps(spec))
 
-def dumps(obj):
-    return _encode(obj)
+def dumps(spec):
+    return _encode(spec)
 
-def check(jspec, obj):
-    return _match(jspec, obj)
+def check(spec, element):
+    return _match(spec, element)
 
-def checks(document, obj):
-    jspec = _decode(document)
-    return _match(jspec, obj)
+def checks(document, element):
+    spec = _decode(document)
+    return _match(spec, element)

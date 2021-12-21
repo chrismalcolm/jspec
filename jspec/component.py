@@ -46,9 +46,6 @@ These standard classes correspond with the basic data types for JSON elements.
 """
 
 class JSPECEntity:
-    
-    def __init__(self):
-        self.string = ""
 
     def __str__(self):
         return self.string
@@ -448,7 +445,7 @@ class JSPECBooleanPlaceholder(JSPECBoolean):
     boolean.
     """
 
-    SERIALIZER = lambda _: "boolean"
+    SERIALIZER = lambda _: "bool"
     """func: Function which returns the placeholder string for JSPEC boolean.
     """
 

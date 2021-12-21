@@ -8,6 +8,7 @@ from jspec.component import (
     JSPECObject,
     JSPECObjectPair,
     JSPECString,
+    JSPECStringPlaceholder,
 )
 
 class JSPECTestScannerObject(JSPECTestScanner):
@@ -31,6 +32,17 @@ class JSPECTestScannerObject(JSPECTestScanner):
                     JSPECObject({
                         JSPECObjectPair(
                             (JSPECString("key"), JSPECString("value"))
+                        ),
+                    }),
+                )
+            },
+            {
+                "name": "Basic object with placeholder",
+                "doc": '{string:"value"}',
+                "want": JSPEC(
+                    JSPECObject({
+                        JSPECObjectPair(
+                            (JSPECStringPlaceholder(), JSPECString("value"))
                         ),
                     }),
                 )
@@ -166,16 +178,22 @@ class JSPECTestScannerObject(JSPECTestScanner):
                 "errpos": 16,
             },
             {
-                "name": "Unterminated object",
+                "name": "Unterminated object (1)",
                 "doc": '{"a":"b"',
                 "errmsg": "Unterminated object",
                 "errpos": 8,
             },
             {
-                "name": "Unterminated object",
+                "name": "Unterminated object (2)",
                 "doc": '{"a":"b"]',
                 "errmsg": "Expecting object pair delimiter ','",
                 "errpos": 8,
+            },
+            {
+                "name": "Unterminated object (3)",
+                "doc": '{',
+                "errmsg": "Unterminated object",
+                "errpos": 0,
             },
         ]
         self._error_match(test_cases)

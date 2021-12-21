@@ -1,5 +1,7 @@
 import unittest
 
+from test.exported.exported import JSPECTestExported
+
 from test.scanner.array import JSPECTestScannerArray
 from test.scanner.arraycapture import JSPECTestScannerArrayCapture
 from test.scanner.boolean import JSPECTestScannerBoolean
@@ -19,8 +21,9 @@ from test.matcher.array import JSPECTestMatcherArray
 from test.matcher.arraycapture import JSPECTestMatcherArrayCapture
 from test.matcher.boolean import JSPECTestMatcherBoolean
 from test.matcher.conditional import JSPECTestMatcherConditional
-from test.matcher.macro import JSPECTestMatcherMacro
+from test.matcher.error import JSPECTestMatcherError
 from test.matcher.int import JSPECTestMatcherInt
+from test.matcher.macro import JSPECTestMatcherMacro
 from test.matcher.null import JSPECTestMatcherNull
 from test.matcher.negation import JSPECTestMatcherNegation
 from test.matcher.object import JSPECTestMatcherObject

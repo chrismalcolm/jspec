@@ -12,7 +12,6 @@ from jspec.component import (
     JSPECString,
     JSPECWildcard,
     JSPECInt,
-    JSPECNull,
     JSPECStringPlaceholder,
     JSPECObjectEllipsis,
     JSPECLogicalOperatorAnd,
@@ -394,6 +393,12 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
                 "doc": '{("a":1)x5-4}',
                 "errmsg": "Minimum for object capture multiplier is larger than the maximum",
                 "errpos": 12,    
+            },
+            {
+                "name": "Empty capture",
+                "doc": '{()x1-4}',
+                "errmsg": "Empty object capture",
+                "errpos": 2,    
             }
         ]
         self._error_match(test_cases)

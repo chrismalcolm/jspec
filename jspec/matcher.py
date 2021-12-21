@@ -63,25 +63,10 @@ class Result:
             and self.capture_metadata[0] == other.capture_metadata[0]
         )
 
-    def __gt__(self, other):
-        if self.capture_metadata[1] != other.capture_metadata[1]:
-            return self.capture_metadata[1] > other.capture_metadata[1]
-        return self.capture_metadata[0] > other.capture_metadata[0]
-
     def __lt__(self, other):
         if self.capture_metadata[1] != other.capture_metadata[1]:
             return self.capture_metadata[1] < other.capture_metadata[1]
         return self.capture_metadata[0] < other.capture_metadata[0]
-
-    def __ge__(self, other):
-        if self.capture_metadata[1] != other.capture_metadata[1]:
-            return self.capture_metadata[1] < other.capture_metadata[1]
-        return self.capture_metadata[0] <= other.capture_metadata[0]
-
-    def __le__(self, other):
-        if self.capture_metadata[1] != other.capture_metadata[1]:
-            return self.capture_metadata[1] < other.capture_metadata[1]
-        return self.capture_metadata[0] <= other.capture_metadata[0]
 
     def errormsg(self):
         if self.res:
@@ -98,13 +83,15 @@ def GoodMatch():
 def BadMatch(loc, msg):
     return Result(False, loc, msg)
 
-def match_conditional(loc, term, element):
-    result = match_element(loc, term.specification[0], element)
+def match_conditional(loc, conditional, element):
+    spec = conditional.spec
+    term = conditional.spec[0]
+    result = match_element(loc, term, element)
     value = bool(result)
     i = 1
-    while i < len(term.specification):
-        operator = term.specification[i]
-        term = term.specification[i+1]
+    while i < len(spec):
+        operator = spec[i]
+        term = spec[i+1]
         i += 2
         result = match_element(loc, term, element)
         if operator.__class__ == JSPECLogicalOperatorAnd:
@@ -115,7 +102,7 @@ def match_conditional(loc, term, element):
             value = (value or bool(result)) and not (value and bool(result))
     if value:
         return GoodMatch()
-    return BadMatch(loc, "conditional elements %s do not match the element '%s'" % (term, element))
+    return BadMatch(loc, "conditional elements %s do not match the element '%s'" % (conditional, element))
 
 
 def match_macro(loc, term, element):
@@ -173,7 +160,7 @@ def match_int_placeholder(loc, term, element):
             return GoodMatch()
         return BadMatch(loc, "expected an int that is more than or equal to '%s', got '%s'" % (value, json.dumps(element)))
 
-    raise ValueError("JSPEC does not support inequalities of class %s" % term.__class__)
+    raise ValueError("JSPEC does not support inequalities of class %s" % symbol.__class__)
 
 def match_real_placeholder(loc, term, element):
     if not isinstance(element, float):
@@ -198,7 +185,7 @@ def match_real_placeholder(loc, term, element):
             return GoodMatch()
         return BadMatch(loc, "expected a real that is more than or equal to '%s', got '%s'" % (value, json.dumps(element)))
 
-    raise ValueError("JSPEC does not support inequalities of class %s" % term.__class__)
+    raise ValueError("JSPEC does not support inequalities of class %s" % symbol.__class__)
 
 def match_number_placeholder(loc, term, element):
     if not isinstance(element, (int, float)):
@@ -223,12 +210,15 @@ def match_number_placeholder(loc, term, element):
             return GoodMatch()
         return BadMatch(loc, "expected a number that is more than or equal to '%s', got '%s'" % (value, json.dumps(element)))
 
-    raise ValueError("JSPEC does not support inequalities of class %s" % term.__class__)
+    raise ValueError("JSPEC does not support inequalities of class %s" % symbol.__class__)
 
 
 def match_object(loc, term, element):
     if not isinstance(element, dict):
         return BadMatch(loc, "expected an object")
+    for spec_pair in term.spec:
+        if not isinstance(spec_pair, (JSPECObjectPair, JSPECObjectCaptureGroup)):
+            raise ValueError("JSPEC objects do not support object paris of class %s" % spec_pair.__class__)
     return match_object_traverse(loc, term, element, 0, 0)
 
 def match_object_traverse(loc, term, element, term_len, element_len):
@@ -255,22 +245,18 @@ def match_object_traverse(loc, term, element, term_len, element_len):
                 bad_matches.append(result)
                 bad_element_pairs.append(element_pair)
                 continue
-            else:
-                if isinstance(spec_pair, JSPECObjectCaptureGroup):
-                    capture = spec_pair
-                    if capture.exhausted():
-                        continue
-                    reduced_capture, result = match_object_capture_group(loc, capture, element_pair, term_len, element_len)
-                    if bool(result):
-                        new_term = JSPECObject(set((p if p != capture else reduced_capture) for p in spec))
-                        new_element = dict(p for p in element.items() if p != element_pair)
-                        result = match_object_traverse(loc, new_term, new_element, term_len+1, element_len+1)
-                        if bool(result):
-                            return result
-                    bad_matches.append(result)
-                    bad_element_pairs.append(element_pair)
-                    continue
-            raise ValueError("JSPEC objects do not support object paris of class %s" % spec_pair.__class__)
+            capture = spec_pair
+            if capture.exhausted():
+                continue
+            reduced_capture, result = match_object_capture_group(loc, capture, element_pair, term_len, element_len)
+            if bool(result):
+                new_term = JSPECObject(set((p if p != capture else reduced_capture) for p in spec))
+                new_element = dict(p for p in element.items() if p != element_pair)
+                result = match_object_traverse(loc, new_term, new_element, term_len+1, element_len+1)
+                if bool(result):
+                    return result
+            bad_matches.append(result)
+            bad_element_pairs.append(element_pair)
 
     bad_matches.sort(reverse=True)
     if len(bad_matches) >= 2 and bad_matches[0] == bad_matches[1]:
@@ -308,6 +294,9 @@ def match_object_capture_group(loc, capture, element_pair, term_len, element_len
 def match_array(loc, term, element):
     if not isinstance(element, list):
         return BadMatch(loc, "expected an array, got '%s'" % json.dumps(element))
+    for spec in term.spec:
+        if not isinstance(spec, (JSPECTerm, JSPECArrayCaptureGroup)):
+            raise ValueError("JSPEC arrays do not support elements of class %s" % spec.__class__)
     return match_array_traverse(loc, term, element, 0, 0)
 
 def match_array_traverse(loc, term, element, term_idx, element_idx):
@@ -328,37 +317,35 @@ def match_array_traverse(loc, term, element, term_idx, element_idx):
         if not bool(result):
             return result
         return match_array_traverse(loc, JSPECArray(spec[1:]), element[1:], term_idx+1, element_idx+1)
-    elif isinstance(spec[0], JSPECArrayCaptureGroup):
-        capture = spec[0]
-        
-        if capture.exhausted():
-            return match_array_traverse(loc, JSPECArray(spec[1:]), element,  term_idx+1, element_idx)
-        
-        if capture.satisfied():
-            best_bad_match = BadMatch(loc, "")
-            reduced_capture, result = match_array_capture_group(loc, capture, element[0], term_idx, element_idx)
-            if bool(result):
-                result = match_array_traverse(loc, JSPECArray(spec[1:]), element[1:], term_idx+1, element_idx+1)
-                if bool(result):
-                    return result
-                best_bad_match = result if best_bad_match < result else best_bad_match
-                result = match_array_traverse(loc, JSPECArray([reduced_capture] + spec[1:]), element[1:], term_idx, element_idx+1)
-                if bool(result):
-                    return result
-                best_bad_match = result if best_bad_match < result else best_bad_match
-            result = match_array_traverse(loc, JSPECArray(spec[1:]), element, term_idx+1, element_idx)
+    
+    capture = spec[0]
+    
+    if capture.exhausted():
+        return match_array_traverse(loc, JSPECArray(spec[1:]), element,  term_idx+1, element_idx)
+    
+    if capture.satisfied():
+        best_bad_match = BadMatch(loc, "")
+        reduced_capture, result = match_array_capture_group(loc, capture, element[0], term_idx, element_idx)
+        if bool(result):
+            result = match_array_traverse(loc, JSPECArray(spec[1:]), element[1:], term_idx+1, element_idx+1)
             if bool(result):
                 return result
             best_bad_match = result if best_bad_match < result else best_bad_match
-            return best_bad_match
-
-        reduced_capture, result = match_array_capture_group(loc, capture, element[0], term_idx, element_idx)
-        if not bool(result):
+            result = match_array_traverse(loc, JSPECArray([reduced_capture] + spec[1:]), element[1:], term_idx, element_idx+1)
+            if bool(result):
+                return result
+            best_bad_match = result if best_bad_match < result else best_bad_match
+        result = match_array_traverse(loc, JSPECArray(spec[1:]), element, term_idx+1, element_idx)
+        if bool(result):
             return result
-        return match_array_traverse(loc, JSPECArray([reduced_capture] + spec[1:]), element[1:], term_idx, element_idx+1)
+        best_bad_match = result if best_bad_match < result else best_bad_match
+        return best_bad_match
 
-    raise ValueError("JSPEC arrays do not support elements of class %s" % spec[0].__class__)
-    
+    reduced_capture, result = match_array_capture_group(loc, capture, element[0], term_idx, element_idx)
+    if not bool(result):
+        return result
+    return match_array_traverse(loc, JSPECArray([reduced_capture] + spec[1:]), element[1:], term_idx, element_idx+1)
+
 def match_array_capture_group(loc, capture, element, term_idx, element_idx):
     result = match_element(loc, capture.entities[0], element)
     value = bool(result)
@@ -441,7 +428,7 @@ def match_element(loc, term, element):
     if isinstance(term, JSPECMacro):
         return match_macro(loc, term, element)
 
-    raise ValueError("JSPEC does not support elements of class %s" % term.__class__)
+    raise ValueError("JSPEC do not support elements of class %s" % term.__class__)
 
 def match_null(loc, term, element):
     if element is not None:

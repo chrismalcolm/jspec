@@ -84,7 +84,6 @@ class JSPECTestMatcherConditional(JSPECTestMatcher):
                 "obj": 4,
             },
         ]
-        test_cases = []
         self._good_match(test_cases)
 
     def test_matcher_conditional_bad(self):
@@ -97,20 +96,19 @@ class JSPECTestMatcherConditional(JSPECTestMatcher):
                 "name": "Single wrong",
                 "doc": "(bool)",
                 "obj": 1,
-                "want": "At location $ - conditional elements ['bool'] do not match the element '1'",
+                "want": "At location $ - conditional elements (bool) do not match the element '1'",
             },
             {
                 "name": "Multiple wrong",
                 "doc": "(string | int | real)",
                 "obj": ["a", 1, 1.1],
-                "want": "At location $ - conditional elements ['int', 'real', 'string'] do not match the element '['a', 1, 1.1]'",
+                "want": "At location $ - conditional elements (string | int | real) do not match the element '['a', 1, 1.1]'",
             },
             {
                 "name": "Embedded wrong",
                 "doc": "(string | int | (1.1 | 2.2 | 3.3))",
                 "obj": ["a", 1, 1.1],
-                "want": "At location $ - conditional elements ['(1.1 | 2.2 | 3.3)', 'int', 'string'] do not match the element '['a', 1, 1.1]'",
+                "want": "At location $ - conditional elements (string | int | (1.1 | 2.2 | 3.3)) do not match the element '['a', 1, 1.1]'"
             },
         ]
-        test_cases = []
         self._bad_match(test_cases)

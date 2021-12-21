@@ -91,6 +91,11 @@ class JSPECTestMatcherObjectCapture(JSPECTestMatcher):
                 "obj": {"a1": "b", "a2": "b", "a3": "b"},
             },
             {
+                "name": "asdad",
+                "doc": '{("a1":"b")x1,("a\d":"b")x2,"c":"d"}',
+                "obj": {"a1": "b", "a2": "b", "a3": "b", "c": "d"},
+            },
+            {
                 "name": "Basic object capture with pairs",
                 "doc": '{("a\d":"b")x?,"c":"d"}',
                 "obj": {"a1": "b", "a2": "b", "a3": "b", "c": "d"},
