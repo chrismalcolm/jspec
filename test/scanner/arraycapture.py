@@ -394,13 +394,13 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             {
                 "name": "Bad element in X",
                 "doc": '[(X)x?]',
-                "errmsg": "Expecting element in array capture",
+                "errmsg": "Expecting JSPEC term in array capture",
                 "errpos": 2,
             },
             {
                 "name": "No value after operator",
                 "doc": '[(1&)x?]',
-                "errmsg": "Expecting element in array capture",
+                "errmsg": "Expecting JSPEC term in array capture",
                 "errpos": 4,
             },
             {
@@ -424,7 +424,7 @@ class JSPECTestScannerArrayCapture(JSPECTestScanner):
             {
                 "name": "4 dots",
                 "doc": '[....]',
-                "errmsg": "Expecting element in array",
+                "errmsg": "Expecting JSPEC term in array",
                 "errpos": 4,
             },
              {

@@ -106,7 +106,7 @@ class JSPECTestScannerString(JSPECTestScanner):
             {
                 "name": "Missing first double quote",
                 "doc": 'field"',
-                "errmsg": "Expecting element",
+                "errmsg": "Expecting JSPEC term",
                 "errpos": 0,
             },
             {
@@ -118,7 +118,7 @@ class JSPECTestScannerString(JSPECTestScanner):
             {
                 "name": "Missing final double quote",
                 "doc": "'field'",
-                "errmsg": "Expecting element",
+                "errmsg": "Expecting JSPEC term",
                 "errpos": 0,
             },
         ]

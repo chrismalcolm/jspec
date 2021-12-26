@@ -355,7 +355,7 @@ class JSPECTestScannerObjectCapture(JSPECTestScanner):
             {
                 "name": "Expecting element value",
                 "doc": '{("a":X)x?}',
-                "errmsg": "Expecting element as value in object capture pair",
+                "errmsg": "Expecting JSPEC term as value in object capture pair",
                 "errpos": 6
             },
             {

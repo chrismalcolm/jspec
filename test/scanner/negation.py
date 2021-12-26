@@ -134,7 +134,7 @@ class JSPECTestScannerNegation(JSPECTestScanner):
             {
                 "name": "No element in negation",
                 "doc": '!',
-                "errmsg": "Expecting element in negation",
+                "errmsg": "Expecting JSPEC term in negation",
                 "errpos": 1,
             },
         ]

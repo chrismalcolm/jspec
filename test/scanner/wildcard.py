@@ -163,7 +163,7 @@ class JSPECTestScannerWildcard(JSPECTestScanner):
               {
                 "name":"Invlaid double wildcard in array",
                 "doc": '[**]',
-                "errmsg": "Expecting element in array",
+                "errmsg": "Expecting JSPEC term in array",
                 "errpos": 2,
             },
             {

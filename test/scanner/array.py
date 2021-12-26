@@ -165,13 +165,13 @@ class JSPECTestScannerArray(JSPECTestScanner):
             {
                 "name": "Unexpected characters",
                 "doc": '[1,2,X]',
-                "errmsg": "Expecting element in array",
+                "errmsg": "Expecting JSPEC term in array",
                 "errpos": 5,
             },
             {
                 "name": "Ill terminated array",
                 "doc": '[1,2)',
-                "errmsg": "Expecting element in array",
+                "errmsg": "Expecting JSPEC term in array",
                 "errpos": 4,
             },
             {

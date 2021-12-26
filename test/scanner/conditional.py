@@ -116,7 +116,7 @@ class JSPECTestScannerConditional(JSPECTestScanner):
             {
                 "name": "Unfinished conditional",
                 "doc": '(1|)',
-                "errmsg": "Expecting element in conditional",
+                "errmsg": "Expecting JSPEC term in conditional",
                 "errpos": 3,
             },
             {

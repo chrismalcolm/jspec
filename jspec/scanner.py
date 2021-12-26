@@ -6,8 +6,8 @@ import re
 
 from .entity import (
     JSPEC,
-    JSPECObjectPair,
     JSPECObject,
+    JSPECObjectPair,
     JSPECArray,
     JSPECString,
     JSPECInt,
@@ -16,27 +16,27 @@ from .entity import (
     JSPECNull,
     JSPECWildcard,
     JSPECNegation,
+    JSPECMacro,
     JSPECConditional,
-    JSPECObjectPlaceholder,
-    JSPECArrayPlaceholder,
-    JSPECStringPlaceholder,
-    JSPECIntPlaceholder,
-    JSPECRealPlaceholder,
-    JSPECBooleanPlaceholder,
-    JSPECNumberPlaceholder,
     JSPECLogicalOperatorAnd,
     JSPECLogicalOperatorOr,
     JSPECLogicalOperatorXor,
+    JSPECObjectPlaceholder,
+    JSPECArrayPlaceholder,
+    JSPECStringPlaceholder,
+    JSPECBooleanPlaceholder,
+    JSPECIntPlaceholder,
+    JSPECRealPlaceholder,
+    JSPECNumberPlaceholder,
+    JSPECInequalityLessThan,
+    JSPECInequalityLessThanOrEqualTo,
+    JSPECInequalityMoreThan,
+    JSPECInequalityMoreThanOrEqualTo,
     JSPECArrayCaptureGroup,
     JSPECObjectCaptureGroup,
     JSPECArrayEllipsis,
     JSPECObjectEllipsis,
     JSPECCaptureMultiplier,
-    JSPECMacro,
-    JSPECInequalityLessThan,
-    JSPECInequalityLessThanOrEqualTo,
-    JSPECInequalityMoreThan,
-    JSPECInequalityMoreThanOrEqualTo,
 )
 
 class JSPECDecodeError(ValueError):
@@ -46,13 +46,6 @@ class JSPECDecodeError(ValueError):
         msg (str): The unformatted error message
         doc (str): The JSPEC document being parsed
         pos (int): The start index of doc where parsing failed
-
-    Attributes:
-        msg (str): The unformatted error message
-        doc (str): The JSPEC document being parsed
-        pos (int): The start index of doc where parsing failed
-        lineno (int): The line corresponding to pos
-        colno (int): The column corresponding to pos
     """
 
     def __init__(self, msg, doc, pos):
@@ -60,11 +53,6 @@ class JSPECDecodeError(ValueError):
         colno = pos - doc.rfind('\n', 0, pos)
         errmsg = '%s: line %d column %d (char %d)' % (msg, lineno, colno, pos)
         ValueError.__init__(self, errmsg)
-        self.msg = msg
-        self.doc = doc
-        self.pos = pos
-        self.lineno = lineno
-        self.colno = colno
 
 STRING_MATCH = re.compile(r"""
     "     # preceded by a double quote
@@ -84,6 +72,12 @@ MACRO_MATCH = re.compile(r"""
     >     # terminated by a closing angled parenthesis""", re.VERBOSE).match
 """_sre.SRE_Pattern: Pattern to match a JSPEC macro."""
 
+MULTIPLIER_MATCH = re.compile(r"""
+    x                    # preceded by an x
+    ([1-9]\d*|\?)        # non-negative integer or ?
+    (?:\-([1-9]\d*|\?))? # hyphen followed by a non-negative integer or ?""", re.VERBOSE).match
+"""_sre.SRE_Pattern: Pattern to match a capture multiplier."""
+
 WHITESPACE_CHARACTERS = ' \t\n\r'
 """string: Whitespace characters."""
 
@@ -91,34 +85,112 @@ WHITESPACE_MATCH = re.compile(r"""
     [ \t\n\r]* # any space, tab, newline or carrage return characters""", re.VERBOSE).match
 """_sre.SRE_Pattern: Pattern to match whitespace."""
 
-MULTIPLIER_MATCH = re.compile(r"""
-    x                    # preceded by an x
-    ([1-9]\d*|\?)        # non-negative integer or ?
-    (?:\-([1-9]\d*|\?))? # hyphen followed by a non-negative integer or ?""", re.VERBOSE).match
-"""_sre.SRE_Pattern: Pattern to match a capture multiplier."""
-
-def skip_any_whitespace(doc, idx):
-    """Iterate through characters in ``doc`` starting from index ``idx`` until
-    a non-whitespace character is reached.
+def scan(doc):
+    """Scan through characters in ``doc``to generate a valid JSPEC instance.
 
     Args:
         doc (str): The JSPEC document.
-        idx (int): The starting index for the iterator.
 
     Returns:
-        str: The first non-whitespace character, starting at index ``idx``
-        int: The index of this character in ``doc``
+        JSPEC: The JSPEC instance that is represented in ``doc``.
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned does not represent a
+            valid JSPEC.
     """
-    nextchar = doc[idx:idx + 1]
-    if nextchar not in WHITESPACE_CHARACTERS:
-        return nextchar, idx
-    idx = WHITESPACE_MATCH(doc, idx).end()
-    nextchar = doc[idx:idx + 1]
-    return nextchar, idx
+    _, start = skip_any_whitespace(doc, 0)
+    try:
+        term, idx = scan_term(doc, start)
+    except StopIteration as err:
+        raise JSPECDecodeError("Expecting JSPEC term", doc, err.value) from None
+    _, end = skip_any_whitespace(doc, idx)
+    if end != len(doc):
+        raise JSPECDecodeError("Extra data", doc, end)
+    result = JSPEC(term)
+    return result
+
+def scan_term(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represent a valid JSPEC term.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECTerm: An instance of the class representing the JSPEC term
+            scanned.
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC term
+
+    Raises:
+        StopIteration: Raised if the string scanned cannot represent a
+            valid JSPEC term.
+    """
+    try:
+        nextchar = doc[idx]
+    except IndexError:
+        raise StopIteration(idx) from None
+
+    if nextchar == '{':
+        return scan_object(doc, idx)
+
+    if nextchar == '[':
+        return scan_array(doc, idx)
+
+    if nextchar == '"':
+        return scan_string(doc, idx)
+
+    if nextchar in "-0123456789":
+        return scan_number(doc, idx)
+
+    if nextchar == 't' and doc[idx:idx+4] == 'true':
+        return JSPECBoolean(True), idx + 4
+    
+    if nextchar == 'f' and doc[idx:idx+5] == 'false':
+        return JSPECBoolean(False), idx + 5
+
+    if nextchar == 'n' and doc[idx:idx+4] == 'null':
+        return JSPECNull(None), idx + 4
+
+    if nextchar == '*':
+        return JSPECWildcard(), idx + 1
+
+    if nextchar == '!':
+        return scan_negation(doc, idx)
+
+    if nextchar == '<':
+        return scan_macro(doc, idx)
+
+    if nextchar == '(':
+        return scan_conditional(doc, idx)
+
+    if nextchar == 'o' and doc[idx:idx+6] == 'object':
+        return JSPECObjectPlaceholder(), idx + 6
+
+    if nextchar == 'a' and doc[idx:idx+5] == 'array':
+        return JSPECArrayPlaceholder(), idx + 5
+
+    if nextchar == 's' and doc[idx:idx+6] == 'string':
+        return JSPECStringPlaceholder(), idx + 6
+
+    if nextchar == 'b' and doc[idx:idx+4] == 'bool':
+        return JSPECBooleanPlaceholder(), idx + 4
+
+    if nextchar == 'i' and doc[idx:idx+3] == 'int':
+        return scan_int_placeholder(doc, idx)
+
+    if nextchar == 'r' and doc[idx:idx+4] == 'real':
+        return scan_real_placeholder(doc, idx)
+
+    if nextchar == 'n' and doc[idx:idx+6] == 'number':
+        return scan_number_placeholder(doc, idx)
+
+    raise StopIteration(idx)
 
 def scan_object(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC object.
+    characters scanned represent a valid JSPEC object.
 
     Args:
         doc (str): The JSPEC document.
@@ -134,8 +206,8 @@ def scan_object(doc, idx):
             valid JSPEC object.
     """
     pairs = set()
+    
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
-
     if nextchar == '':
         raise JSPECDecodeError("Unterminated object", doc, idx-1)
     if nextchar == '}':
@@ -143,7 +215,6 @@ def scan_object(doc, idx):
 
     while True:
         nextchar = doc[idx:idx + 1]
-
         if nextchar == '(':
             pair, idx = scan_object_capture(doc, idx)
             if pair in pairs:
@@ -164,9 +235,9 @@ def scan_object(doc, idx):
                 raise JSPECDecodeError("Expecting key-value delimiter ':' in object", doc, idx)
             _, idx = skip_any_whitespace(doc, idx + 1)
             try:
-                value, idx = scan_element(doc, idx)
+                value, idx = scan_term(doc, idx)
             except StopIteration as err:
-                raise JSPECDecodeError("Expecting element as value in object pair", doc, err.value) from None
+                raise JSPECDecodeError("Expecting JSPEC term as value in object pair", doc, err.value) from None
             pair = JSPECObjectPair((key, value))
             if key in [pair.key() for pair in pairs if isinstance(pair, JSPECObjectPair)]:
                 raise JSPECDecodeError("Repeated object key for pair in object", doc, idx)
@@ -183,7 +254,7 @@ def scan_object(doc, idx):
 
 def scan_object_capture(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC object capture.
+    characters scanned represent a valid JSPEC object capture.
 
     Args:
         doc (str): The JSPEC document.
@@ -204,6 +275,7 @@ def scan_object_capture(doc, idx):
         raise JSPECDecodeError("Empty object capture", doc, idx)
     
     entities = list()
+    
     while True:
         if nextchar == 's' and doc[idx:idx+6] == 'string':
             key, idx = JSPECStringPlaceholder(), idx + 6
@@ -216,12 +288,11 @@ def scan_object_capture(doc, idx):
             raise JSPECDecodeError("Expecting key-value delimiter ':' in object capture", doc, idx)
         nextchar, idx = skip_any_whitespace(doc, idx + 1)
         try:
-            val, idx = scan_element(doc, idx)
+            val, idx = scan_term(doc, idx)
         except StopIteration as err:
-            raise JSPECDecodeError("Expecting element as value in object capture pair", doc, err.value) from None
+            raise JSPECDecodeError("Expecting JSPEC term as value in object capture pair", doc, err.value) from None
         entities.append(JSPECObjectPair((key, val)))
         nextchar, idx = skip_any_whitespace(doc, idx)
-
         if nextchar == '&':
             entities.append(JSPECLogicalOperatorAnd())
         elif nextchar == '|':
@@ -252,7 +323,7 @@ def scan_object_capture(doc, idx):
 
 def scan_object_ellipsis(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC object ellipsis.
+    characters scanned represent a valid JSPEC object ellipsis.
 
     Args:
         doc (str): The JSPEC document.
@@ -273,7 +344,7 @@ def scan_object_ellipsis(doc, idx):
 
 def scan_array(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC array.
+    characters scanned represent a valid JSPEC array.
 
     Args:
         doc (str): The JSPEC document.
@@ -290,23 +361,21 @@ def scan_array(doc, idx):
     """
     values = []
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
-
     if nextchar == '':
         raise JSPECDecodeError("Unterminated array", doc, idx-1)
     if nextchar == ']':
         return JSPECArray(values), idx + 1
 
-    while True:
-        
+    while True:    
         if nextchar == '(':
             value, idx = scan_array_capture(doc, idx)
         elif nextchar == '.':
             value, idx = scan_array_ellipsis(doc, idx)
         else:
             try:
-                value, idx = scan_element(doc, idx)
+                value, idx = scan_term(doc, idx)
             except StopIteration as err:
-                raise JSPECDecodeError("Expecting element in array", doc, err.value) from None
+                raise JSPECDecodeError("Expecting JSPEC term in array", doc, err.value) from None
         if len(values) > 0 and isinstance(value, JSPECArrayCaptureGroup) and value == values[-1]:
             raise JSPECDecodeError("Redundant array capture", doc, idx)
         values.append(value)
@@ -316,12 +385,12 @@ def scan_array(doc, idx):
         if nextchar == '':
             raise JSPECDecodeError("Unterminated array", doc, idx)
         if nextchar != ',':
-            raise JSPECDecodeError("Expecting element in array", doc, idx)
+            raise JSPECDecodeError("Expecting JSPEC term in array", doc, idx)
         nextchar, idx = skip_any_whitespace(doc, idx + 1)
 
 def scan_array_capture(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC array capture.
+    characters scanned represent a valid JSPEC array capture.
 
     Args:
         doc (str): The JSPEC document.
@@ -340,13 +409,15 @@ def scan_array_capture(doc, idx):
     nextchar, idx = skip_any_whitespace(doc, idx + 1)
     if nextchar == ')':
         raise JSPECDecodeError("Empty array capture", doc, idx)
+
     entities = list()
+
     while True:
         try:
-            element, idx = scan_element(doc, idx)
+            term, idx = scan_term(doc, idx)
         except StopIteration as err:
-            raise JSPECDecodeError("Expecting element in array capture", doc, err.value) from None
-        entities.append(element)
+            raise JSPECDecodeError("Expecting JSPEC term in array capture", doc, err.value) from None
+        entities.append(term)
         nextchar, idx = skip_any_whitespace(doc, idx)
         if nextchar == '&':
             entities.append(JSPECLogicalOperatorAnd())
@@ -357,6 +428,7 @@ def scan_array_capture(doc, idx):
         else:
             break
         _, idx = skip_any_whitespace(doc, idx + 1)
+
     if nextchar != ')':
         raise JSPECDecodeError("Expecting array capture termination ')'", doc, idx)
     idx += 1
@@ -377,7 +449,7 @@ def scan_array_capture(doc, idx):
 
 def scan_array_ellipsis(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC array ellipsis.
+    characters scanned represent a valid JSPEC array ellipsis.
 
     Args:
         doc (str): The JSPEC document.
@@ -398,7 +470,7 @@ def scan_array_ellipsis(doc, idx):
 
 def scan_string(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC string.
+    characters scanned represent a valid JSPEC string.
 
     Args:
         doc (str): The JSPEC document.
@@ -422,7 +494,7 @@ def scan_string(doc, idx):
 
 def scan_number(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC number.
+    characters scanned represent a valid JSPEC number.
 
     Args:
         doc (str): The JSPEC document.
@@ -450,7 +522,7 @@ def scan_number(doc, idx):
 
 def scan_negation(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC negation.
+    characters scanned represent a valid JSPEC negation.
 
     Args:
         doc (str): The JSPEC document.
@@ -468,56 +540,14 @@ def scan_negation(doc, idx):
     """
     _, idx = skip_any_whitespace(doc, idx + 1)
     try:
-        element, idx = scan_element(doc, idx)
+        term, idx = scan_term(doc, idx)
     except StopIteration as err:
-        raise JSPECDecodeError("Expecting element in negation", doc, err.value) from None
-    return JSPECNegation(element), idx
-
-def scan_conditional(doc, idx):
-    """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC conditional.
-
-    Args:
-        doc (str): The JSPEC document.
-        idx (int): The starting index for the scan.
-
-    Returns:
-        JSPECConditional: The JSPECTerm that represents the valid JSPEC
-            conditional
-        int: The index of the character in ``doc`` after the last character
-            from the valid JSPEC conditional
-
-    Raises:
-        JSPECDecodeError: Raised if the string scanned cannot represent a
-            valid JSPEC conditional.
-    """
-    nextchar, idx = skip_any_whitespace(doc, idx + 1)
-    if nextchar == ')':
-        raise JSPECDecodeError("Empty conditional", doc, idx)
-    values = list()
-    while True:
-        try:
-            element, idx = scan_element(doc, idx)
-        except StopIteration as err:
-            raise JSPECDecodeError("Expecting element in conditional", doc, err.value) from None
-        values.append(element)
-        nextchar, idx = skip_any_whitespace(doc, idx)
-        if nextchar == '&':
-            values.append(JSPECLogicalOperatorAnd())
-        elif nextchar == '|':
-            values.append(JSPECLogicalOperatorOr())
-        elif nextchar == '^':
-            values.append(JSPECLogicalOperatorXor())
-        else:
-            break
-        _, idx = skip_any_whitespace(doc, idx + 1)
-    if nextchar != ')':
-        raise JSPECDecodeError("Expecting conditional termination ')'", doc, idx)
-    return JSPECConditional(values), idx + 1
+        raise JSPECDecodeError("Expecting JSPEC term in negation", doc, err.value) from None
+    return JSPECNegation(term), idx
 
 def scan_macro(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC macro.
+    characters scanned represent a valid JSPEC macro.
 
     Args:
         doc (str): The JSPEC document.
@@ -540,9 +570,51 @@ def scan_macro(doc, idx):
     value = JSPECMacro(s)
     return value, m.end()
 
+def scan_conditional(doc, idx):
+    """Scan through characters in ``doc`` starting from index ``idx`` until the
+    characters scanned represent a valid JSPEC conditional.
+
+    Args:
+        doc (str): The JSPEC document.
+        idx (int): The starting index for the scan.
+
+    Returns:
+        JSPECConditional: The JSPECTerm that represents the valid JSPEC
+            conditional
+        int: The index of the character in ``doc`` after the last character
+            from the valid JSPEC conditional
+
+    Raises:
+        JSPECDecodeError: Raised if the string scanned cannot represent a
+            valid JSPEC conditional.
+    """
+    nextchar, idx = skip_any_whitespace(doc, idx + 1)
+    if nextchar == ')':
+        raise JSPECDecodeError("Empty conditional", doc, idx)
+    values = list()
+    while True:
+        try:
+            term, idx = scan_term(doc, idx)
+        except StopIteration as err:
+            raise JSPECDecodeError("Expecting JSPEC term in conditional", doc, err.value) from None
+        values.append(term)
+        nextchar, idx = skip_any_whitespace(doc, idx)
+        if nextchar == '&':
+            values.append(JSPECLogicalOperatorAnd())
+        elif nextchar == '|':
+            values.append(JSPECLogicalOperatorOr())
+        elif nextchar == '^':
+            values.append(JSPECLogicalOperatorXor())
+        else:
+            break
+        _, idx = skip_any_whitespace(doc, idx + 1)
+    if nextchar != ')':
+        raise JSPECDecodeError("Expecting conditional termination ')'", doc, idx)
+    return JSPECConditional(values), idx + 1
+
 def scan_int_placeholder(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC int placeholder.
+    characters scanned represent a valid JSPEC int placeholder.
 
     Args:
         doc (str): The JSPEC document.
@@ -575,7 +647,7 @@ def scan_int_placeholder(doc, idx):
 
 def scan_real_placeholder(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC real placeholder.
+    characters scanned represent a valid JSPEC real placeholder.
 
     Args:
         doc (str): The JSPEC document.
@@ -608,7 +680,7 @@ def scan_real_placeholder(doc, idx):
 
 def scan_number_placeholder(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC number placeholder.
+    characters scanned represent a valid JSPEC number placeholder.
 
     Args:
         doc (str): The JSPEC document.
@@ -641,7 +713,7 @@ def scan_number_placeholder(doc, idx):
 
 def scan_inequality_symbol(doc, idx):
     """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC inequality symbol.
+    characters scanned represent a valid JSPEC inequality symbol.
 
     Args:
         doc (str): The JSPEC document.
@@ -662,105 +734,21 @@ def scan_inequality_symbol(doc, idx):
         return JSPECInequalityMoreThanOrEqualTo(), idx + 1
     return JSPECInequalityMoreThan(), idx
 
-
-def scan_element(doc, idx):
-    """Scan through characters in ``doc`` starting from index ``idx`` until the
-    characters scanned represeting a valid JSPEC element.
-
-    Args:
-        doc (str): The JSPEC document.
-        idx (int): The starting index for the scan.
-
-    Returns:
-        JSPECTerm: The JSPECTerm that represents the valid JSPEC element
-        int: The index of the character in ``doc`` after the last character
-            from the valid JSPEC element
-
-    Raises:
-        StopIteration: Raised if the string scanned cannot represent a
-            valid JSPEC element.
-    """
-    try:
-        nextchar = doc[idx]
-    except IndexError:
-        raise StopIteration(idx) from None
-
-    if nextchar == '{':
-        return scan_object(doc, idx)
-
-    if nextchar == '[':
-        return scan_array(doc, idx)
-
-    if nextchar == '"':
-        return scan_string(doc, idx)
-
-    if nextchar in "-0123456789":
-        return scan_number(doc, idx)
-
-    if nextchar == '!':
-        return scan_negation(doc, idx)
-
-    if nextchar == '(':
-        return scan_conditional(doc, idx)
-
-    if nextchar == '<':
-        return scan_macro(doc, idx)
-
-    if nextchar == 't' and doc[idx:idx+4] == 'true':
-        return JSPECBoolean(True), idx + 4
-    
-    if nextchar == 'f' and doc[idx:idx+5] == 'false':
-        return JSPECBoolean(False), idx + 5
-
-    if nextchar == 'n' and doc[idx:idx+4] == 'null':
-        return JSPECNull(None), idx + 4
-
-    if nextchar == '*':
-        return JSPECWildcard(), idx + 1
-
-    if nextchar == 'o' and doc[idx:idx+6] == 'object':
-        return JSPECObjectPlaceholder(), idx + 6
-
-    if nextchar == 'a' and doc[idx:idx+5] == 'array':
-        return JSPECArrayPlaceholder(), idx + 5
-
-    if nextchar == 's' and doc[idx:idx+6] == 'string':
-        return JSPECStringPlaceholder(), idx + 6
-
-    if nextchar == 'i' and doc[idx:idx+3] == 'int':
-        return scan_int_placeholder(doc, idx)
-
-    if nextchar == 'r' and doc[idx:idx+4] == 'real':
-        return scan_real_placeholder(doc, idx)
-
-    if nextchar == 'b' and doc[idx:idx+4] == 'bool':
-        return JSPECBooleanPlaceholder(), idx + 4
-
-    if nextchar == 'n' and doc[idx:idx+6] == 'number':
-        return scan_number_placeholder(doc, idx)
-
-    raise StopIteration(idx)
-
-def scan(doc):
-    """Scan through characters in ``doc``to generate a valid JSPEC instance.
+def skip_any_whitespace(doc, idx):
+    """Iterate through characters in ``doc`` starting from index ``idx`` until
+    a non-whitespace character is reached.
 
     Args:
         doc (str): The JSPEC document.
+        idx (int): The starting index for the iterator.
 
     Returns:
-        JSPEC: The JSPEC instance that represented in ``doc``.
-
-    Raises:
-        JSPECDecodeError: Raised if the string scanned cannot represent a
-            valid JSPEC.
+        str: The first non-whitespace character, starting at index ``idx``
+        int: The index of this character in ``doc``
     """
-    _, start = skip_any_whitespace(doc, 0)
-    try:
-        element, idx = scan_element(doc, start)
-    except StopIteration as err:
-        raise JSPECDecodeError("Expecting element", doc, err.value) from None
-    _, end = skip_any_whitespace(doc, idx)
-    if end != len(doc):
-        raise JSPECDecodeError("Extra data", doc, end)
-    result = JSPEC(element)
-    return result
+    nextchar = doc[idx:idx + 1]
+    if nextchar not in WHITESPACE_CHARACTERS:
+        return nextchar, idx
+    idx = WHITESPACE_MATCH(doc, idx).end()
+    nextchar = doc[idx:idx + 1]
+    return nextchar, idx

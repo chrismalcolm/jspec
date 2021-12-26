@@ -45,8 +45,6 @@ class JSPECEntity:
     Attributes:
         string (str): The serialization of the JSPEC entity
     """
-    def __init__(self):
-        self.string = ""
 
     def __str__(self):
         return self.string
@@ -380,6 +378,28 @@ class JSPECNegation(JSPECTerm):
     exclamation mark.
     """
 
+class JSPECMacro(JSPECTerm):
+    """This class represents a JSPEC macro.
+
+    A JSPEC macro is a variable name which can be exported as a Python native
+    JSON constant during the matching process. These variables are environment
+    variables.
+    
+    A JSON element will match with an instance of this class, provided that it
+    equals the exported Python native JSON constant
+
+    Args:
+        eval_string (string): String of macro variable name.
+    """
+
+    COVERTER = str
+    """func: Converts the ``name`` into a Python string.
+    """
+
+    SERIALIZER = lambda name: "<%s>" % name
+    """func: Returns the macro variable name, enclosed in angled parentheses.
+    """
+
 class JSPECConditional(JSPECTerm):
     """This class represents a JSPEC conditional.
 
@@ -416,26 +436,48 @@ class JSPECConditional(JSPECTerm):
     rounded parentheses.
     """
 
-class JSPECMacro(JSPECTerm):
-    """This class represents a JSPEC macro.
-
-    A JSPEC macro is a variable name which can be exported as a Python native
-    JSON constant during the matching process. These variables are environment
-    variables.
+class JSPECLogicalOperator(JSPECEntity):
+    """This class is the base class that represents a JSPEC logical operator.
     
-    A JSON element will match with an instance of this class, provided that it
-    equals the exported Python native JSON constant
+    A JSPEC logical operator is any logical operator that can be used to
+    construct logical statements.
 
-    Args:
-        eval_string (string): String of macro variable name.
+    Attributes:
+        string (str): The serialization of the logical operator
     """
 
-    COVERTER = str
-    """func: Converts the ``name`` into a Python string.
+    SYMBOL = ""
+    """string: Symbol to represent the logical operation. 
     """
 
-    SERIALIZER = lambda name: "<%s>" % name
-    """func: Returns the macro variable name, enclosed in angled parentheses.
+    def __init__(self):
+        self.string = self.__class__.SYMBOL
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+class JSPECLogicalOperatorAnd(JSPECLogicalOperator):
+    """This class represents a JSPEC AND logical operator.
+    """
+
+    SYMBOL = "&"
+    """string: Symbol for AND operation.
+    """
+
+class JSPECLogicalOperatorOr(JSPECLogicalOperator):
+    """This class represents a JSPEC OR logical operator.
+    """
+
+    SYMBOL = "|"
+    """string: Symbol for OR operation.
+    """
+
+class JSPECLogicalOperatorXor(JSPECLogicalOperator):
+    """This class represents a JSPEC XOR logical operator.
+    """
+
+    SYMBOL = "^"
+    """string: Symbol for XOR operation.
     """
 
 class JSPECObjectPlaceholder(JSPECObject):
@@ -623,50 +665,6 @@ class JSPECInequalityMoreThanOrEqualTo(JSPECInequality):
     """string: Symbol to represent the more than or equal to inequality symbol.
     """
 
-class JSPECLogicalOperator(JSPECEntity):
-    """This class is the base class that represents a JSPEC logical operator.
-    
-    A JSPEC logical operator is any logical operator that can be used to
-    construct logical statements.
-
-    Attributes:
-        string (str): The serialization of the logical operator
-    """
-
-    SYMBOL = ""
-    """string: Symbol to represent the logical operation. 
-    """
-
-    def __init__(self):
-        self.string = self.__class__.SYMBOL
-
-    def __eq__(self, other):
-        return self.__class__ == other.__class__
-
-class JSPECLogicalOperatorAnd(JSPECLogicalOperator):
-    """This class represents a JSPEC AND logical operator.
-    """
-
-    SYMBOL = "&"
-    """string: Symbol for AND operation.
-    """
-
-class JSPECLogicalOperatorOr(JSPECLogicalOperator):
-    """This class represents a JSPEC OR logical operator.
-    """
-
-    SYMBOL = "|"
-    """string: Symbol for OR operation.
-    """
-
-class JSPECLogicalOperatorXor(JSPECLogicalOperator):
-    """This class represents a JSPEC XOR logical operator.
-    """
-
-    SYMBOL = "^"
-    """string: Symbol for XOR operation.
-    """
-
 class JSPECCapture(JSPECEntity):
     """This class represents a JSPEC capture.
     
@@ -849,7 +847,6 @@ class JSPECObjectCaptureGroup(JSPECCapture):
     """func: Returns the key-value pairs and operators alternating, enclosed in
     round parentheses, with a optional x and multiplier.
     """
-
 
 class JSPECArrayEllipsis(JSPECArrayCaptureGroup):
     """This class represents a JSPEC array ellipsis.

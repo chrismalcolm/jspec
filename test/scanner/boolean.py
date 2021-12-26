@@ -70,13 +70,13 @@ class JSPECTestScannerBoolean(JSPECTestScanner):
             {
                 "name": "Capital True boolean",
                 "doc": 'True',
-                "errmsg": "Expecting element",
+                "errmsg": "Expecting JSPEC term",
                 "errpos": 0,
             },
             {
                 "name": "Capital False boolean",
                 "doc": 'False',
-                "errmsg": "Expecting element",
+                "errmsg": "Expecting JSPEC term",
                 "errpos": 0,
             },
         ]

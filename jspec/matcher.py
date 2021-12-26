@@ -8,7 +8,6 @@ import os
 import re
 
 from .entity import (
-    JSPECCaptureMultiplier,
     JSPECTerm,
     JSPECObject,
     JSPECObjectPair,
@@ -20,8 +19,11 @@ from .entity import (
     JSPECNull,
     JSPECWildcard,
     JSPECNegation,
-    JSPECConditional,
     JSPECMacro,
+    JSPECConditional,
+    JSPECLogicalOperatorAnd,
+    JSPECLogicalOperatorOr,
+    JSPECLogicalOperatorXor,
     JSPECObjectPlaceholder,
     JSPECArrayPlaceholder,
     JSPECStringPlaceholder,
@@ -29,15 +31,12 @@ from .entity import (
     JSPECRealPlaceholder,
     JSPECBooleanPlaceholder,
     JSPECNumberPlaceholder,
-    JSPECArrayCaptureGroup,
-    JSPECObjectCaptureGroup,
-    JSPECLogicalOperatorAnd,
-    JSPECLogicalOperatorOr,
-    JSPECLogicalOperatorXor,
     JSPECInequalityLessThan,
     JSPECInequalityLessThanOrEqualTo,
     JSPECInequalityMoreThan,
     JSPECInequalityMoreThanOrEqualTo,
+    JSPECArrayCaptureGroup,
+    JSPECObjectCaptureGroup,
 )
 
 PYTHON_NATIVE = (

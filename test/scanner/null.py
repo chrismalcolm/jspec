@@ -56,13 +56,13 @@ class JSPECTestScannerNull(JSPECTestScanner):
             {
                 "name": "Capital null",
                 "doc": 'Null',
-                "errmsg": "Expecting element",
+                "errmsg": "Expecting JSPEC term",
                 "errpos": 0,
             },
             {
                 "name": "Python None",
                 "doc": 'None',
-                "errmsg": "Expecting element",
+                "errmsg": "Expecting JSPEC term",
                 "errpos": 0,
             },
         ]

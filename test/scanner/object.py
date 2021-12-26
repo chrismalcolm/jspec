@@ -168,7 +168,7 @@ class JSPECTestScannerObject(JSPECTestScanner):
             {
                 "name": "Expected colon",
                 "doc": '{"a":}',
-                "errmsg": "Expecting element as value in object pair",
+                "errmsg": "Expecting JSPEC term as value in object pair",
                 "errpos": 5,
             },
             {
