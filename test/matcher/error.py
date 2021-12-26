@@ -2,7 +2,7 @@
 """
 
 from test.matcher import JSPECTestMatcher
-from jspec.component import (
+from jspec.entity import (
     JSPEC, 
     JSPECObject,
     JSPECArray,

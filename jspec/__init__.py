@@ -5,7 +5,7 @@
 
 from . import scanner
 from . import matcher
-from . import component
+from . import entity
 
 __version__ = "1.1.0"
 
@@ -15,12 +15,12 @@ def _decode(document):
     return scanner.scan(document)
 
 def _encode(spec):
-    if not isinstance(spec, component.JSPEC):
+    if not isinstance(spec, entity.JSPEC):
         raise TypeError("Expecting a JSPEC not %s" % spec.__class__) 
     return str(spec)
 
 def _match(spec, element):
-    if not isinstance(spec, component.JSPEC):
+    if not isinstance(spec, entity.JSPEC):
         raise TypeError("Expecting a JSPEC not %s" % spec.__class__) 
     return matcher.match(spec, element)
 

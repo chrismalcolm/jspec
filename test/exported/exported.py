@@ -1,7 +1,7 @@
 import unittest
 import jspec
 
-from jspec.component import (
+from jspec.entity import (
     JSPEC, 
     JSPECObject,
     JSPECObjectPair,

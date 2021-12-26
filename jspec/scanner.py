@@ -4,7 +4,7 @@
 
 import re
 
-from .component import (
+from .entity import (
     JSPEC,
     JSPECObjectPair,
     JSPECObject,

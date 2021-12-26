@@ -1,10 +1,13 @@
+"""Module for 
+"""
+
 # TODO add documentation
 
 import json
 import os
 import re
 
-from .component import (
+from .entity import (
     JSPECCaptureMultiplier,
     JSPECTerm,
     JSPECObject,
@@ -475,5 +478,5 @@ def match_negation(loc, term, element):
     return GoodMatch()
 
 def match(spec, element):
-    result = match_element('$', spec.term, element)
+    result = match_element('$', spec.base, element)
     return bool(result), result.errormsg()

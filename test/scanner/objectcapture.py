@@ -4,7 +4,7 @@
 """
 
 from test.scanner import JSPECTestScanner
-from jspec.component import (
+from jspec.entity import (
     JSPEC,
     JSPECObjectPair,
     JSPECObject,
