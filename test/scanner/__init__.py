@@ -5,7 +5,7 @@ from jspec.scanner import JSPECDecodeError
 class JSPECTestScanner(unittest.TestCase):
     """Base Class for testing the behaviour of the ``jspec.scanner`` module.
 
-    All unit tests classes for the  ``jspec.scanner`` module should inherit
+    All unit tests classes for the ``jspec.scanner`` module should inherit
     from this class and use the methods below to run different types of test
     cases.
     """
@@ -14,7 +14,7 @@ class JSPECTestScanner(unittest.TestCase):
         """Run test cases expecting a good match.
 
         Each test case contains a JSPEC document and an expected JSPEC
-        output. The JSPEC document the a string to be interpreted as a JSPEC.
+        output. The JSPEC document is a string to be interpreted as a JSPEC.
         The expected JSPEC output is a JSPEC instance which we expect the
         ``jspec.scanner.scan`` to generate from scanning the JSPEC document.
 
@@ -22,17 +22,21 @@ class JSPECTestScanner(unittest.TestCase):
             test_cases (list): The test cases, in the following format
                 [
                     {
-                        "doc": `JSPEC_Document_1`,
-                        "want": `Expected_JSPEC_output 1`
+                        "name": <TEST_NAME_1>,
+                        "doc": <JSPEC_DOCUMENT_1>,
+                        "want": <EXPECTED_JSPEC_OUTPUT_1>
                     },
                     {
-                        "doc": `JSPEC_Document_2`,
-                        "want": `Expected_JSPEC_output_2`
+                        "name": <TEST_NAME_2>,
+                        "doc": <JSPEC_DOCUMENT_2>,
+                        "want": <EXPECTED_JSPEC_OUTPUT_2>
                     },
                     ...
                 ]
-                JSPEC_Document_X is the JSPEC document for test case X
-                Expected_JSPEC_output_X is the output for test case X
+                where  TEST_NAME_X is the name for the test case X,
+                JSPEC_DOCUMENT_X is the JSPEC document for test case X and 
+                EXPECTED_JSPEC_OUTPUT_X is the expected output for test
+                case X.
         """
         for test_case in test_cases:
             name, doc, want = test_case["name"], test_case["doc"], test_case["want"]
@@ -56,17 +60,21 @@ class JSPECTestScanner(unittest.TestCase):
             test_cases (list): The test cases, in the following format
                 [
                     {
-                        "doc": `JSPEC_Document_1`,
-                        "notwant": `Unexpected_JSPEC_output_1`
+                        "name": <TEST_NAME_1>,
+                        "doc": <JSPEC_DOCUMENT_1>,
+                        "notwant": <UNEXPECTED_JSPEC_OUTPUT_1>
                     },
                     {
-                        "doc": `JSPEC_Document_2`,
-                        "notwant": `Unexpected_JSPEC_output_2`
+                        "name": <TEST_NAME_2>,
+                        "doc": <JSPEC_DOCUMENT_2>,
+                        "notwant": <UNEXPECTED_JSPEC_OUTPUT_2>
                     },
                     ...
                 ]
-                JSPEC_Document_X is the JSPEC document for test case X
-                Unexpected_JSPEC_output_X is not the output for test case X
+                where  TEST_NAME_X is the name for the test case X,
+                JSPEC_DOCUMENT_X is the JSPEC document for test case X and 
+                UNEXPECTED_JSPEC_OUTPUT_X is the unexpected output for test
+                case X.
         """
         for test_case in test_cases:
             name, doc, want = test_case["name"], test_case["doc"], test_case["notwant"]
@@ -91,21 +99,24 @@ class JSPECTestScanner(unittest.TestCase):
             test_cases (list): The test cases, in the following format
                 [
                     {
-                        "doc": `JSPEC_Document_1`,
-                        "errmsg": `Expected_errmsg_1`,
-                        "errpos": `Expected_pos_1`
+                        "name": <TEST_NAME_1>,
+                        "doc": `JSPEC_DOCUMENT_1>,
+                        "errmsg": `EXPECTED_ERRMSG_1>,
+                        "errpos": `EXPECTED_POS_1>
                     },
                     {
-                        "doc": `JSPEC_Document_2`,
-                        "errmsg": `Expected_errmsg_2`,
-                        "errpos": `Expected_pos_2`
+                        "name": <TEST_NAME_2>,
+                        "doc": <JSPEC_DOCUMENT_2>,
+                        "errmsg": <EXPECTED_ERRMSG_2>,
+                        "errpos": <EXPECTED_POS_2>
                     },
                     ...
                 ]
-                JSPEC_Document_X is the JSPEC document for test case X
-                Expected_errmsg_X is the expected err.errmsg for test case X
-                Expected_errmsg_X is the expected err.pos for test case X
-                Where err is the raised JSPECDecodeError
+                where  TEST_NAME_X is the name for the test case X, 
+                JSPEC_DOCUMENT_X is the JSPEC document for test case X,
+                EXPECTED_ERRMSG_X is the expected err.errmsg for test case X
+                and EXPECTED_POS is the expected err.pos for test case X, where
+                err is the raised JSPECDecodeError.
         """
         for test_case in test_cases:
             name, doc, errmsg, errpos = test_case["name"], test_case["doc"], test_case["errmsg"], test_case["errpos"]
