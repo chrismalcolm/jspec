@@ -1,6 +1,5 @@
 """Module for scanning JSPEC documents.
 """
-#TODO finish documentation
 
 import re
 
@@ -630,10 +629,10 @@ def scan_int_placeholder(doc, idx):
         JSPECDecodeError: Raised if the int placeholder scanned cannot
             represent a valid JSPEC int placeholder.
     """
-    nextchar, newidx = skip_any_whitespace(doc, idx + 3)
+    nextchar, new_idx = skip_any_whitespace(doc, idx + 3)
     if nextchar != "<" and nextchar != ">":
         return JSPECIntPlaceholder(None), idx + 3
-    symbol, idx = scan_inequality_symbol(doc, newidx)
+    symbol, idx = scan_inequality_symbol(doc, new_idx)
     _, idx = skip_any_whitespace(doc, idx + 1)
     m = NUMBER_MATCH(doc, idx)
     if m is None:
@@ -663,10 +662,10 @@ def scan_real_placeholder(doc, idx):
         JSPECDecodeError: Raised if the real placeholder scanned cannot
             represent a valid JSPEC real placeholder.
     """
-    nextchar, newidx = skip_any_whitespace(doc, idx + 4)
+    nextchar, new_idx = skip_any_whitespace(doc, idx + 4)
     if nextchar != "<" and nextchar != ">":
         return JSPECRealPlaceholder(None), idx + 4
-    symbol, idx = scan_inequality_symbol(doc, newidx)
+    symbol, idx = scan_inequality_symbol(doc, new_idx)
     _, idx = skip_any_whitespace(doc, idx + 1)
     m = NUMBER_MATCH(doc, idx)
     if m is None:
@@ -696,10 +695,10 @@ def scan_number_placeholder(doc, idx):
         JSPECDecodeError: Raised if the number placeholder scanned cannot
             represent a valid JSPEC number placeholder.
     """
-    nextchar, newidx = skip_any_whitespace(doc, idx + 6)
+    nextchar, new_idx = skip_any_whitespace(doc, idx + 6)
     if nextchar != "<" and nextchar != ">":
         return JSPECNumberPlaceholder(None), idx + 6
-    symbol, idx = scan_inequality_symbol(doc, newidx)
+    symbol, idx = scan_inequality_symbol(doc, new_idx)
     _, idx = skip_any_whitespace(doc, idx + 1)
     m = NUMBER_MATCH(doc, idx)
     if m is None:
