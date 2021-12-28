@@ -128,7 +128,10 @@ def match(spec, element):
         str: Details on why the match failed if it was a bad match, otherwise
             an empty string.
     """
-    result = match_element('$', spec.base, element)
+    try:
+        result = match_element('$', spec.base, element)
+    except ValueError as vle:
+        raise vle
     return bool(result), result.reason()
 
 def match_element(loc, term, element):

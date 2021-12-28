@@ -748,7 +748,8 @@ def scan_inequality_symbol(doc, idx):
 
 def skip_any_whitespace(doc, idx):
     """Iterate through characters in ``doc`` starting from index ``idx`` until
-    a non-whitespace character is reached.
+    a non-whitespace character is reached. This iteration will also attempt to
+    ignore comments.
 
     Args:
         doc (str): The JSPEC document.
@@ -757,6 +758,9 @@ def skip_any_whitespace(doc, idx):
     Returns:
         str: The first non-whitespace character, starting at index ``idx``
         int: The index of this character in ``doc``
+
+    Raises:
+        JSPECDecodeError: Raised if an unterminated comment is detected.
     """
     nextchar = doc[idx:idx + 1]
     if nextchar not in WHITESPACE_CHARACTERS:

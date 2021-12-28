@@ -143,6 +143,9 @@ r1 result: True r1 message: None
 r2 result: False r2 message: Cannot match key regex at position '$'. Want other, same_\w+. Got same_word, extra
 ```
 
+# TODO Set as version 1.2.0 as beta
+# TODO See how to get github badges
+# TODO deploy as module
 # new stuff
 
 to run test
