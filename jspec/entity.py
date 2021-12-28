@@ -121,7 +121,7 @@ class JSPECObject(JSPECTerm):
     """func: Convert the ``pairs`` into ``self.spec``.
     """
 
-    SERIALIZER = lambda pairs: '{%s}' % ', '.join([str(pair) for pair in pairs])
+    SERIALIZER = lambda pairs: '{%s}' % ', '.join(sorted([str(pair) for pair in pairs]))
     """func: Serialize the ``pairs`` into a comma separated list, enclosed by
     curly parentheses.
     """

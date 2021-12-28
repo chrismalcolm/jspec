@@ -5,6 +5,7 @@ from test.exported.exported import JSPECTestExported
 from test.scanner.array import JSPECTestScannerArray
 from test.scanner.arraycapture import JSPECTestScannerArrayCapture
 from test.scanner.boolean import JSPECTestScannerBoolean
+from test.scanner.comment import JSPECTestScannerComment
 from test.scanner.conditional import JSPECTestScannerConditional
 from test.scanner.macro import JSPECTestScannerMacro
 from test.scanner.int import JSPECTestScannerInt

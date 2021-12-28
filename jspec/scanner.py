@@ -77,12 +77,25 @@ MULTIPLIER_MATCH = re.compile(r"""
     (?:\-([1-9]\d*|\?))? # hyphen followed by a non-negative integer or ?""", re.VERBOSE).match
 """_sre.SRE_Pattern: Pattern to match a capture multiplier."""
 
-WHITESPACE_CHARACTERS = ' \t\n\r'
+WHITESPACE_CHARACTERS = ' \t\n\r\/'
 """string: Whitespace characters."""
 
 WHITESPACE_MATCH = re.compile(r"""
     [ \t\n\r]* # any space, tab, newline or carrage return characters""", re.VERBOSE).match
 """_sre.SRE_Pattern: Pattern to match whitespace."""
+
+COMMENT_MATCH = re.compile(r"""
+    \/\/     # preceded by a double forward slash
+    .*       # any character except \n, zero or more times
+    (?:\n|$) # terminated by the end of the string or a newline character""", re.VERBOSE).match
+"""_sre.SRE_Pattern: Pattern to match a single line comment."""
+
+MULTILINE_COMMENT_MATCH = re.compile(r"""
+    \/\*          # preceded by a forward slash and an asterisk
+    (?:(?:.|\n)*?) # any character zero or more times
+    \*\/          # terminated by an asterisk and a forward slash""", re.VERBOSE).match
+"""_sre.SRE_Pattern: Pattern to match a multi-line comment."""
+
 
 def scan(doc):
     """Scan through characters in ``doc``to generate a valid JSPEC instance.
@@ -748,6 +761,16 @@ def skip_any_whitespace(doc, idx):
     nextchar = doc[idx:idx + 1]
     if nextchar not in WHITESPACE_CHARACTERS:
         return nextchar, idx
-    idx = WHITESPACE_MATCH(doc, idx).end()
+    while True:
+        idx = WHITESPACE_MATCH(doc, idx).end()
+        if doc[idx:idx + 2] == '//':
+            idx = COMMENT_MATCH(doc, idx).end()
+            continue
+        if doc[idx:idx + 2] != '/*':
+            break
+        m = MULTILINE_COMMENT_MATCH(doc, idx)
+        if m is None:
+            raise JSPECDecodeError("Unterminated comment", doc, idx)
+        idx = m.end()
     nextchar = doc[idx:idx + 1]
     return nextchar, idx
