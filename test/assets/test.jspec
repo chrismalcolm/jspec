@@ -1,0 +1,13 @@
+{
+    "id": <MY_ID>,
+    "timestamp": number, 
+    "data": [
+        (
+            {
+                "longitude": real,
+                "latitude": real
+            }
+        )x?
+    ],
+    ...
+}
