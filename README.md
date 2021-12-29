@@ -1,6 +1,6 @@
-# JSPEC
+# JSPEC 
+![check-code-coverage](https://img.shields.io/badge/code--coverage-100%-brightgreen)
 
-## Sumary
 A JSPEC (**J**son **SPEC**ification) is a tool that can used to check the elements and structure of a JSON. JSPEC has it's own class **jspec.JSPEC** and its own file format, which use the **.jspec** extension. 
 
 ## Basic Usage
@@ -265,7 +265,6 @@ A JSPEC array ellipsis will match with any amount of consecutive elements in an 
 | `[1,...]` | `[2,1] ` | Bad Match | Ellipsis cannot match anything |
 
 ```
-# TODO Set as version 1.2.0 as beta
 # TODO See how to get github badges
 # TODO deploy as module
 ```
@@ -279,3 +278,7 @@ coverage run --source=jspec -m unittest test/test.py
 # Get the coverage report
 coverage report -m
 ```
+
+coverage run --source=jspec -m unittest test/test.py
+coverage report -m > test/coverage/coverage.txt
+coverage json -o test/coverage/coverage.json
