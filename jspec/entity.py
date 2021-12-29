@@ -100,10 +100,10 @@ class JSPECTerm(JSPECEntity):
 class JSPECObject(JSPECTerm):
     """This class represents a JSPEC object.
 
-    A JSPEC object is a set of JSPEC pairs and JSPEC object captures.
+    A JSPEC object is a set of JSPEC object pairs and JSPEC object captures.
 
     A JSON object will match with an instance of this class, provided it can
-    match all the JSPEC pairs and satisfy all JSPEC object captures.
+    match all the JSPEC object pairs and satisfy all JSPEC object captures.
 
     Args:
         value (set): set of the form:
@@ -386,7 +386,7 @@ class JSPECMacro(JSPECTerm):
     variables.
     
     A JSON element will match with an instance of this class, provided that it
-    equals the exported Python native JSON constant
+    equals the exported Python native JSON constant.
 
     Args:
         eval_string (string): String of macro variable name.
@@ -784,8 +784,8 @@ class JSPECCaptureMultiplier(JSPECEntity):
 class JSPECArrayCaptureGroup(JSPECCapture):
     """This class represents a JSPEC array capture.
 
-    It is a list of JSPEC terms and logical operators which form a logical
-    statement. It also has an optional minimum and maximum.
+    It is a list of JSPEC terms and JSPEC logical operators which form a
+    logical statement. It also has an optional minimum and maximum.
     
     A group of JSON elements will match with an instance of this type, provided
     that each element satisfies the logical statement of JSPEC terms and JSPEC

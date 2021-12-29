@@ -1,206 +1,191 @@
-# Jspec
-Jspec is a tool that can be used to check the regex and structure of JSON. This can be done by composing a .jspec file, generating a JSpec object and using it to return whether the .json file adheres to the regex and structure defined in the .jspec file.
+# JSPEC
 
-## What is a .jspec file
-A .jspec file is a document which outlines the desired regex and structure for .json files. It's format adheres to normal JSON rules, with the addition of regex, ellipsis substitution and ellipsis templating. Below is a description of all the addition rules which apply to JSPEC and an example of a .jspec file and matching .json file.
+## Sumary
+A JSPEC (**J**son **SPEC**ification) is a tool that can used to check the elements and structure of a JSON. JSPEC has it's own class **jspec.JSPEC** and its own file format, which use the **.jspec** extension. 
 
-### Regex
----
-In order for a JSPEC to match a JSON, the JSON has to satify all the regex conditions in the JSPEC. Regex can be used to match with elements, keys and values. They cannot be used to match brackets for arrays or objects.
+## Basic Usage
+A specification can be defined using a JSPEC file or a string. Using the **jspec.load** or **jspec.loads** methods respectively, this can produce a **jspec.JSPEC** instance. This instance can also be converted back to a JSPEC file or string, using the **jspec.dump** or **jspec.dumps** methods respectively. To check a JSON against a JSPEC, use the 
+**jspec.check** to check using a **jspec.JSPEC** instance, or use the **jspec.checks** to check using a string. Any JSON used for these two methods must be in a Python native format, which can be achieved using the **json.loads** method.
 
-| JSPEC snippet | Match example |
-|-|-|
-| `["\w", "\d", "b", 2]` | `["a", 1, "b", 2]` |
-| `{"\w+": {"id-\d{4}": "green"}}` | `{"word": {"id-1256": "green"}}` |
-| `{"timestamp": ["\d+", "\d+"], "e-[A-Za-z]{6}": "\d"}` | `{"timestamp": [1200, 3600], "e-ArHqzL": 4}` |
-
-### Ellipsis substitution
----
-Using an ellipsis in a JSPEC array will instruct the JSPEC interpreter to ignore all elements, arrays or objects in that place. If necessary, commas need to be placed before or after the ellipsis. Similarly, using a ellipsis in a JSPEC object will instruct the JSPEC interpreter to ignore all additional key-value pairs in that object. If necessary, commas need to be placed before or after the ellipsis.
-
-| JSPEC snippet | Match example |
-|-|-|
-| `[1, 2, 3, ... ]` | `[1, 2, 3, 4, 5]` |
-| `[ ... ,"d" ,"e"]` | `["a", "b", "c", "d", "e"]` |
-| `[6, ... , 9, 10]` | `[6, 7, 8, 9, 10]` |
-| `["a", ... ,"c", "d", ... "g"]` | `["a", "b", "c", "d", "e", "f", "g"]`|
-| `[ ... ]` | `[1, 2, 3, "x", "y", "z"]` |
-| `["\d+", ... ,"\w+", ... , [1, 2, "\d"]]` | `[23, 8, [4, 5], "red", "green", "blue", [1, 2, 5]]` |
-| `{"a": 1, "b": 2, "c": 3, ... }` | `{"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}` |
-| `{ ...,  "y": 25, "z": 26}` | `{"w": 23, "x": 24, "y": 25, "z": 26}` |
-| `{ "a": 1,  "b": 2, ... ,"z": 26}` | `{"a": 1, "b": 2, "c": 3, "x": 24, "y": 25, "z": 26}` |
-| `{ ... }` | `{"a": 1, "z": 26}` |
-| `{"same_\w+": ["\d{2}", ... , 14], "other": "key-[0-9a-f]{4}", ...}` | `{"same_word": [12, 13, 14], "other": "key-0af4", "extra": {}}` |
-
-*NOTE*
-*Be careful not to use ambiguous regex when matching arrays or objet fields. E.g. {"\w+": [], "other": 1} is ambiguous since other can match \w+. This is to be avoided as results would not be consistent.*
-
-### Ellipsis Templating
----
-Using a pair of ellipsis to surround an element in a JSPEC array will interpreter to only except elements which adhere to the regex in the array. Similarly, using a pair of ellipsis to surround a key-value pair will instruct the interpreter to only accept key-value pairs which adhere to the regex in the object.
-
-| Syntax | Match example |
-|-|-|
-| `[ ... 1 ... ]`  | `[1, 1, 1, 1]` |
-| `[ ... "\w+" ... ]`  | `["red", "brick", "wall"]` |
-| `{ ... "\w+": "\d+" ... }` | `{"a": 1, "b": 2, "y": 25, "z": 26}` |
-| `{ ... "\d": "okay" ... }` | `{"1": "okay", "2": "okay", "3": "okay"}` |
-| `{ ... "\w+": [ ... "\d" ... ] ... }` | `{"red": [1,2,3], "blue": [4]}`|
-
-### Example
-The example.jspec will match with example.json.
-
-example.jspec
 ```
-{
-    ... ,
-    "timestamps": [ ... "\d+" ... ],
-    "query": {
-        "type": "sql",
-        "vals": [ ... "[a-f0-9]{8}" ... ]
-    },
-    "id_pairs": {
-        ... "\w+": "id-\d{4,8}" ...
-    },
-    "list_of_lists": [
-        [ ... ],
-        [ ... ]
-    ],
-    "alphabet": ["a", "b", ... , "m", ... , "y", "z"]
-    , ...
-}
+# TODO include JSPEC file example here.
 ```
-
-example.json
-```json
-{
-    "extra_field_1": "blah",
-    "timestamps": [1003, 1006, 2005, 4005],
-    "query": {
-        "type": "sql",
-        "vals": [
-            "af05eb41",
-            "b048cda2",
-            "d094eea7"
-        ]
-    },
-    "id_pairs": {
-        "red": 8374334,
-        "green": 3424,
-        "blue": 10923,
-        "yellow": 772266
-    },
-    "list_of_lists": [
-        [1, 2, 3],
-        ["a", "b", "c"]
-    ],
-    "alphabet": ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
-}
-```
-
-## Usage
-Once you have created a .jspec file, you can check to see if it matches against JSON. To load the JSPEC, uses the `jspec.load` or `jspec.loads` methods for loading file objects or JSPEC string respectively. These will return an instance of the `JSpec` class if the JSPEC is valid, else a `JSpecLoadError` will be raised. 
-
-The `JSpec` class has a `match` method which checks the JSON argument against the JSPEC. The JSON argument can be a file object, JSON string or Python native object. The function will return `Result` which has a `result()` and `message()` method. The `result()` method will return whether the JSON matched the JSON. The `message()` will return the message for why the JSON match failed if it did. Example usage is given below.
-
-### Example 1
 
 ```python
-import jspec
-
-with open("example.jspec") as f:
-    spec = jspec.load(f)
-
-with open("example.json") as f:
-    r = spec.match(f)
-    print(r.result())
-```
-Output:
-```bash
-True
+# TODO include example here
 ```
 
-### Example 2
+## How to Construct a JSPEC File
+A JSPEC file adheres to the same rules as JSON files, with some additional features. It is formed from formed of entities called [JSPEC terms](#jspec-term) and [JSPEC captures](#jspec-capture).
 
-```python
-import jspec
+### JSPEC Term
+A JSPEC term can match with a single JSON element. The traditional JSON data types are all supported, alongside other JSPEC terms. They are listed here as follows:
+* [object](#object)
+* [array](#array)
+* [string](#string)
+* [int](#int)
+* [real](#real)
+* [boolean](#boolean)
+* [null](#null)
+* [wildcard](#wildcard)
+* [negation](#negation)
+* [macro](#macro)
+* [conditional](#conditional)
+* [placeholder](#placeholder)
 
-snippet = '{"same_\w+": ["\d{2}", ... , 14], "other": "key-[0-9a-f]{4}", ...}'
-good = {"same_word": [12, 13, 14], "other": "key-0af4", "extra": {}}
-bad = {"same_word": [12, 13, 14], "extra": {}}
+### JSPEC Capture
+A JSPEC capture can match with a group of JSON entities.
+Captures can only appear in objects or arrays. They are listed here as follows:
+* [object capture](#object-capture)
+* [array capture](#array-capture)
 
-spec = jspec.loads(snippet)
+### Object
+A JSPEC object is a set of JSPEC object pairs and JSPEC object captures. A JSON object will match with a JSPEC object, provided it can match all the JSPEC object pairs and satisfy all JSPEC object captures. They are expressed in the same way objects are in JSON.
 
-r1 = spec.match(good)
-r2 = spec.match(bad)
 
-print("r1 result:", r1.result(), "r1 message:", r1.message())
-print("r2 result:", r2.result(), "r2 message:", r2.message())
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `{"red": "blue"}` | `{"red": "blue"}` | Good Match | Equal object paris |
+| `{"red": "blue", "green": "yellow"}` | `{"green": "yellow", "red": "blue"}` | Good Match | Equal object paris |
+| `{"red": "blue"}` | `{"blue": "red"}` | Bad Match | Object paris not equal |
+
+### Array
+A JSPEC array is a list of JSPEC terms and array captures. A JSON array will match an with a JSPEC array, provided it can match all the JSPEC terms and satisfy all JSPEC array captures. They are expressed in the same way arrays are in JSON.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `[1,2,3,4]` | `[1,2,3,4]` | Good Match | Elements at correct indices |
+| `[1,2,3,4]` | `[4,3,2,1]` | Bad Match | Elements at incorrect indices |
+
+### String
+A JSPEC string is a regex pattern string. A JSON string will a JSPEC string, provided it satisfies the regex pattern string. They are expressed in the same way strings are in JSON.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `"cat"` | `"cat"` | Good Match | Strings are equal |
+| `<\w+>` | `<word>` | Good Match | Satisfies the regex |
+| `<\w+>` | `<1234>` | Bad Match | Satisfies the regex |
+
+### Int
+A JSPEC int is an integer. A JSON int will match an with JSPEC int, provided its integer value equals the integer value of the JSPEC int. They are expressed in the same way ints are in JSON.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `123` | `123` | Good Match | Same integer value |
+| `-485` | `-485` | Good Match | Same integer value |
+| `10` | `100` | Bad Match | Different integer value |
+
+### Real
+A JSPEC real is a real number. A JSON real will match an with a JSPEC real, provided its real number value equals the real number value of the JSPEC real. They are expressed in the same way reals are in JSON.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `3.141` | `0.9999` | Good Match | Same float value |
+| `0.9999e-10` | `0.9999e-10` | Good Match | Same float value |
+| `2.1e4` | `21000` | Good Match | Same float value |
+| `2.1e4` | `2100` | Bad Match | Different float value |
+
+### Boolean
+A JSPEC boolean is a boolean. A JSON boolean will match an with a JSPEC boolean, provided its boolean value equals the boolean value of the JSPEC boolean. They are expressed in the same way booleans are in JSON.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `true` | `true` | Good Match | Same boolean value |
+| `false` | `false` | Good Match | Same boolean value |
+| `true` | `false` | Bad Match | Different boolean value |
+| `false` | `true` | Bad Match | Different boolean value |
+
+### Null
+A JSPEC null is a null. A JSON null value will match with a JSPEC null. They are expressed in the same way nulls are in JSON.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `null` | `null` | Good Match | Null |
+| `null` | `1` | Bad Match | Not null |
+
+### Wildcard
+A JSPEC wildcard is the JSPEC term that will match with any JSON element. They are expressed as a wildcard character ` *`.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `*` | `123` | Good Match | Matches any element |
+| `*` | `[1,2,3]` | Good Match | Matches any element |
+| `*` | `{"a": "b"}` | Good Match | Matches any element |
+
+### Negation
+A JSPEC negation is a negated JSPEC term. A JSON element will match with a JSPEC negation, provided it does not match with the negated JSPEC term. They are expressed as an exclamation mark followed by the negated JSPEC term.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `!4` | `3` | Good Match | 4 != 3 |
+| `!4` | `{}` | Good Match | 4 != {} |
+| `![]` | `[1,2,3]` | Good Match | [] != [1,2,3] |
+| `![1,2]` | `"[]"` | Good Match | [1,2] != "[1,2]" |
+| `!4` | `4` | Bad Match | 4 = 4 |
+| `![1,2]` | `[1,2]` | Bad Match | [1,2] = [1,2] |
+
+### Macro
+A JSPEC macro is a variable name which can be exported as a Python native JSON constant during the matching process. These variables are environment variables. A JSON element will match with a JSPEC macro, provided that it equals the exported Python native JSON constant. They are expressed as the environment variable name, enclosed in angled parentheses.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `<ENV_VARIABLE>` | `123` | Good Match | Only when the env variable `ENV_VARIABLE` equals 123 |
+| `<IMPORTANT_LIST>` | `[1,2,3]` | Good Match | Only when the env variable `IMPORTANT_LIST` equals [1,2,3] |
+| `<OTHER_VARIABLE>` | `123` | Bad Match | Only when the env variable `OTHER_VARIABLE` does not equal 123 |
+
+### Conditional
+A JSPEC conditional a logical statement of JSPEC terms and logical operators (`&` AND, `|` OR, `^` XOR). A JSON element will match with a JSPEC conditional, provided it satisfies the logical statement of JSPEC terms and logical operators. They are expressed as JSPEC terms in between the logical operators, enclosed in rounded parentheses.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| ` ` | ` ` | Good Match | Satisfied the logical statement |
+| ` ` | ` ` | Bad Match | Did not satisfied the logical statement |
+
+### Placeholder
+A JSPEC placeholder is a JSON datatype name, which will match any JSON element of that datatype. The numerical placeholders can also have an inequality attached to them, to set a range of numerical values for it to match.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| `object` | `{"a": 1, "b": 2}` | Good Match | Matches any object |
+| `array` | `[1,2,3]` | Good Match | Matches any array|
+| `string` | `"something"` | Good Match | Matches any string |
+| `int` | `3` | Good Match | Matches any int |
+| `real` | `-0.90e4` | Good Match | Matches any real |
+| `bool` | `true` | Good Match | Matches any boolean |
+| `number` | `12` | Good Match | Matches any int or real |
+| `object` | `[1,2,3]` | Bad Match | Is not an object |
+| `array` | `{"a": 1, "b": 2}` | Bad Match | Is not an array|
+| `number` | `"12"` | Bad Match | Is not a int or real |
+
+### Object Capture
+A JSPEC object capture is a list of JSPEC object pairs and logical operators (`&` AND, `|` OR, `^` XOR) which form a logical statement. Any JSON object pairs which can be part of the capture group must satisfy the logical statement. It also has an optional minimum and maximum number of object pairs in the capture group. They are expressed as JSPEC object pairs in between the logical operators, enclosed in rounded parentheses, with an optional multiplier range.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| ` ` | ` ` | Good Match | |
+| ` ` | ` ` | Bad Match | |
+
+### Array Capture
+A JSPEC array capture is a list of JSPEC object pairs and logical operators (`&` AND, `|` OR, `^` XOR) which form a logical statement. Any JSON object pairs which can be part of the capture group must satisfy the logical statement. It also has an optional minimum and maximum number of object pairs in the capture group. They are expressed as JSPEC terms in between the logical operators, enclosed in rounded parentheses, with an optional multiplier range.
+
+| JSPEC Snippet | JSON Snippet | Result | Reason | 
+|-|-|-|-|
+| ` ` | ` ` | Good Match | |
+| ` ` | ` ` | Bad Match | |
+
 ```
-Output:
-```bash
-r1 result: True r1 message: None
-r2 result: False r2 message: Cannot match key regex at position '$'. Want other, same_\w+. Got same_word, extra
-```
-
+# TODO finish examples
 # TODO Set as version 1.2.0 as beta
 # TODO See how to get github badges
 # TODO deploy as module
-# new stuff
+```
 
-to run test
-python3 -m unittest test/test.py
-
-TODO update docs here 
-
-! negation
-!4
-!"sds"
-!(342)
-|| or
-^^ xor
-&& and
-()xn conditional as capture
-()x3
-{("a": 4)x4} conditional as object capture
-
-[< !0 >x5]
-[<< !0 >>x5]
-
-[1, 2, 3, 4, <<5 | 6>>x32, (7)xn, int <= 7 ]
-[...] = [(*)xn]
-{
-    "w": 1,
-    ("a": 4)x4,
-}
-{
-    ...,
-    ("a": 4)x4,
-}
-{
-    (string:*)xn,
-    ("a": 4)x4,
-}
-{
-    (string:*)xn,
-    ("a": 4 | "b": 5),
-    (("a": 4)x4 | ("b": 5)x4),
-}
-
-[int < 5, <5, int >= 6, >= 6]
-
-[< 5, <5, >= 6, >= 6]
-
-[int < 5, int<5, int >= 6, int>= 6]
-construct error message
-
-Error message must be of the form
-<verb or adjective> <subject> <location>
-
-Use words to describe of subject, of what is odes not what it is.
-e.g. capture group terminator, not >
-you should be able to change the symbol for the subject and the error message still makes sense
-
-# TODO add dev deps for this documentation
+## Unit testing
+The aim for this project is for code to be fully unit testable with 100% coverage. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests.
+```bash
+# Run the unit test suite
 coverage run --source=jspec -m unittest test/test.py
+
+# Get the coverage report
 coverage report -m
+```
