@@ -270,7 +270,7 @@ A JSPEC array ellipsis will match with any amount of consecutive elements in an 
 ```
 
 ## Unit testing
-The aim for this project is for code to be fully unit testable with 100% coverage. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests.
+The aim for this project is for code to be fully unit testable with 100% coverage. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage`.
 ```bash
 # Run the unit test suite
 coverage run --source=jspec -m unittest test/test.py
@@ -278,7 +278,3 @@ coverage run --source=jspec -m unittest test/test.py
 # Get the coverage report
 coverage report -m
 ```
-
-coverage run --source=jspec -m unittest test/test.py
-coverage report -m > test/coverage/coverage.txt
-coverage json -o test/coverage/coverage.json
