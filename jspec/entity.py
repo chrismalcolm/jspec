@@ -781,39 +781,6 @@ class JSPECCaptureMultiplier(JSPECEntity):
     def exhausted(self):
         return self.maximum == 0
 
-class JSPECArrayCaptureGroup(JSPECCapture):
-    """This class represents a JSPEC array capture.
-
-    It is a list of JSPEC terms and JSPEC logical operators which form a
-    logical statement. It also has an optional minimum and maximum.
-    
-    A group of JSON elements will match with an instance of this type, provided
-    that each element satisfies the logical statement of JSPEC terms and JSPEC
-    logical operators, and the number of JSON elements in the group is between
-    the optional minimum and maximum.
-
-    Args:
-        entities (list): List of the form:
-           entities = [
-                element_1,
-                operator_1,
-                element_2,
-                operator_2,
-                ...
-                element_n-1,
-                operator_n-1,
-                element_n,
-            ]
-            where each element_x is a JSPECTerm and each operator_y is a
-            JSPECLogicalOperator.
-    """
-
-    SERIALIZER = lambda entities, multiplier: (
-        "(%s)" % " ".join(str(e) for e in entities) + str(multiplier)
-    )
-    """func: Returns the entities and operators alternating, enclosed in
-    round parentheses, with a optional x and multiplier."""
-
 class JSPECObjectCaptureGroup(JSPECCapture):
     """This class represents a JSPEC object capture.
 
@@ -848,13 +815,46 @@ class JSPECObjectCaptureGroup(JSPECCapture):
     round parentheses, with a optional x and multiplier.
     """
 
-class JSPECArrayEllipsis(JSPECArrayCaptureGroup):
-    """This class represents a JSPEC array ellipsis.
-    """
+class JSPECArrayCaptureGroup(JSPECCapture):
+    """This class represents a JSPEC array capture.
+
+    It is a list of JSPEC terms and JSPEC logical operators which form a
+    logical statement. It also has an optional minimum and maximum.
     
+    A group of JSON elements will match with an instance of this type, provided
+    that each element satisfies the logical statement of JSPEC terms and JSPEC
+    logical operators, and the number of JSON elements in the group is between
+    the optional minimum and maximum.
+
+    Args:
+        entities (list): List of the form:
+           entities = [
+                element_1,
+                operator_1,
+                element_2,
+                operator_2,
+                ...
+                element_n-1,
+                operator_n-1,
+                element_n,
+            ]
+            where each element_x is a JSPECTerm and each operator_y is a
+            JSPECLogicalOperator.
+    """
+
+    SERIALIZER = lambda entities, multiplier: (
+        "(%s)" % " ".join(str(e) for e in entities) + str(multiplier)
+    )
+    """func: Returns the entities and operators alternating, enclosed in
+    round parentheses, with a optional x and multiplier."""
+
+class JSPECObjectEllipsis(JSPECObjectCaptureGroup):
+    """This class represents a JSPEC object ellipsis.
+    """
+
     def __init__(self):
         super().__init__(
-            [JSPECWildcard()], 
+            [JSPECObjectPair((JSPECStringPlaceholder(), JSPECWildcard()))],
             JSPECCaptureMultiplier(None, None),
         )
 
@@ -871,13 +871,13 @@ class JSPECArrayEllipsis(JSPECArrayCaptureGroup):
     def exhausted(self):
         return False
 
-class JSPECObjectEllipsis(JSPECObjectCaptureGroup):
-    """This class represents a JSPEC object ellipsis.
+class JSPECArrayEllipsis(JSPECArrayCaptureGroup):
+    """This class represents a JSPEC array ellipsis.
     """
-
+    
     def __init__(self):
         super().__init__(
-            [JSPECObjectPair((JSPECStringPlaceholder(), JSPECWildcard()))],
+            [JSPECWildcard()], 
             JSPECCaptureMultiplier(None, None),
         )
 

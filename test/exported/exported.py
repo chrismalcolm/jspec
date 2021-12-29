@@ -1,4 +1,5 @@
 import unittest
+import os
 import jspec
 
 from jspec.entity import (
@@ -102,6 +103,30 @@ class JSPECTestExported(unittest.TestCase):
         )
         element = {"key": "value"}
         self.assertTrue(jspec.check(spec, element))
+        os.environ["MY_ID"] = '1'
+        with open("./test/assets/test.jspec", "r") as f:
+            spec = jspec.load(f)
+        element = {
+            "id": 1,
+            "timestamp": 1530.5,
+            "data": [
+                {
+                    "longitude": 10.2,
+                    "latitude": 41.3,
+                },
+                {
+                    "longitude": 33.3,
+                    "latitude": 76.2,
+                },
+                {
+                    "longitude": 9.5,
+                    "latitude": 12.1,
+                }
+            ],
+            "other": "data"
+        }
+        res, _ = jspec.check(spec, element)
+        self.assertTrue(res)
 
     def test_checks(self):
         """Test the ``jspec.checks`` function."""
