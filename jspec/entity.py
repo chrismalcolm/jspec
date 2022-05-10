@@ -91,11 +91,13 @@ class JSPECTerm(JSPECEntity):
             return False
         return self.spec == other.spec
 
-    def _converter(self, value):
-        return self.__class__.COVERTER(value)
+    @classmethod
+    def _converter(cls, value):
+        return cls.COVERTER(value)
 
-    def _serializer(self, value):
-        return self.__class__.SERIALIZER(value)
+    @classmethod
+    def _serializer(cls, value):
+        return cls.SERIALIZER(value)
 
 class JSPECObject(JSPECTerm):
     """This class represents a JSPEC object.

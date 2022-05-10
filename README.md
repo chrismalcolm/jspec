@@ -1,6 +1,18 @@
 # JSPEC 
 ![check-code-coverage](https://img.shields.io/badge/code--coverage-100%-brightgreen)
 
+## Installation
+```bash
+pip install jspec
+```
+
+TODO
+fix badge
+do command line funcs
+tool for vscode
+githuv actions with tox
+mention 0 dependencies (pure python) (aside from unit tests)
+
 A JSPEC (**J**son **SPEC**ification) is a tool that can used to check the elements and structure of a JSON. JSPEC has it's own class **jspec.JSPEC** and its own file format, which use the **.jspec** extension. 
 
 ## Basic Usage
@@ -89,7 +101,7 @@ A JSPEC term can match with a single JSON element. The traditional JSON data typ
 * [placeholder](#placeholder)
 
 ### JSPEC Capture
-A JSPEC capture can match with a group of JSON entities.
+A JSPEC capture can match with a group of JSON elements.
 Captures can only appear in objects or arrays. They are listed here as follows:
 * [object capture](#object-capture)
 * [array capture](#array-capture)
@@ -103,15 +115,17 @@ A JSPEC object is a set of JSPEC object pairs and JSPEC object captures. A JSON 
 |-|-|-|-|
 | `{"red": "blue"}` | `{"red": "blue"}` | Good Match | Equal object paris |
 | `{"red": "blue", "green": "yellow"}` | `{"green": "yellow", "red": "blue"}` | Good Match | Equal object paris |
-| `{"red": "blue"}` | `{"blue": "red"}` | Bad Match | Object paris not equal |
+| `{"red": "blue"}` | `{"blue": "red"}` | Bad Match | Object pairs not equal |
 
 ### Array
-A JSPEC array is a list of JSPEC terms and array captures. A JSON array will match an with a JSPEC array, provided it can match all the JSPEC terms and satisfy all JSPEC array captures. They are expressed in the same way arrays are in JSON.
+A JSPEC array is a list of JSPEC terms and JSPEC array captures. A JSON array will match an with a JSPEC array, provided it can match all the JSPEC terms and satisfy all JSPEC array captures. They are expressed in the same way arrays are in JSON.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
 | `[1,2,3,4]` | `[1,2,3,4]` | Good Match | Elements at correct indices |
 | `[1,2,3,4]` | `[4,3,2,1]` | Bad Match | Elements at incorrect indices |
+| `[1,2,3,4]` | `[1,1,1,1]` | Bad Match | Elements do not match |
+| `[1,2,3,4]` | `[1,2,3]` | Bad Match | Length of elements do not match |
 
 ### String
 A JSPEC string is a regex pattern string. A JSON string will a JSPEC string, provided it satisfies the regex pattern string. They are expressed in the same way strings are in JSON.
@@ -120,7 +134,7 @@ A JSPEC string is a regex pattern string. A JSON string will a JSPEC string, pro
 |-|-|-|-|
 | `"cat"` | `"cat"` | Good Match | Strings are equal |
 | `<\w+>` | `<word>` | Good Match | Satisfies the regex |
-| `<\w+>` | `<1234>` | Bad Match | Satisfies the regex |
+| `<\w+>` | `<1234>` | Bad Match | Does not satisfy the regex |
 
 ### Int
 A JSPEC int is an integer. A JSON int will match an with JSPEC int, provided its integer value equals the integer value of the JSPEC int. They are expressed in the same way ints are in JSON.
@@ -136,7 +150,7 @@ A JSPEC real is a real number. A JSON real will match an with a JSPEC real, prov
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
-| `3.141` | `0.9999` | Good Match | Same float value |
+| `3.141` | `3.141` | Good Match | Same float value |
 | `0.9999e-10` | `0.9999e-10` | Good Match | Same float value |
 | `2.1e4` | `21000` | Good Match | Same float value |
 | `2.1e4` | `2100` | Bad Match | Different float value |
@@ -176,7 +190,8 @@ A JSPEC negation is a negated JSPEC term. A JSON element will match with a JSPEC
 | `!4` | `3` | Good Match | 4 != 3 |
 | `!4` | `{}` | Good Match | 4 != {} |
 | `![]` | `[1,2,3]` | Good Match | [] != [1,2,3] |
-| `![1,2]` | `"[]"` | Good Match | [1,2] != "[1,2]" |
+| `![1,2]` | `"[]"` | Good Match | [1,2] != "[]" |
+| `!![1,2]` | `"[1,2]"` | Good Match | [1,2] = "[1,2]" |
 | `!4` | `4` | Bad Match | 4 = 4 |
 | `![1,2]` | `[1,2]` | Bad Match | [1,2] = [1,2] |
 
@@ -202,7 +217,7 @@ A JSPEC conditional a logical statement of JSPEC terms and logical operators (`&
 |`(!"a\d" ^ !"\w7")` | `"a7"` | Bad Match | Did not satisfied the logical statement |
 
 ### Placeholder
-A JSPEC placeholder is a JSON datatype name, which will match any JSON element of that datatype. The numerical placeholders can also have an inequality attached to them, to set a range of numerical values for it to match.
+A JSPEC placeholder is a JSON datatype name, which will match any JSON element of that datatype. The possible placeholders are `object`, `array`, `string`, `int`, `real`, `bool` and `number`. The numerical placeholders can also have an inequality attached to them, to set a range of numerical values for it to match.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
@@ -263,11 +278,6 @@ A JSPEC array ellipsis will match with any amount of consecutive elements in an 
 | `[...]` | `[]` | Good Match | Ellipsis matches nothing |
 | `[1,2,3 ... 5,6]` | `[1,2,4,3,5,6]` | Bad Match | Ellipsis cannot match anything |
 | `[1,...]` | `[2,1] ` | Bad Match | Ellipsis cannot match anything |
-
-```
-# TODO See how to get github badges
-# TODO deploy as module
-```
 
 ## Unit testing
 The aim for this project is for code to be fully unit testable with 100% coverage. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage`.
