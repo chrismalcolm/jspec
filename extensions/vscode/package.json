@@ -1,0 +1,26 @@
+{
+    "publisher": "ChrisMalcolm",
+    "name": "jspec",
+    "displayName": "JSPEC Syntax Support",
+    "description": "Syntax highlighting for the JSPEC language",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.67.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "jspec",
+            "aliases": ["jspec", "jspec"],
+            "extensions": [".jspec"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "jspec",
+            "scopeName": "source.jspec",
+            "path": "./syntaxes/jspec.tmLanguage.json"
+        }]
+    }
+}

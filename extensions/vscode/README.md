@@ -1,0 +1,3 @@
+# jspec README
+
+JSPEC extension.

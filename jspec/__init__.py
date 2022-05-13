@@ -7,10 +7,10 @@ from . import entity
 
 __version__ = "2.0.1"
 
-def _decode(document):
+def _decode(document, pretty=False, indent=None):
     if not isinstance(document, str):
         raise TypeError("Expecting a string not %s" % document.__class__)
-    return scanner.scan(document)
+    return scanner.scan(document, pretty=pretty, indent=indent)
 
 def _encode(spec):
     if not isinstance(spec, entity.JSPEC):
@@ -22,7 +22,7 @@ def _match(spec, element):
         raise TypeError("Expecting a JSPEC not %s" % spec.__class__) 
     return matcher.match(spec, element)
 
-def load(file):
+def load(file, pretty=False, indent=None):
     """Loads the file ``file`` as a JSPEC.
     
     Args:
@@ -37,9 +37,9 @@ def load(file):
         jspec.JSPECDecodeError: Any error with decoding the file contents as a
             JSPEC.
     """
-    return loads(file.read())
+    return loads(file.read(), pretty=pretty, indent=indent)
 
-def loads(document):
+def loads(document, pretty=False, indent=None):
     """Loads the string ``document`` as a JSPEC.
     
     Args:
@@ -52,7 +52,7 @@ def loads(document):
         TypeError: If the input is not a string.
         jspec.JSPECDecodeError: Any error with decoding the string as a JSPEC.
     """
-    return _decode(document)
+    return _decode(document, pretty=pretty, indent=indent)
 
 def dump(spec, file):
     """Dump the serialization of the JSPEC ``spec`` into the file ``file``.

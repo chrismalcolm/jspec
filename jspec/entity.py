@@ -27,8 +27,11 @@ class JSPEC:
 
     def __init__(self, term):
         self.base = term
+        self._pretty_string = None
 
     def __str__(self):
+        if self._pretty_string:
+            return self._pretty_string
         return str(self.base)
 
     def __eq__(self, other):

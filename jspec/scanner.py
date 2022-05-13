@@ -96,6 +96,14 @@ MULTILINE_COMMENT_MATCH = re.compile(r"""
     \*\/          # terminated by an asterisk and a forward slash""", re.VERBOSE).match
 """_sre.SRE_Pattern: Pattern to match a multi-line comment."""
 
+def scan(doc, pretty=False, indent=None):
+    """
+        indent (str/None): The indent used for styling.
+    """
+    indent = indent or '\t'
+    if pretty:
+        return Scanner().scan_pretty(doc, indent)
+    return Scanner().scan(doc)
 
 class Scanner():
     """This class is an interface used for scanning JSPEC documents.
@@ -843,13 +851,13 @@ class Scanner():
         nextchar = doc[idx:idx + 1]
         return nextchar, idx
 
-    def scan_pretty(self, doc, indent=None):
+    def scan_pretty(self, doc, indent):
         """Scan through characters in ``doc``to generate a valid JSPEC instance
         and generates a pretty JSPEC document.
 
         Args:
             doc (str): The JSPEC document.
-            indent (str/None): The indent used for styling.
+            indent (str): The indent used for styling.
 
         Returns:
             (JSPEC, str)
@@ -860,7 +868,6 @@ class Scanner():
             JSPECDecodeError: Raised if the string scanned does not represent a
                 valid JSPEC.
         """
-        indent = indent or '\t'
         
         # Save the comments and their chronological whitespace order
         self._save_comment_data()
@@ -880,7 +887,8 @@ class Scanner():
         self._disable_comment_data()
         doc = self._add_comments(doc)
 
-        return spec, doc
+        spec._pretty_string = doc
+        return spec
 
     def _enable_recording(self):
         """When scanning the JSPEC document, brackets and comma will be
