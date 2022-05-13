@@ -2,6 +2,7 @@
 """
 
 import re
+from unittest.mock import DEFAULT
 
 from .entity import (
     JSPEC,
@@ -96,11 +97,28 @@ MULTILINE_COMMENT_MATCH = re.compile(r"""
     \*\/          # terminated by an asterisk and a forward slash""", re.VERBOSE).match
 """_sre.SRE_Pattern: Pattern to match a multi-line comment."""
 
+DEFAULT_TAB = '\t'
+"""str: Default tab indentation for pretty JSPEC formatting."""
+
 def scan(doc, pretty=False, indent=None):
     """
-        indent (str/None): The indent used for styling.
+        Scan through characters in ``doc``to generate a valid JSPEC instance.
+
+        Args:
+            doc (str): The JSPEC document.
+            pretty (bool): Optional. Default is False, if True the JSPEC string
+                will be formated with tabs, newlines and retain any comments
+            indent (str/None): Optional. The tab indentation for the pretty
+                format for the JSPEC. None means a default tab will be used.
+
+        Returns:
+            JSPEC: The JSPEC instance that is represented in ``doc``.
+
+        Raises:
+            JSPECDecodeError: Raised if the string scanned does not represent a
+                valid JSPEC.
     """
-    indent = indent or '\t'
+    indent = indent or DEFAULT_TAB
     if pretty:
         return Scanner().scan_pretty(doc, indent)
     return Scanner().scan(doc)

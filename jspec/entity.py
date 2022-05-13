@@ -19,6 +19,8 @@ class JSPEC:
 
     Attributes:
         base (JSPECTerm): The base JSPEC term for this JSPEC.
+        _pretty_string (str/None): A pretty string version of the JSPEC, if one
+            is known, else None
 
     Args:
         term (JSPECTerm): The term to set as the base JSPEC term for this

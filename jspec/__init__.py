@@ -28,6 +28,10 @@ def load(file, pretty=False, indent=None):
     Args:
         file (file): File to be loaded as a JSPEC. Must support the read
             method.
+        pretty (bool): Optional. Default is False, if True the JSPEC string
+            will be formated with tabs, newlines and retain any comments
+        indent (str/None): Optional. The tab indentation for the pretty format
+            for the JSPEC. None means a default tab will be used.
     
     Returns:
         jspec.JSPEC: The JSPEC instance created from the file loaded.
@@ -44,6 +48,10 @@ def loads(document, pretty=False, indent=None):
     
     Args:
         document (str): String to be loaded as a JSPEC.
+        pretty (bool): Optional. Default is False, if True the JSPEC string
+            will be formated with tabs, newlines and retain any comments
+        indent (str/None): Optional. The tab indentation for the pretty format
+            for the JSPEC. None means a default tab will be used.
     
     Returns:
         jspec.JSPEC: The JSPEC instance created from the string loaded.

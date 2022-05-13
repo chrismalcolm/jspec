@@ -8,10 +8,11 @@ pip install jspec
 
 TODO
 fix badge
-do command line funcs
-tool for vscode
+tests for command line funcs
+need J{SEC other errors of (pretty fials internally and if indent is not whitespace)
+fix tool for vscode
 githuv actions with tox
-mention 0 dependencies (pure python) (aside from unit tests)
+mention 0 dependencies (pure python) (aside from unit tests) powerful
 
 A JSPEC (**J**son **SPEC**ification) is a tool that can used to check the elements and structure of a JSON. JSPEC has it's own class **jspec.JSPEC** and its own file format, which use the **.jspec** extension. 
 
