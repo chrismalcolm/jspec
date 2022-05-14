@@ -1,5 +1,7 @@
 import unittest
 
+from test.parse.parse import JSPECTestParse
+from test.check.check import JSPECTestCheck
 from test.exported.exported import JSPECTestExported
 
 from test.scanner.array import JSPECTestScannerArray

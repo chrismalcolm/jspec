@@ -254,7 +254,6 @@ class JSPECTestExported(unittest.TestCase):
             ),
         )
         spec = jspec.loads(self.LONG_DOCUMENT, pretty=True, indent='    ')
-        print(str(spec))
         self.assertEqual(
             str(spec),
             self.PRETTY_DOCUMENT,

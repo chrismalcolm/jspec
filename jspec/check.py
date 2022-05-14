@@ -58,13 +58,13 @@ def main():
     try:
         if options.jspec_file is None:
             if options.jspec_raw is None:
-                raise Exception("no")
+                raise ValueError("The --raw-jspec flag value is not a valid JSPEC")
             spec = jspec.loads(options.jspec_raw)
         else:
             spec = jspec.load(options.jspec_file)
         if options.json_file is None:
             if options.json_raw is None:
-                raise Exception("blah") 
+                raise ValueError("The --raw-json flag value is not a valid JSON")
             element = json.loads(options.json_raw)
         else:
             element = json.load(open(options.json_file, 'r', encoding='utf-8'))
@@ -74,7 +74,7 @@ def main():
             sys.stdout.write(message)
             sys.stdout.write('\n')
 
-    except Exception as exc:
+    except (jspec.scanner.JSPECDecodeError, jspec.scanner.JSPECScannerError, ValueError) as exc:
         raise SystemExit(exc)
 
 if __name__ == '__main__':

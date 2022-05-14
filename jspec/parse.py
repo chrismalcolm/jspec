@@ -39,7 +39,7 @@ Usage (2):
 
     -- Error with incorrect format
     $ echo '[1,2,,4]' | python3 -m jspec.parse
-    Expecting JSPEC term in array: line 1 column 6 (char 5
+    Expecting JSPEC term in array: line 1 column 6 (char 5)
 """
 
 def main():
@@ -88,7 +88,7 @@ def main():
         jspec.dump(spec, outfile)
         outfile.write('\n')
 
-    except Exception as exc:
+    except (jspec.scanner.JSPECDecodeError, jspec.scanner.JSPECScannerError) as exc:
         raise SystemExit(exc)
 
 if __name__ == '__main__':

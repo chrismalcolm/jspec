@@ -7,11 +7,12 @@ pip install jspec
 ```
 
 TODO
-fix badge
-tests for command line funcs
+does version for extension work?
 need J{SEC other errors of (pretty fials internally and if indent is not whitespace)
 githuv actions with tox
-mention 0 dependencies (pure python) (aside from unit tests) powerful
+fix badge
+document mention 0 dependencies (pure python) (aside from unit tests) powerful
+publish
 
 A JSPEC (**J**son **SPEC**ification) is a tool that can used to check the elements and structure of a JSON. JSPEC has it's own class **jspec.JSPEC** and its own file format, which use the **.jspec** extension. 
 

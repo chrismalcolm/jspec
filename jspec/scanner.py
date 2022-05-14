@@ -54,6 +54,10 @@ class JSPECDecodeError(ValueError):
         errmsg = '%s: line %d column %d (char %d)' % (msg, lineno, colno, pos)
         ValueError.__init__(self, errmsg)
 
+class JSPECScannerError(RuntimeError):
+    """Subclass of RuntimeError for general exceptions that occur in this
+    module."""
+
 STRING_MATCH = re.compile(r"""
     "     # preceded by a double quote
     (.*?) # any character except \n, zero or more times (not greedy)
@@ -885,25 +889,37 @@ class Scanner():
         Raises:
             JSPECDecodeError: Raised if the string scanned does not represent a
                 valid JSPEC.
+            JSPECScannerError: Raised if there is an issue with re-scanning a
+                JSPEC string that is used when building the pretty printed
+                string.
         """
         
         # Save the comments and their chronological whitespace order
-        self._save_comment_data()
-        spec = self.scan(doc)
-        doc = str(spec)
-        self._disable_comment_data()
-
+        try:
+            self._save_comment_data()
+            spec = self.scan(doc)
+            doc = str(spec)
+            self._disable_comment_data()
+        except JSPECDecodeError as jde:
+            raise jde
+        
         # Apply indentation on the brackets and commas
-        self._enable_recording()
-        self.scan(doc)
-        self._disable_recording()
-        doc = self._add_indents(doc, indent)
+        try:
+            self._enable_recording()
+            self.scan(doc)
+            self._disable_recording()
+            doc = self._add_indents(doc, indent)
+        except JSPECDecodeError as jde:
+            raise JSPECScannerError(str(jde))
 
         # Insert the comments saved earlier
-        self._load_comment_data()
-        self.scan(doc)
-        self._disable_comment_data()
-        doc = self._add_comments(doc)
+        try:
+            self._load_comment_data()
+            self.scan(doc)
+            self._disable_comment_data()
+            doc = self._add_comments(doc)
+        except JSPECDecodeError as jde:
+            raise JSPECScannerError(str(jde))
 
         spec._pretty_string = doc
         return spec
