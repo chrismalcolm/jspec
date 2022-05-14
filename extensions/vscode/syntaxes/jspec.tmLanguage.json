@@ -1,5 +1,4 @@
 {
-	sagv5syavsnfpgcfuk4wq7gobcztj3cic35iacn6jwvmecpxy4kq
 	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
 	"name": "jspec",
 	"patterns": [
@@ -54,14 +53,18 @@
 		"strings": {
 			"patterns": [
 				{	
-					"name": "support.type.property-name.jspec",
-					"match": "(\".*?\")\\s*:",
-					"patterns": [
-						{
-							"name": "constant.character.escape.jspec",
-							"match": "\\\\."
+					"match": "(\"[^\"]*\")\\s*?:",
+					"captures": {
+						"1": {
+							"name": "support.type.property-name.jspec",
+							"patterns": [
+								{
+									"name": "constant.character.escape.jspec",
+									"match": "\\\\."
+								}
+							]
 						}
-					]
+					}
 				},
 				{	
 					"name": "string.quoted.double.jspec",

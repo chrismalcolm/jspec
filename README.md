@@ -10,7 +10,6 @@ TODO
 fix badge
 tests for command line funcs
 need J{SEC other errors of (pretty fials internally and if indent is not whitespace)
-fix tool for vscode
 githuv actions with tox
 mention 0 dependencies (pure python) (aside from unit tests) powerful
 
