@@ -54,10 +54,6 @@ class JSPECDecodeError(ValueError):
         errmsg = '%s: line %d column %d (char %d)' % (msg, lineno, colno, pos)
         ValueError.__init__(self, errmsg)
 
-class JSPECScannerError(RuntimeError):
-    """Subclass of RuntimeError for general exceptions that occur in this
-    module."""
-
 STRING_MATCH = re.compile(r"""
     "     # preceded by a double quote
     (.*?) # any character except \n, zero or more times (not greedy)
@@ -121,6 +117,8 @@ def scan(doc, pretty=False, indent=None):
         Raises:
             JSPECDecodeError: Raised if the string scanned does not represent a
                 valid JSPEC.
+            TypeError: Raised if there are any errors with the input argument
+                indent when pretty printing.
     """
     indent = indent or DEFAULT_TAB
     if pretty:
@@ -889,11 +887,16 @@ class Scanner():
         Raises:
             JSPECDecodeError: Raised if the string scanned does not represent a
                 valid JSPEC.
-            JSPECScannerError: Raised if there is an issue with re-scanning a
-                JSPEC string that is used when building the pretty printed
-                string.
+            TypeError: Raised if any of the chars in indent are not a space or
+                tab
         """
-        
+        illegal = set(indent) - {' ', '\t'}
+        if illegal:
+            raise TypeError(
+                "indent contains illegal characters %s,"
+                " must only be spaces and tabs" % illegal
+            )
+
         # Save the comments and their chronological whitespace order
         try:
             self._save_comment_data()
@@ -904,22 +907,16 @@ class Scanner():
             raise jde
         
         # Apply indentation on the brackets and commas
-        try:
-            self._enable_recording()
-            self.scan(doc)
-            self._disable_recording()
-            doc = self._add_indents(doc, indent)
-        except JSPECDecodeError as jde:
-            raise JSPECScannerError(str(jde))
+        self._enable_recording()
+        self.scan(doc)
+        self._disable_recording()
+        doc = self._add_indents(doc, indent)
 
         # Insert the comments saved earlier
-        try:
-            self._load_comment_data()
-            self.scan(doc)
-            self._disable_comment_data()
-            doc = self._add_comments(doc)
-        except JSPECDecodeError as jde:
-            raise JSPECScannerError(str(jde))
+        self._load_comment_data()
+        self.scan(doc)
+        self._disable_comment_data()
+        doc = self._add_comments(doc)
 
         spec._pretty_string = doc
         return spec

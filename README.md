@@ -287,5 +287,5 @@ The aim for this project is for code to be fully unit testable with 100% coverag
 coverage run --source=jspec -m unittest test/test.py
 
 # Get the coverage report
-coverage report -m
+coverage report -m --omit=jspec/parse.py,jspec/check.py
 ```

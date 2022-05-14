@@ -253,6 +253,24 @@ class JSPECTestExported(unittest.TestCase):
                 }),
             ),
         )
+        err = None
+        try:
+            spec = jspec.loads('{"key": value}', pretty=True)
+        except jspec.scanner.JSPECDecodeError as jde:
+            err = jde
+        self.assertNotEqual(
+            err,
+            None
+        )
+        err = None
+        try:
+            spec = jspec.loads('{"key": "value"}', pretty=True, indent=" xa\t")
+        except TypeError as vle:
+            err = vle
+        self.assertNotEqual(
+            err,
+            None
+        )
         spec = jspec.loads(self.LONG_DOCUMENT, pretty=True, indent='    ')
         self.assertEqual(
             str(spec),

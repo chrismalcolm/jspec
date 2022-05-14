@@ -37,7 +37,8 @@ def load(file, pretty=False, indent=None):
         jspec.JSPEC: The JSPEC instance created from the file loaded.
 
     Raises:
-        TypeError: If unable to load the file contents as a string.
+        TypeError: If unable to load the file contents as a string or if the
+            indent is not consisting only of tabs and spaces.
         jspec.JSPECDecodeError: Any error with decoding the file contents as a
             JSPEC.
     """
@@ -57,7 +58,8 @@ def loads(document, pretty=False, indent=None):
         jspec.JSPEC: The JSPEC instance created from the string loaded.
 
     Raises:
-        TypeError: If the input is not a string.
+        TypeError: If the input is not a string or if the indent is not
+            consisting only of tabs and spaces.
         jspec.JSPECDecodeError: Any error with decoding the string as a JSPEC.
     """
     return _decode(document, pretty=pretty, indent=indent)

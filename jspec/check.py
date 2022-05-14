@@ -74,7 +74,7 @@ def main():
             sys.stdout.write(message)
             sys.stdout.write('\n')
 
-    except (jspec.scanner.JSPECDecodeError, jspec.scanner.JSPECScannerError, ValueError) as exc:
+    except (jspec.scanner.JSPECDecodeError, ValueError) as exc:
         raise SystemExit(exc)
 
 if __name__ == '__main__':

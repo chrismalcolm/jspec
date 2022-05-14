@@ -88,7 +88,7 @@ def main():
         jspec.dump(spec, outfile)
         outfile.write('\n')
 
-    except (jspec.scanner.JSPECDecodeError, jspec.scanner.JSPECScannerError) as exc:
+    except (jspec.scanner.JSPECDecodeError, TypeError) as exc:
         raise SystemExit(exc)
 
 if __name__ == '__main__':
