@@ -4,7 +4,7 @@
 
 A JSPEC (**J**son **SPEC**ification) is a powerful Programming Language tool that can used to check the elements and structure of a JSON document. JSPEC documents are written using the **JSPEC Language** which uses the same syntax as JSON, but with its own file extension `.jspec` and some added features to the syntax. For example:
 
-![](https://github.com/chrismalcolm/jspec/blob/pretty/images/1_jspec.png)
+![](https://github.com/chrismalcolm/jspec/blob/main/images/1_jspec.png)
 
 The example above gives a small insight into some of the features of JSPEC, such as regex, type placeholders, ellipses, comments and conditional statements. Full documentation for all of these features are given [here](#jspec-language).
 
@@ -20,7 +20,7 @@ This module provides interfaces for parsing JSPEC documents and checking JSPEC a
 
 example.jspec
 
-![](https://github.com/chrismalcolm/jspec/blob/pretty/images/2_jspec.png)
+![](https://github.com/chrismalcolm/jspec/blob/main/images/2_jspec.png)
 
 good_match.json
 ```json
@@ -242,7 +242,7 @@ A JSPEC array ellipsis will match with any amount of consecutive elements in an 
 ### Comments
 A JSPEC comment cannot be used to match against anything in a JSON, and only purpose is to provide documentation insights for the viewer of the JSPEC document. Both single line and multiline comments are supported in the following formats:
 
-![](https://github.com/chrismalcolm/jspec/blob/pretty/images/3_jspec.png)
+![](https://github.com/chrismalcolm/jspec/blob/main/images/3_jspec.png)
 
 ## Basic Python Usage
 A specification can be defined using a JSPEC file or a string. Using the **jspec.load** or **jspec.loads** methods respectively, this can produce a **jspec.JSPEC** instance. This instance can also be converted back to a JSPEC file or string, using the **jspec.dump** or **jspec.dumps** methods respectively. To check a JSON against a JSPEC, use the 
@@ -250,7 +250,7 @@ A specification can be defined using a JSPEC file or a string. Using the **jspec
 
 JSPEC file
 
-![](https://github.com/chrismalcolm/jspec/blob/pretty/images/4_jspec.png)
+![](https://github.com/chrismalcolm/jspec/blob/main/images/4_jspec.png)
 
 This example describes a JSON object with an "id" field set as the environment variable MY_ID, the "timestamp" field as a number, and "data" as a list of objects, each with a "longitude" and "latitude" keys and real values.
 
