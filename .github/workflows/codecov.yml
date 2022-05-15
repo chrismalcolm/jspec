@@ -29,5 +29,3 @@ jobs:
             echo "code coverage is not 100%"
             exit 1
         fi
-    - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v2
