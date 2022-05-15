@@ -336,14 +336,29 @@ Output
 ```
 
 ## Visual Studio Code Extension
-This repository also provided a Visual Studio Code extension which is available to be downloaded from the marketplace, under the name "JSPEC". It provides syntax highlighting for the JSPEC Language. The sub repository for extension source code is linked [here](https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode). 
-
-Link to azure organization here: https://dev.azure.com/chrismalcolm/
-
-Link to the marketplace publisher here: https://marketplace.visualstudio.com/manage/publishers/ChrisMalcolm
+This repository also provided a Visual Studio Code extension which is available to be downloaded from the marketplace, under the name "JSPEC". It provides syntax highlighting for the JSPEC Language.
 
 ## Contributing
 Process for contributing would be creating a PR and having it reviewed and merge by @chrismalcolm. Please and your name and email to the `CONTRIBUTORS.txt` file when contributing.
+
+### Deploying an update to the extension
+The sub repository for extension source code here https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode
+
+Link to the marketplace publisher here: https://marketplace.visualstudio.com/manage/publishers/ChrisMalcolm
+
+To deploy a new version of the Visual Studio extension, make sure `Node.js` is installed and run the following to install vsce:
+
+```bash
+npm install -g vsce
+```
+
+To create a new `.vslx` file, navigate to sub repository for the extension and run:
+
+```bash
+vsce package
+```
+
+This will create the package. This can just be drag and dropped using the UI of the marketplace publisher, to deploy a new version of the extension.
 
 ## Unit testing
 The aim for this project is for code to be fully unit testable with 100% coverage for the main modules. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage` and a local dependency.
