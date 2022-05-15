@@ -2,7 +2,7 @@
 ![Tests](https://github.com/chrismalcolm/jspec/actions/workflows/tests.yml/badge.svg)
 ![CodeCov](https://github.com/chrismalcolm/jspec/actions/workflows/codecov.yml/badge.svg)
 
-A JSPEC (**J**son **SPEC**ification) is a powerful Programming Language tool that can used to check the elements and structure of a JSON document. JSPEC documents are written using the **JSPEC Language** which uses the same syntax as JSON, but with its own file extension `.jspec` and some added features to the syntax. For example:
+A JSPEC (**J**son **SPEC**ification) is a powerful Programming Language tool that can be used to check the elements and structure of a JSON document. JSPEC documents are written using the **JSPEC Language** which uses the same syntax as JSON, but with its own file extension `.jspec` and some added features to the syntax. For example:
 
 ```
 {
@@ -15,7 +15,7 @@ A JSPEC (**J**son **SPEC**ification) is a powerful Programming Language tool tha
 }
 ```
 
-The example above gives a small insight into some of the features of JSPEC, such as regex, type placeholders, ellipses, comments and conditional statements. Full documentation for all of these features are given [here](#jspec-language).
+The example above gives a small insight into some of the features of JSPEC, such as regex, type placeholders, ellipses, comments and conditional statements. Full documentation for all of these features is provided [here](#jspec-language).
 
 ## Installation and requirements
 The JSPEC module is written in pure Python and only uses standard Python libraries, so there are no dependencies aside from Python and pip3. To install run:
@@ -24,7 +24,7 @@ The JSPEC module is written in pure Python and only uses standard Python librari
 pip3 install jspec
 ```
 
-## What can this JSPEC module used for?
+## What can this JSPEC module be used for?
 This module provides interfaces for parsing JSPEC documents and checking JSPEC against JSON. A check involves a JSPEC document and a JSON document, and if the JSPEC can be used to describe the JSON, it is said to be a "good match". Otherwise, it is said to be a "bad match" and a reason as to why will be provided. For example:
 
 example.jspec
@@ -98,7 +98,7 @@ A JSPEC array is a list of JSPEC terms and JSPEC array captures. A JSON array wi
 | `[1,2,3,4]` | `[1,2,3]` | Bad Match | Length of elements do not match |
 
 ### String
-A JSPEC string is a regex pattern string. A JSON string will a JSPEC string, provided it satisfies the regex pattern string. They are expressed in the same way strings are in JSON.
+A JSPEC string is a regex pattern string. A JSON string will match with a JSPEC string, provided it satisfies the regex pattern string. They are expressed in the same way strings are in JSON.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
@@ -107,7 +107,7 @@ A JSPEC string is a regex pattern string. A JSON string will a JSPEC string, pro
 | `<\w+>` | `<1234>` | Bad Match | Does not satisfy the regex |
 
 ### Int
-A JSPEC int is an integer. A JSON int will match an with JSPEC int, provided its integer value equals the integer value of the JSPEC int. They are expressed in the same way ints are in JSON.
+A JSPEC int is an integer. A JSON int will match with a JSPEC int, provided its integer value equals the integer value of the JSPEC int. They are expressed in the same way ints are in JSON.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
@@ -144,7 +144,7 @@ A JSPEC null is a null. A JSON null value will match with a JSPEC null. They are
 | `null` | `1` | Bad Match | Not null |
 
 ### Wildcard
-A JSPEC wildcard is the JSPEC term that will match with any JSON element. They are expressed as a wildcard character ` *`.
+A JSPEC wildcard is the JSPEC term that will match any JSON element. It is expressed as a wildcard character ` *`.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
@@ -166,7 +166,7 @@ A JSPEC negation is a negated JSPEC term. A JSON element will match with a JSPEC
 | `![1,2]` | `[1,2]` | Bad Match | [1,2] = [1,2] |
 
 ### Macro
-A JSPEC macro is a variable name which can be exported as a Python native JSON constant during the matching process. These variables are environment variables. A JSON element will match with a JSPEC macro, provided that it equals the exported Python native JSON constant. They are expressed as the environment variable name, enclosed in angled parentheses.
+A JSPEC macro is a variable name that can be exported as a Python native JSON constant during the matching process. These variables are environment variables. A JSON element will match with a JSPEC macro, provided that it equals the exported Python native JSON constant. They are expressed as the environment variable name, enclosed in angled parentheses.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
@@ -175,7 +175,7 @@ A JSPEC macro is a variable name which can be exported as a Python native JSON c
 | `<OTHER_VARIABLE>` | `123` | Bad Match | Only when the env variable `OTHER_VARIABLE` does not equal 123 |
 
 ### Conditional
-A JSPEC conditional a logical statement of JSPEC terms and logical operators (`&` AND, `|` OR, `^` XOR). A JSON element will match with a JSPEC conditional, provided it satisfies the logical statement of JSPEC terms and logical operators. They are expressed as JSPEC terms in between the logical operators, enclosed in rounded parentheses.
+A JSPEC conditional is a logical statement of JSPEC terms and logical operators (`&` AND, `|` OR, `^` XOR). A JSON element will match with a JSPEC conditional, provided it satisfies the logical statement of JSPEC terms and logical operators. They are expressed as JSPEC terms in between the logical operators, enclosed in rounded parentheses.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
@@ -203,7 +203,7 @@ A JSPEC placeholder is a JSON datatype name, which will match any JSON element o
 | `number` | `"12"` | Bad Match | Is not a int or real |
 
 ### Object Capture
-A JSPEC object capture is a list of JSPEC object pairs and logical operators (`&` AND, `|` OR, `^` XOR) which form a logical statement. Any JSON object pairs which can be part of the capture group must satisfy the logical statement. It also has an optional minimum and maximum number of object pairs in the capture group. They are expressed as JSPEC object pairs in between the logical operators, enclosed in rounded parentheses, with an optional multiplier range. The optional range is expressed as `xn` or `xn-m` where `n` and `m` are non-negative integers or `?` and `n` <= `m`.
+A JSPEC object capture is a list of JSPEC object pairs and logical operators (`&` AND, `|` OR, `^` XOR) which form a logical statement. Any JSON object pairs which can be part of the capture group must satisfy the logical statement. It also has an optional minimum and the maximum number of object pairs in the capture group. They are expressed as JSPEC object pairs in between the logical operators, enclosed in rounded parentheses, with an optional multiplier range. The optional range is expressed as `xn` or `xn-m` where `n` and `m` are non-negative integers or `?` and `n` <= `m`.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
@@ -217,7 +217,7 @@ A JSPEC object capture is a list of JSPEC object pairs and logical operators (`&
 | `{("\w": int \| "\w": bool)x2-?, "d": null}` | `{"a": 1, "b": true, "c": false}` | Bad Match | Missing "d": null |
 
 ### Array Capture
-A JSPEC array capture is a list of JSPEC object pairs and logical operators (`&` AND, `|` OR, `^` XOR) which form a logical statement. Any JSON object pairs which can be part of the capture group must satisfy the logical statement. It also has an optional minimum and maximum number of object pairs in the capture group. They are expressed as JSPEC terms in between the logical operators, enclosed in rounded parentheses, with an optional multiplier range. The optional range is expressed as `xn` or `xn-m` where `n` and `m` are non-negative integers or `?` and `n` <= `m`.
+A JSPEC array capture is a list of JSPEC object pairs and logical operators (`&` AND, `|` OR, `^` XOR) which form a logical statement. Any JSON object pairs which can be part of the capture group must satisfy the logical statement. It also has an optional minimum and the maximum number of object pairs in the capture group. They are expressed as JSPEC terms in between the logical operators, enclosed in rounded parentheses, with an optional multiplier range. The optional range is expressed as `xn` or `xn-m` where `n` and `m` are non-negative integers or `?` and `n` <= `m`.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
@@ -250,7 +250,7 @@ A JSPEC array ellipsis will match with any amount of consecutive elements in an 
 | `[1,...]` | `[2,1] ` | Bad Match | Ellipsis cannot match anything |
 
 ### Comments
-A JSPEC comment cannot be used to match against anything in a JSON, and only purpose is to provide documentation insights for the viewer of the JSPEC document. Both single line and multiline comments are supported in the following formats:
+A JSPEC comment cannot be used to match against anything in a JSON, and the only purpose is to provide documentation insights for the viewer of the JSPEC document. Both single line and multiline comments are supported in the following formats:
 
 ```
 {
@@ -258,7 +258,7 @@ A JSPEC comment cannot be used to match against anything in a JSON, and only pur
     // They can be placed at the end of a line
     "key": "value", // even after other JSPEC entities like this
     "other": [1, ... ,5],
-    /* Multiline commetns start with a forward slash and star
+    /* Multiline comments start with a forward slash and star
     and are terminated by a star and forward slash.*/
     "red": "car",
     /*
@@ -341,29 +341,29 @@ Output
 This repository also provided a Visual Studio Code extension which is available to be downloaded from the marketplace, under the name "JSPEC". It provides syntax highlighting for the JSPEC Language.
 
 ## Contributing
-Process for contributing would be creating a PR and having it reviewed and merge by @chrismalcolm. Please and your name and email to the `CONTRIBUTORS.txt` file when contributing.
+The process for contributing would be creating a PR and having it reviewed and merged by @chrismalcolm. Please add your name and email to the `CONTRIBUTORS.txt` file when contributing.
 
 ### Deploying an update to the extension
-The sub repository for extension source code here https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode
+The sub repository for extension source code is found here: https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode
 
 Link to the marketplace publisher here: https://marketplace.visualstudio.com/manage/publishers/ChrisMalcolm
 
-To deploy a new version of the Visual Studio extension, make sure `Node.js` is installed and run the following to install vsce:
+To deploy a new version of the Visual Studio extension, make sure `Node.js` is installed and run the following to install `vsce`:
 
 ```bash
 npm install -g vsce
 ```
 
-To create a new `.vslx` file, navigate to sub repository for the extension and run:
+To create a new `.vslx` file, navigate to the sub-repository for the extension and run:
 
 ```bash
 vsce package
 ```
 
-This will create the package. This can just be drag and dropped using the UI of the marketplace publisher, to deploy a new version of the extension.
+This will create the package. This can just be dragged and dropped using the UI of the marketplace publisher, to deploy a new version of the extension.
 
 ### Unit testing
-The aim for this project is for code to be fully unit testable with 100% coverage for the main modules. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage` and a local dependency.
+The aim of this project is for code to be fully unit testable with 100% coverage for the main modules. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage` and a local dependency.
 
 ```bash
 # Run the unit test suite
