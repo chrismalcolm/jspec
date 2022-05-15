@@ -33,7 +33,7 @@ class JSPECTestParse(unittest.TestCase):
             f.truncate(0)
         self.assertEqual(
             text,
-            (b'{' + NL + b'    "key": "value"' + NL + b'}' + NL).decode('utf-8')
+            '{\n    "key": "value"\n}\n'
         )
 
     def test_command_line_scripts_usage_2_1(self):
