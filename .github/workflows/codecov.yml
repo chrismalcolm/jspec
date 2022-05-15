@@ -20,11 +20,22 @@ jobs:
       run: |
         pip install coverage
         coverage run --source=jspec -m unittest test/test.py
-        coverage report -m --omit=jspec/parse.py,jspec/check.py > coverage.txt
+        coverage json --omit=jspec/parse.py,jspec/check.py
     - name: Store coverage file
       uses: actions/upload-artifact@v3
       with:
         name: coverage
-        path: coverage.txt
+        path: coverage.json
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
+    - name: Publish CodeCov badge
+        run: |
+          set -x total=100
+          if (( $(echo "$total <= 50" | bc -l) )) ; then
+            COLOR=red
+          elif (( $(echo "$total > 80" | bc -l) )); then
+            COLOR=green
+          else
+            COLOR=orange
+          fi
+          curl "https://img.shields.io/badge/coavrege-$total%25-$COLOR" > badge.svg
