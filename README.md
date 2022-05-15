@@ -336,7 +336,11 @@ Output
 ```
 
 ## Visual Studio Code Extension
-This repository also provided a Visual Studio Code extension which is available to be downloaded from the marketplace, under the name "JSPEC". It provides syntax highlighting for the JSPEC Language. The sub repository for extension source code is linked [here](https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode).
+This repository also provided a Visual Studio Code extension which is available to be downloaded from the marketplace, under the name "JSPEC". It provides syntax highlighting for the JSPEC Language. The sub repository for extension source code is linked [here](https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode). 
+
+Link to azure organization here: https://dev.azure.com/chrismalcolm/
+
+Link to the marketplace publisher here: https://marketplace.visualstudio.com/manage/publishers/ChrisMalcolm
 
 ## Contributing
 Process for contributing would be creating a PR and having it reviewed and merge by @chrismalcolm. Please and your name and email to the `CONTRIBUTORS.txt` file when contributing.
