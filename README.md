@@ -1,5 +1,6 @@
-# JSPEC 
-![check-code-coverage](https://img.shields.io/badge/code--coverage-100%-brightgreen)
+# JSPEC
+
+![Tests](https://github.com/chrismalcolm/jspec/actions/workflows/tests.yml/badge.svg)
 
 ## Installation
 ```bash
@@ -8,8 +9,6 @@ pip install jspec
 
 TODO
 does version for extension work?
-need J{SEC other errors of (pretty fials internally and if indent is not whitespace)
-githuv actions with tox
 fix badge
 document mention 0 dependencies (pure python) (aside from unit tests) powerful
 publish
