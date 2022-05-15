@@ -19,6 +19,12 @@ jobs:
     - name: Generate Report
       run: |
         pip install coverage
-        coverage run -m unittest test/test.py
+        coverage run --source=jspec -m unittest test/test.py
+        coverage report -m --omit=jspec/parse.py,jspec/check.py > coverage.txt
+    - name: Store coverage file
+      uses: actions/upload-artifact@v3
+        with:
+        name: coverage
+        path: coverage.txt
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
