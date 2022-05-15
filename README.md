@@ -4,7 +4,16 @@
 
 A JSPEC (**J**son **SPEC**ification) is a powerful Programming Language tool that can used to check the elements and structure of a JSON document. JSPEC documents are written using the **JSPEC Language** which uses the same syntax as JSON, but with its own file extension `.jspec` and some added features to the syntax. For example:
 
-![](https://github.com/chrismalcolm/jspec/blob/main/images/1_jspec.png)
+```
+{
+    "module": "\w+",
+    "downloads": int,
+    "list": [1, ... ,5],
+    // Comment
+    "conditional": ("A" | "B"),
+    ...
+}
+```
 
 The example above gives a small insight into some of the features of JSPEC, such as regex, type placeholders, ellipses, comments and conditional statements. Full documentation for all of these features are given [here](#jspec-language).
 
@@ -19,8 +28,9 @@ pip3 install jspec
 This module provides interfaces for parsing JSPEC documents and checking JSPEC against JSON. A check involves a JSPEC document and a JSON document, and if the JSPEC can be used to describe the JSON, it is said to be a "good match". Otherwise, it is said to be a "bad match" and a reason as to why will be provided. For example:
 
 example.jspec
-
-![](https://github.com/chrismalcolm/jspec/blob/main/images/2_jspec.png)
+```
+[1, ..., 4]
+```
 
 good_match.json
 ```json
@@ -242,15 +252,42 @@ A JSPEC array ellipsis will match with any amount of consecutive elements in an 
 ### Comments
 A JSPEC comment cannot be used to match against anything in a JSON, and only purpose is to provide documentation insights for the viewer of the JSPEC document. Both single line and multiline comments are supported in the following formats:
 
-![](https://github.com/chrismalcolm/jspec/blob/main/images/3_jspec.png)
+```
+{
+    // Single line comments start with a double forward slash
+    // They can be placed at the end of a line
+    "key": "value", // even after other JSPEC entities like this
+    "other": [1, ... ,5],
+    /* Multiline commetns start with a forward slash and star
+    and are terminated by a star and forward slash.*/
+    "red": "car",
+    /*
+     * Comments can be place anywhere where there is whitespace
+     */
+    "versions": [1, 2, /*like here*/ 3, 4 /*and here*/, 5]
+}
+```
 
 ## Basic Python Usage
 A specification can be defined using a JSPEC file or a string. Using the **jspec.load** or **jspec.loads** methods respectively, this can produce a **jspec.JSPEC** instance. This instance can also be converted back to a JSPEC file or string, using the **jspec.dump** or **jspec.dumps** methods respectively. To check a JSON against a JSPEC, use the 
 **jspec.check** to check using a **jspec.JSPEC** instance, or use the **jspec.checks** to check using a string. Any JSON used for these two methods must be in a Python native format, which can be achieved using the **json.loads** method.
 
 JSPEC file
-
-![](https://github.com/chrismalcolm/jspec/blob/main/images/4_jspec.png)
+```
+{
+    "id": <MY_ID>,
+    "timestamp": number,
+    "data": [
+        (
+            {
+                "longitude": real,
+                "latitude": real
+            }
+        )x?
+    ],
+    ...
+}
+```
 
 This example describes a JSON object with an "id" field set as the environment variable MY_ID, the "timestamp" field as a number, and "data" as a list of objects, each with a "longitude" and "latitude" keys and real values.
 

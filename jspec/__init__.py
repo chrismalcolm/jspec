@@ -5,7 +5,7 @@ from . import scanner
 from . import matcher
 from . import entity
 
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 
 def _decode(document, pretty=False, indent=None):
     if not isinstance(document, str):
