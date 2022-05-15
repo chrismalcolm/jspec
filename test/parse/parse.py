@@ -1,5 +1,8 @@
+import os
 import unittest
 import subprocess
+
+NL = b'\r\n' if os.name == 'nt' else b'\n'
 
 class JSPECTestParse(unittest.TestCase):
     """Class for testing the functions in the ``jspec.parse`` module.
@@ -10,7 +13,7 @@ class JSPECTestParse(unittest.TestCase):
         result = subprocess.run(['python3', '-m', 'jspec.parse', './test/assets/load.jspec'], stdout=subprocess.PIPE)
         self.assertEqual(
             result.stdout,
-            b'{\n    "key": "value"\n}\n'
+            b'{' + NL + b'    "key": "value"' + NL + b'}' + NL
         )
 
     def test_command_line_scripts_usage_1_2(self):
@@ -18,7 +21,7 @@ class JSPECTestParse(unittest.TestCase):
         result = subprocess.run(['python3', '-m', 'jspec.parse', './test/assets/load.jspec', '--indent=\t'], stdout=subprocess.PIPE)
         self.assertEqual(
             result.stdout,
-            b'{\n\t"key": "value"\n}\n'
+            b'{' + NL + b'\t"key": "value"' + NL + b'}' + NL
         )
 
     def test_command_line_scripts_usage_1_3(self):
@@ -30,7 +33,7 @@ class JSPECTestParse(unittest.TestCase):
             f.truncate(0)
         self.assertEqual(
             text,
-            '{\n    "key": "value"\n}\n'
+            (b'{' + NL + b'    "key": "value"' + NL + b'}' + NL).decode('utf-8')
         )
 
     def test_command_line_scripts_usage_2_1(self):
@@ -40,7 +43,7 @@ class JSPECTestParse(unittest.TestCase):
         output = p.communicate(input=stdin.encode())[0]
         self.assertEqual(
             output,
-            b'{\n    "jspec": "term",\n    ...\n}\n'
+            b'{' + NL + b'    "jspec": "term",' + NL + b'    ...' + NL + b'}' + NL
         )
 
     def test_command_line_scripts_usage_2_2(self):
@@ -50,7 +53,7 @@ class JSPECTestParse(unittest.TestCase):
         output = p.communicate(input=stdin.encode())[0]
         self.assertEqual(
             output,
-            b'{"jspec": "term", ...}\n'
+            b'{"jspec": "term", ...}' + NL
         )
 
     def test_command_line_scripts_usage_2_3(self):
@@ -60,7 +63,7 @@ class JSPECTestParse(unittest.TestCase):
         output = p.communicate(input=stdin.encode())[0]
         self.assertEqual(
             output,
-            b'Expecting JSPEC term in array: line 1 column 6 (char 5)\n'
+            b'Expecting JSPEC term in array: line 1 column 6 (char 5)' + NL
         )
 
 

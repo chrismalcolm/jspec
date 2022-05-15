@@ -1,5 +1,8 @@
+import os
 import unittest
 import subprocess
+
+NL = b'\r\n' if os.name == 'nt' else b'\n'
 
 class JSPECTestCheck(unittest.TestCase):
     """Class for testing the functions in the ``jspec.check`` module.
@@ -18,7 +21,7 @@ class JSPECTestCheck(unittest.TestCase):
         result = subprocess.run(['python3', '-m', 'jspec.check', './test/assets/load.jspec', '--raw-json={"key": 2}'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         self.assertEqual(
             result.stdout,
-            b'At location $.key - expected a string, got \'2\'\n'
+            b'At location $.key - expected a string, got \'2\'' + NL
         )
 
     def test_command_line_scripts_usage_1_3(self):
