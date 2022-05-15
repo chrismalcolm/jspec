@@ -1,94 +1,55 @@
 # JSPEC
-
 ![Tests](https://github.com/chrismalcolm/jspec/actions/workflows/tests.yml/badge.svg)
-
 ![CodeCov](https://github.com/chrismalcolm/jspec/actions/workflows/codecov.yml/badge.svg)
 
-## Installation
-```bash
-pip install jspec
-```
+A JSPEC (**J**son **SPEC**ification) is a powerful Programming Language tool that can used to check the elements and structure of a JSON document. JSPEC documents are written using the **JSPEC Language** which uses the same syntax as JSON, but with its own file extension `.jspec` and some added features to the syntax. For example:
 
-TODO
-does version for extension work?
-fix badge
-document mention 0 dependencies (pure python) (aside from unit tests) powerful
-publish
-
-A JSPEC (**J**son **SPEC**ification) is a tool that can used to check the elements and structure of a JSON. JSPEC has it's own class **jspec.JSPEC** and its own file format, which use the **.jspec** extension. 
-
-## Basic Usage
-A specification can be defined using a JSPEC file or a string. Using the **jspec.load** or **jspec.loads** methods respectively, this can produce a **jspec.JSPEC** instance. This instance can also be converted back to a JSPEC file or string, using the **jspec.dump** or **jspec.dumps** methods respectively. To check a JSON against a JSPEC, use the 
-**jspec.check** to check using a **jspec.JSPEC** instance, or use the **jspec.checks** to check using a string. Any JSON used for these two methods must be in a Python native format, which can be achieved using the **json.loads** method.
-
-JSPEC file
-```
+```json
 {
-    "id": <MY_ID>,
-    "timestamp": number,
-    "data": [
-        (
-            {
-                "longitude": real,
-                "latitude": real
-            }
-        )x?
-    ],
+    "module": "\w+",
+    "downloads": int,
+    "list": [1, ... ,5],
+    // Comment
+    "conditional": ("A" | "B"),
     ...
 }
 ```
+The example above gives a small insight into some of the features of JSPEC, such as regex, type placeholders, ellipses, comments and conditional statements. Full documentation for all of these features are given [here](#jspec-language).
 
-Source
-```python
-import os
-import jspec
+## Installation and requirements
+The JSPEC module is written in pure Python and only uses standard Python libraries, so there are no dependencies aside from Python and pip3. To install run:
 
-os.environ["MY_ID"] = '1'
-with open("./test/assets/test.jspec", "r") as f:
-    spec = jspec.load(f)
-element_1 = {
-    "id": 1,
-    "timestamp": 1530.5,
-    "data": [
-        {
-            "longitude": 10.2,
-            "latitude": 41.3,
-        },
-        {
-            "longitude": 33.3,
-            "latitude": 76.2,
-        },
-        {
-            "longitude": 9.5,
-            "latitude": 12.1,
-        }
-    ],
-    "other": "data"
-}
-
-element_2 = {
-    "id": 1,
-    "bad": "fields"
-}
-
-result_1, reason_1 = jspec.check(spec, element_1)
-print("1:", result_1, reason_1)
-
-result_2, reason_2 = jspec.check(spec, element_1)
-print("2:",result_2, reason_2)
-```
-
-Output
 ```bash
-1: True, ''
-2: False, 'At location $ - exhausted JSON object, failed to match the following JSPEC pairs: ["data": [({"latitude": real, "longitude": real})x?], "timestamp": number, ...]'
+pip3 install jspec
 ```
 
-## How to Construct a JSPEC File
-A JSPEC file adheres to the same rules as JSON files, with some additional features. It is formed from formed of entities called [JSPEC terms](#jspec-term) and [JSPEC captures](#jspec-capture).
+## What can this JSPEC module used for?
+This module provides interfaces for parsing JSPEC documents and checking JSPEC against JSON. A check involves a JSPEC document and a JSON document, and if the JSPEC can be used to describe the JSON, it is said to be a "good match". Otherwise, it is said to be a "bad match" and a reason as to why will be provided. For example:
 
-### JSPEC Term
-A JSPEC term can match with a single JSON element. The traditional JSON data types are all supported, alongside other JSPEC terms. They are listed here as follows:
+example.jspec
+```json
+[1, ..., 4]
+```
+
+good_match.json
+```json
+[1, 2, 3, 4]
+```
+
+bad_match.json
+```json
+[1, 2, 3, 4, 5]
+```
+
+The JSPEC document `example.jspec` above describes an array, beginning with a 1 and ending with a 4, ignoring anything in between. The JSON document `good_match.json` fits this description, and would therefore be called a good match. In contrast, the `bad_match.json` does not fit this description, as the array does not end in a 4, and would be called a bad match.
+
+## JSPEC Language
+
+**Fundamental JSPEC terminology**
+* [term](#jspec-term)
+* [capture](#jspec-capture)
+
+**Terminology shared by both JSON and JSPEC**
 * [object](#object)
 * [array](#array)
 * [string](#string)
@@ -96,19 +57,25 @@ A JSPEC term can match with a single JSON element. The traditional JSON data typ
 * [real](#real)
 * [boolean](#boolean)
 * [null](#null)
+
+**Terminology unique to JSPEC**
 * [wildcard](#wildcard)
 * [negation](#negation)
 * [macro](#macro)
 * [conditional](#conditional)
 * [placeholder](#placeholder)
-
-### JSPEC Capture
-A JSPEC capture can match with a group of JSON elements.
-Captures can only appear in objects or arrays. They are listed here as follows:
 * [object capture](#object-capture)
 * [array capture](#array-capture)
 * [object ellipsis](#object-ellipsis)
 * [array ellipsis](#array-ellipsis)
+* [comments](#comments)
+
+### JSPEC Term
+A JSPEC term can match with a single JSON element. The traditional JSON data types are all supported, alongside other JSPEC terms.
+
+### JSPEC Capture
+A JSPEC capture can match with a group of JSON elements.
+Captures can only appear in objects or arrays.
 
 ### Object
 A JSPEC object is a set of JSPEC object pairs and JSPEC object captures. A JSON object will match with a JSPEC object, provided it can match all the JSPEC object pairs and satisfy all JSPEC object captures. They are expressed in the same way objects are in JSON.
@@ -259,7 +226,7 @@ A JSPEC array capture is a list of JSPEC object pairs and logical operators (`&`
 | `[1,2,3,(bool)x?,5,6]` | `[1,2,3,4,5,6]` | Bad Match | Capture not satisfied |
 
 ### Object Ellipsis
-A JSPEC object ellipsis will match with any extra object pairs that have not already been matched.
+A JSPEC object ellipsis will match with any extra object pairs that have not already been matched. It is equivalent to the wildcard object capture `(string: *)x?`.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
@@ -269,7 +236,7 @@ A JSPEC object ellipsis will match with any extra object pairs that have not alr
 | `{"a":1,"b":2, ...}` | `{"a":1}` | Bad Match | The JSPEC object pair "b": 2 is not matched |
 
 ### Array Ellipsis
-A JSPEC array ellipsis will match with any amount of consecutive elements in an array.
+A JSPEC array ellipsis will match with any amount of consecutive elements in an array. It is equivalent to the wildcard array capture `(*)x?`.
 
 | JSPEC Snippet | JSON Snippet | Result | Reason | 
 |-|-|-|-|
@@ -281,8 +248,102 @@ A JSPEC array ellipsis will match with any amount of consecutive elements in an 
 | `[1,2,3 ... 5,6]` | `[1,2,4,3,5,6]` | Bad Match | Ellipsis cannot match anything |
 | `[1,...]` | `[2,1] ` | Bad Match | Ellipsis cannot match anything |
 
+### Comments
+A JSPEC comment cannot be used to match against anything in a JSON, and only purpose is to provide documentation insights for the viewer of the JSPEC document. Both single line and multiline comments are supported in the following formats:
+
+```json
+{
+    // Single line comments start with a double forward slash
+    // They can be placed at the end of a line
+    "key": "value", // even after other JSPEC entities like this
+    "other": [1, ... ,5],
+    /* Multiline commetns start with a forward slash and star
+    and are terminated by a star and forward slash.*/
+    "red": "car",
+    /*
+     * Comments can be place anywhere where there is whitespace
+     */
+    "versions": [1, 2, /*like here*/ 3, 4 /*and here*/, 5]
+}
+```
+
+## Basic Python Usage
+A specification can be defined using a JSPEC file or a string. Using the **jspec.load** or **jspec.loads** methods respectively, this can produce a **jspec.JSPEC** instance. This instance can also be converted back to a JSPEC file or string, using the **jspec.dump** or **jspec.dumps** methods respectively. To check a JSON against a JSPEC, use the 
+**jspec.check** to check using a **jspec.JSPEC** instance, or use the **jspec.checks** to check using a string. Any JSON used for these two methods must be in a Python native format, which can be achieved using the **json.loads** method.
+
+JSPEC file
+```json
+{
+    "id": <MY_ID>,
+    "timestamp": number,
+    "data": [
+        (
+            {
+                "longitude": real,
+                "latitude": real
+            }
+        )x?
+    ],
+    ...
+}
+```
+This example describes a JSON object with an "id" field set as the environment variable MY_ID, the "timestamp" field as a number, and "data" as a list of objects, each with a "longitude" and "latitude" keys and real values.
+
+Source
+```python
+import os
+import jspec
+
+os.environ["MY_ID"] = '1'
+with open("./test/assets/test.jspec", "r") as f:
+    spec = jspec.load(f)
+element_1 = {
+    "id": 1,
+    "timestamp": 1530.5,
+    "data": [
+        {
+            "longitude": 10.2,
+            "latitude": 41.3,
+        },
+        {
+            "longitude": 33.3,
+            "latitude": 76.2,
+        },
+        {
+            "longitude": 9.5,
+            "latitude": 12.1,
+        }
+    ],
+    "other": "data"
+}
+
+element_2 = {
+    "id": 1,
+    "bad": "fields"
+}
+
+result_1, reason_1 = jspec.check(spec, element_1)
+print("1:", result_1, reason_1)
+
+result_2, reason_2 = jspec.check(spec, element_1)
+print("2:",result_2, reason_2)
+```
+
+Output
+```bash
+1: True, ''
+2: False, 'At location $ - exhausted JSON object, failed to match the following JSPEC pairs: ["data": [({"latitude": real, "longitude": real})x?], "timestamp": number, ...]'
+```
+
+## Visual Studio Code Extension
+This repository also provided a Visual Studio Code extension which is available to be downloaded from the marketplace, under the name "JSPEC". It provides syntax highlighting for the JSPEC Language. The sub repository for extension source code is linked [here](https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode).
+
+## Contributing
+Process for contributing would be creating a PR and having it reviewed and merge by @chrismalcolm. Please and your name and email to the `CONTRIBUTORS.txt` file when contributing.
+
 ## Unit testing
-The aim for this project is for code to be fully unit testable with 100% coverage. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage`.
+The aim for this project is for code to be fully unit testable with 100% coverage for the main modules. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage` and a local dependency.
+
 ```bash
 # Run the unit test suite
 coverage run --source=jspec -m unittest test/test.py
