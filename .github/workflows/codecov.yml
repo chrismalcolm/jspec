@@ -30,13 +30,4 @@ jobs:
       uses: codecov/codecov-action@v2
     - name: Publish CodeCov badge
       run: |
-        set -x
-        total=100
-        if (( $(echo "$total <= 50" | bc -l) )) ; then
-          COLOR=red
-        elif (( $(echo "$total > 80" | bc -l) )); then
-          COLOR=green
-        else
-          COLOR=orange
-        fi
-        curl "https://img.shields.io/badge/coavrege-$total%25-$COLOR" > badge.svg
+        curl "https://img.shields.io/badge/coavrege-100%25-green" > badge.svg
