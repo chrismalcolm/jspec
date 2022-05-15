@@ -20,14 +20,19 @@ jobs:
       run: |
         pip install coverage
         coverage run --source=jspec -m unittest test/test.py
-        coverage json --omit=jspec/parse.py,jspec/check.py
+        coverage report -m --omit=jspec/parse.py,jspec/check.py > coverage.txt
     - name: Store coverage file
       uses: actions/upload-artifact@v3
       with:
         name: coverage
-        path: coverage.json
+        path: coverage.txt
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
-    - name: Publish CodeCov badge
+    - name: Check Percentage
       run: |
-        curl "https://img.shields.io/badge/coavrege-100%25-green" > badge.svg
+        percentage=$(tail -c 5 coverage.txt)
+        echo "code coverage percentage $percentage"
+        if [ "$percentage" != "100%" ]; then
+            echo "code coverage is not 100%"
+            exit 1
+        fi
