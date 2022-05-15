@@ -22,5 +22,5 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     install_requires=INSTALL_REQUIRE,
-    test_require=TESTS_REQUIRE
+    tests_require=TESTS_REQUIRE
 )
