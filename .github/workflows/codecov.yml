@@ -21,13 +21,6 @@ jobs:
         pip install coverage
         coverage run --source=jspec -m unittest test/test.py
         coverage report -m --omit=jspec/parse.py,jspec/check.py > coverage.txt
-    - name: Store coverage file
-      uses: actions/upload-artifact@v3
-      with:
-        name: coverage
-        path: coverage.txt
-    - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v2
     - name: Check Percentage
       run: |
         percentage=$(tail -c 5 coverage.txt)
@@ -36,3 +29,5 @@ jobs:
             echo "code coverage is not 100%"
             exit 1
         fi
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v2
