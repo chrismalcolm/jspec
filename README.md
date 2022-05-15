@@ -2,6 +2,8 @@
 
 ![Tests](https://github.com/chrismalcolm/jspec/actions/workflows/tests.yml/badge.svg)
 
+![CodeCov](https://github.com/chrismalcolm/jspec/actions/workflows/codecov.yml/badge.svg)
+
 ## Installation
 ```bash
 pip install jspec
