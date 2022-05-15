@@ -32,7 +32,7 @@ jobs:
       run: |
         percentage=$(tail -c 5 coverage.txt)
         echo "code coverage percentage $percentage"
-        if [ "$percentage" != "100%" ]; then
+        if [ "$percentage" == "100%" ]; then
             echo "code coverage is not 100%"
             exit 1
         fi
