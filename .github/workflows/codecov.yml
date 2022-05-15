@@ -24,7 +24,7 @@ jobs:
     - name: Store coverage file
       uses: actions/upload-artifact@v3
         with:
-        name: coverage
-        path: coverage.txt
+          name: coverage
+          path: coverage.txt
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
