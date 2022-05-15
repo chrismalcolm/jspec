@@ -1,0 +1,31 @@
+name: CodeCov
+
+on: 
+  - push
+  - pull_request
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      OS: ubuntu-latest
+      PYTHON: '3.10'
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'
+    - name: Generate Report
+      run: |
+        pip install coverage
+        coverage run --source=jspec -m unittest test/test.py
+        coverage report -m --omit=jspec/parse.py,jspec/check.py > coverage.txt
+    - name: Check Percentage
+      run: |
+        percentage=$(tail -c 5 coverage.txt)
+        echo "code coverage percentage $percentage"
+        if [ "$percentage" != "100%" ]; then
+            echo "code coverage is not 100%"
+            exit 1
+        fi

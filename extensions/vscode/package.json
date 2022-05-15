@@ -1,0 +1,30 @@
+{
+    "publisher": "ChrisMalcolm",
+    "name": "jspec",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/chrismalcolm/jspec/extensions/vscode"
+    },
+    "displayName": "JSPEC",
+    "description": "Syntax highlighting for the JSPEC language",
+    "version": "1.0.1",
+    "engines": {
+        "vscode": "^1.67.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "jspec",
+            "aliases": ["jspec", "jspec"],
+            "extensions": [".jspec"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "jspec",
+            "scopeName": "source.jspec",
+            "path": "./syntaxes/jspec.tmLanguage.json"
+        }]
+    }
+}

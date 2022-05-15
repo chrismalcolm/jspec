@@ -1,0 +1,102 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "jspec",
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#macros"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#multipliers"
+		},
+		{
+			"include": "#numbers"
+		},	
+		{
+			"include": "#constants"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.jspec",
+					"match": "\/\/.*(?:\n|$)"
+				},
+				{
+					"name": "comment.block.jspec",
+					"begin": "\/\\*",
+					"end": "\\*\/"
+				}
+			]
+		},
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.operator.jspec",
+					"match": "\\b(>=|<=|=|<|>|&|\\||\\^|!)\\b"
+				}
+			]
+		},
+		"macros": {
+			"name": "constant.language.jspec",
+			"match": "<.*?>"
+		},
+		"strings": {
+			"patterns": [
+				{	
+					"match": "(\"[^\"]*\")\\s*?:",
+					"captures": {
+						"1": {
+							"name": "support.type.property-name.jspec",
+							"patterns": [
+								{
+									"name": "constant.character.escape.jspec",
+									"match": "\\\\."
+								}
+							]
+						}
+					}
+				},
+				{	
+					"name": "string.quoted.double.jspec",
+					"match": "\".*?\"",
+					"patterns": [
+						{
+							"name": "constant.character.escape.jspec",
+							"match": "\\\\."
+						}
+					]
+				}
+			]
+		},
+		"multipliers": {
+			"match": "x([1-9]\\d*|\\?)(?:\\-([1-9]\\d*|\\?))?",
+			"captures": {
+				"1": {
+					"name": "keyword.control.jspec"
+				},
+				"2": {
+					"name": "keyword.control.jspec"
+				}
+			}
+		},
+		"numbers": {
+			"name": "constant.numeric.jspec",
+			"match": "(-?(?:0|[1-9]\\d*))(\\.\\d+)?([eE][-+]?\\d+)?"
+		},
+		"constants": {
+			"name": "constant.language.jspec",
+			"match": "(true|false|object|array|string|int|real|number|bool|null|\\*|\\.\\.\\.)"
+		}
+	},
+	"scopeName": "source.jspec"
+}

@@ -19,6 +19,8 @@ class JSPEC:
 
     Attributes:
         base (JSPECTerm): The base JSPEC term for this JSPEC.
+        _pretty_string (str/None): A pretty string version of the JSPEC, if one
+            is known, else None
 
     Args:
         term (JSPECTerm): The term to set as the base JSPEC term for this
@@ -27,8 +29,11 @@ class JSPEC:
 
     def __init__(self, term):
         self.base = term
+        self._pretty_string = None
 
     def __str__(self):
+        if self._pretty_string:
+            return self._pretty_string
         return str(self.base)
 
     def __eq__(self, other):
@@ -91,11 +96,13 @@ class JSPECTerm(JSPECEntity):
             return False
         return self.spec == other.spec
 
-    def _converter(self, value):
-        return self.__class__.COVERTER(value)
+    @classmethod
+    def _converter(cls, value):
+        return cls.COVERTER(value)
 
-    def _serializer(self, value):
-        return self.__class__.SERIALIZER(value)
+    @classmethod
+    def _serializer(cls, value):
+        return cls.SERIALIZER(value)
 
 class JSPECObject(JSPECTerm):
     """This class represents a JSPEC object.

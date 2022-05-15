@@ -1,8 +1,0 @@
-Name                Stmts   Miss  Cover   Missing
--------------------------------------------------
-jspec/__init__.py      29      0   100%
-jspec/entity.py       225      0   100%
-jspec/matcher.py      359      0   100%
-jspec/scanner.py      348      0   100%
--------------------------------------------------
-TOTAL                 961      0   100%
