@@ -2,7 +2,7 @@ name: CodeCov
 
 on: 
   - push
-  - pull_request]
+  - pull_request
 
 jobs:
   run:
@@ -11,12 +11,9 @@ jobs:
       OS: ubuntu-latest
       PYTHON: '3.10'
     steps:
-    - uses: checkout@v2
-      with:
-        fetch-depth: ‘2’
-
-    - name: Setup Python
-      uses: actions/setup-python@master
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
       with:
         python-version: 3.10
     - name: Generate Report
