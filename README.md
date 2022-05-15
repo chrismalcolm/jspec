@@ -19,6 +19,7 @@ pip3 install jspec
 This module provides interfaces for parsing JSPEC documents and checking JSPEC against JSON. A check involves a JSPEC document and a JSON document, and if the JSPEC can be used to describe the JSON, it is said to be a "good match". Otherwise, it is said to be a "bad match" and a reason as to why will be provided. For example:
 
 example.jspec
+
 ![](https://github.com/chrismalcolm/jspec/blob/pretty/images/2_jspec.png)
 
 good_match.json
@@ -248,7 +249,9 @@ A specification can be defined using a JSPEC file or a string. Using the **jspec
 **jspec.check** to check using a **jspec.JSPEC** instance, or use the **jspec.checks** to check using a string. Any JSON used for these two methods must be in a Python native format, which can be achieved using the **json.loads** method.
 
 JSPEC file
+
 ![](https://github.com/chrismalcolm/jspec/blob/pretty/images/4_jspec.png)
+
 This example describes a JSON object with an "id" field set as the environment variable MY_ID, the "timestamp" field as a number, and "data" as a list of objects, each with a "longitude" and "latitude" keys and real values.
 
 Source
