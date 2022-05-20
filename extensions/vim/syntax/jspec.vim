@@ -2,7 +2,7 @@
 " Language:    JSPEC
 " Maintainer:  Chris Malcolm <malcochris123@hotmail.co.uk>
 " Last Change: 20/05/2022
-" Version:     0.1.0
+" Version:     1.0.0
 
 if exists("b:current_syntax")
   finish
@@ -39,13 +39,13 @@ syn match jspecConstant   "true\|false\|object\|array\|string\|int\|real\|number
 syn match jspecBraces     "[{}\[\]\(\)]"
 
 command -nargs=+ HiLink hi def link <args>
-HiLink jspecComment Comment
-HiLink jspecOperator Special
-HiLink jspecMacro Constant
-HiLink jspecString String
-HiLink jspecObjectKey Operator
-HiLink jspecNumber Function
+HiLink jspecComment    Comment
+HiLink jspecOperator   Special
+HiLink jspecMacro      Constant
+HiLink jspecString     String
+HiLink jspecObjectKey  Operator
+HiLink jspecNumber     Function
 HiLink jspecMultiplier Function
-HiLink jspecConstant Function
-HiLink jspecBraces Special
+HiLink jspecConstant   Function
+HiLink jspecBraces     Special
 delcommand HiLink
