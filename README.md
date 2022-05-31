@@ -1,6 +1,10 @@
 # JSPEC
 ![Tests](https://github.com/chrismalcolm/jspec/actions/workflows/tests.yml/badge.svg)
 ![CodeCov](https://github.com/chrismalcolm/jspec/actions/workflows/codecov.yml/badge.svg)
+[![PyPi license](https://badgen.net/pypi/license/pip/)](https://pypi.org/project/jspec/)
+[![PyPi version](https://badgen.net/pypi/v/pip/)](https://pypi.org/project/jspec/)
+[![python](https://img.shields.io/badge/python-3.6%20|%203.7%20|%203.8%20|%203.9%20|%203.10-blue.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+[![docs](https://img.shields.io/badge/docs-passing-success.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 
 JSPEC is a powerful yet simple and lightweight JSON validation module.
 
@@ -38,12 +42,12 @@ False, 'at $.age expecting an int not a real'
 >>> 
 ```
 
-The first check for **`{"name": "Chris", "age": 26, "status": "online"}`** passes because because both the "name" and "status" conditions are satisfied, and the "status" pair is ignored. The **`check`** function returns **True** with an empty string when successful.
+The first check for **`{"name": "Chris", "age": 26, "status": "online"}`** passes because because both the "name" and "status" conditions are satisfied, and the "status" key-value pair is ignored. The **`check`** function returns **True** with an empty string when successful.
 
 The second check for **`{"name": "Bob", "age": 34.5}`** failed, because even though the "name" condition is satisfied, because 34.5 is not an integer, it failed the "age" condition.  The **`check`** function returns **False** with a reason for failure when unsuccessful.
 
 ## What is the JSPEC language?
-The JSPEC language is a natural and intuitive extension of JSON language that is used to explicitly describe JSON. Its name JSPEC stands for **J**SON **SPEC**IFICATION. JSPEC has its own file format **.jspec** along with its own syntax highlighter extensions supported in [VS Code](https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode/) and [Vim](https://github.com/chrismalcolm/jspec/tree/main/extensions/vim/). Its usage will be explored further in the [Basic Usage](#basic-usage) and [Advanced Usage](#advanced-usage) sections below. There is also a link for official documentation for all of the features of the [JSPEC language](https://github.com/chrismalcolm/jspec/tree/main/docs/language/README.md).
+The JSPEC language is a natural and intuitive extension of JSON language that is used to explicitly describe JSON. Its name JSPEC stands for **J**SON **SPEC**IFICATION. JSPEC has its own file format **.jspec** along with its own syntax highlighter extensions supported in [VS Code](https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode/) and [Vim](https://github.com/chrismalcolm/jspec/tree/main/extensions/vim/). Its usage will be explored further in the [Basic Usage](#basic-usage) and [Advanced Usage](#advanced-usage) sections below. There is also a link for official documentation for all of the features of the [JSPEC language](https://github.com/chrismalcolm/jspec/blob/main/docs/language/README.md).
 
 ## Implicit vs Explicit
 Most Python JSON validation/schema modules use implicit language to describe their schema. This means that they describe the structure and properties of the JSON, encoded using some paradigm. An example of an implicit schema is given below.
@@ -91,7 +95,7 @@ To demonstrate this further, here is the equivalent schema of the above, written
 This states exactly the same information as the implicit schema, but in a much more simple, explicit and elegant way.
 
 ## Basic Usage
-This section will explore how to use the JSPEC language through examples of JSPEC files and Python snippets. For all of the examples in this section, it will be assumed that the example JSPEC file has been loaded as a JSPEC instance **`spec`**. For documentation on the functions of this module. follow the link [here](https://github.com/chrismalcolm/jspec/tree/main/docs/functions/README.md).
+This section will explore how to use the JSPEC language through examples of JSPEC files and Python snippets. For all of the examples in this section, it will be assumed that the example JSPEC file has been loaded as a JSPEC instance **`spec`**. For documentation on the functions of this module. follow the link [here](https://github.com/chrismalcolm/jspec/blob/main/docs/functions/README.md).
 
 ### Example 1
 The example below is a JSPEC schema, specifying that the JSON be an object with a key "name" with a string value, a key "age" with an integer value, and with no other keys allowed.
@@ -352,7 +356,7 @@ Single line and multiline **comments** are also supported in the JSPEC language.
 I am open to any suggestions on how this project can be improved. The process for contributing would be creating a PR and having it reviewed and merged by @chrismalcolm. Please add your name and email to the `CONTRIBUTORS.txt` file when contributing.
 
 ## Unit testing
-The aim of this project is for code to be fully unit testable with 100% coverage for the main modules **scanner**, **entity** and **matcher**. The command-line helpers **parse** and **check** are also included in the unit tests, but there is no requirement for these to be included in the coverage report. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage` and a local dependency.
+The aim of this project is for code to be fully unit testable with 100% coverage for the main modules **scanner**, **entity** and **matcher**. The command-line helpers **parse** and **check** are also included in the unit tests, but there is no requirement for these to be included in the coverage report. To view the unit test suite, use the link [here](https://github.com/chrismalcolm/jspec/tree/main/test/). The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage`. The Github code coverage for this repo is set only to pass if the test coverage is 100% for the modules **scanner**, **entity** and **matcher**.
 
 ```bash
 # Run the unit test suite
