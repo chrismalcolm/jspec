@@ -337,6 +337,7 @@ To create an example, we need to set the environment variables in the schema.
 ### Example 10
 Single line and multiline **comments** are also supported in the JSPEC language. Single line comments are written using **//** and extend to the end of the line. Multiline comments begin with **/\*** and end with **\*/**. They can be placed in any whitespace. Both comment types are demonstrated below.
 
+*example_10.jspec*
 ```
 {
     // Single line comments start with a double forward slash
