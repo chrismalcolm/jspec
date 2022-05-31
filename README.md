@@ -2,20 +2,7 @@
 ![Tests](https://github.com/chrismalcolm/jspec/actions/workflows/tests.yml/badge.svg)
 ![CodeCov](https://github.com/chrismalcolm/jspec/actions/workflows/codecov.yml/badge.svg)
 
-A JSPEC (**J**son **SPEC**ification) is a powerful Programming Language tool that can be used to check the elements and structure of a JSON document. JSPEC documents are written using the **JSPEC Language** which uses the same syntax as JSON, but with its own file extension `.jspec` and some added features to the syntax. For example:
-
-```
-{
-    "module": "\w+",
-    "downloads": int,
-    "list": [1, ... ,5],
-    // Comment
-    "conditional": ("A" | "B"),
-    ...
-}
-```
-
-The example above gives a small insight into some of the features of JSPEC, such as regex, type placeholders, ellipses, comments and conditional statements. Full documentation for all of these features is provided [here](#jspec-language).
+JSPEC is a powerful yet simple and lightweight JSON validation module.
 
 ## Installation and requirements
 The JSPEC module is written in pure Python and only uses standard Python libraries, so there are no dependencies aside from Python and pip3. To install run:
@@ -24,233 +11,327 @@ The JSPEC module is written in pure Python and only uses standard Python librari
 pip3 install jspec
 ```
 
-## What can this JSPEC module be used for?
-This module provides interfaces for parsing JSPEC documents and checking JSPEC against JSON. A check involves a JSPEC document and a JSON document, and if the JSPEC can be used to describe the JSON, it is said to be a "good match". Otherwise, it is said to be a "bad match" and a reason as to why will be provided. For example:
+## At a glance
+The schema used in this module is written in the JSPEC language, which is an intuitive and explicit way to describe JSON. In the example below, the schema is defined in a JSPEC file (**.jspec**). It is a schema for a JSON object satisfying two conditions; a key "name" with a string value and a key "age" with an integer value. All other keys will be ignored.
 
-example.jspec
+*example_00.jspec*
 ```
-[1, ..., 4]
-```
-
-good_match.json
-```json
-[1, 2, 3, 4]
-```
-
-bad_match.json
-```json
-[1, 2, 3, 4, 5]
+{
+    "name": string, 
+    "age": int,
+    ...
+}
 ```
 
-The JSPEC document `example.jspec` above describes an array, beginning with a 1 and ending with a 4, ignoring anything in between. The JSON document `good_match.json` fits this description, and would therefore be called a good match. In contrast, the `bad_match.json` does not fit this description, as the array does not end in a 4, and would be called a bad match.
+Use the JSPEC **`load`** function to create the specification object, then use the JSPEC **`check`** function to see if a given JSON adheres to the schema in *example_00.jspec*. In the code snippet below, we are validating the schema against the JSON objects **`{"name": "Chris", "age": 26, "status": "online"}`** and **`{"name": "Bob", "age": 34.5}`**.
 
-## JSPEC Language
+```python
+>>> import jspec
+>>> 
+>>> with open("example_00.jspec") as f:
+>>>     spec = jspec.load(f)
+>>> 
+>>> jspec.check(spec, {"name": "Chris", "age": 26, "status": "online"})
+True, ''
+>>> jspec.check(spec, {"name": "Bob", "age": 34.5})
+False, 'at $.age expecting an int not a real'
+>>> 
+```
 
-**Fundamental JSPEC terminology**
-* [term](#jspec-term)
-* [capture](#jspec-capture)
+The first check for **`{"name": "Chris", "age": 26, "status": "online"}`** passes because because both the "name" and "status" conditions are satisfied, and the "status" pair is ignored. The **`check`** function returns **True** with an empty string when successful.
 
-**Terminology shared by both JSON and JSPEC**
-* [object](#object)
-* [array](#array)
-* [string](#string)
-* [int](#int)
-* [real](#real)
-* [boolean](#boolean)
-* [null](#null)
+The second check for **`{"name": "Bob", "age": 34.5}`** failed, because even though the "name" condition is satisfied, because 34.5 is not an integer, it failed the "age" condition.  The **`check`** function returns **False** with a reason for failure when unsuccessful.
 
-**Terminology unique to JSPEC**
-* [wildcard](#wildcard)
-* [negation](#negation)
-* [macro](#macro)
-* [conditional](#conditional)
-* [placeholder](#placeholder)
-* [object capture](#object-capture)
-* [array capture](#array-capture)
-* [object ellipsis](#object-ellipsis)
-* [array ellipsis](#array-ellipsis)
-* [comments](#comments)
+## What is the JSPEC language?
+The JSPEC language is a natural and intuitive extension of JSON language that is used to explicitly describe JSON. Its name JSPEC stands for **J**SON **SPEC**IFICATION. JSPEC has its own file format **.jspec** along with its own syntax highlighter extensions supported in [VS Code](https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode/) and [Vim](https://github.com/chrismalcolm/jspec/tree/main/extensions/vim/). Its usage will be explored further in the [Basic Usage](#basic-usage) and [Advanced Usage](#advanced-usage) sections below. There is also a link for official documentation for all of the features of the [JSPEC language](https://github.com/chrismalcolm/jspec/tree/main/docs/language/README.md).
 
-### JSPEC Term
-A JSPEC term can match with a single JSON element. The traditional JSON data types are all supported, alongside other JSPEC terms.
+## Implicit vs Explicit
+Most Python JSON validation/schema modules use implicit language to describe their schema. This means that they describe the structure and properties of the JSON, encoded using some paradigm. An example of an implicit schema is given below.
+```python
+schema = {
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "role": {
+            "type": "string",
+            "allowed": [
+                "agent",
+                "client",
+                "supplier"
+            ]
+        },
+        "value": {
+            "min": 100,
+            "max": 2000
+        }
+    },
+    "required": ["id", "role", "value"],
+    "additionalProperties": True,
+}
+```
+Upon reading this, it may become fairly clear what conditions the schema is asking for. It's for an object, with an integer "id" key, a "role" key allowing only certain values, a "value" key for a number within a threshold, and any additional keys will be ignored. However, usage of an implicit JSON schema library poses the following issues:
+1. Learning the paradigm in order to create a schema
+2. A schema will become harder to read and understand when you introduce many nested objects and arrays, as is common in many practical use cases.
 
-### JSPEC Capture
-A JSPEC capture can match with a group of JSON elements.
-Captures can only appear in objects or arrays.
+JSPEC offers solutions to each of these issues in the following ways. 
+1. There is no paradigm to learn. Since JSPEC describes JSON explicitly, if you know how to write JSON, you already know how to write JSPEC! JSPEC only offers additional syntaxes above normal JSON language, to make some generalizations easier.
+2. A JSPEC file can only get as nested as the JSON you are writing the schema for. It is a lot easier to write a schema for complex nested structures.
 
-### Object
-A JSPEC object is a set of JSPEC object pairs and JSPEC object captures. A JSON object will match with a JSPEC object, provided it can match all the JSPEC object pairs and satisfy all JSPEC object captures. They are expressed in the same way objects are in JSON.
+To demonstrate this further, here is the equivalent schema of the above, written in JSPEC:
+```
+{
+    "id": int,
+    "role": "agent|client|supplier",
+    "value": (number > 100 & number < 2000),
+    ...
+}
+```
+This states exactly the same information as the implicit schema, but in a much more simple, explicit and elegant way.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `{"red": "blue"}` | `{"red": "blue"}` | Good Match | Equal object paris |
-| `{"red": "blue", "green": "yellow"}` | `{"green": "yellow", "red": "blue"}` | Good Match | Equal object paris |
-| `{"red": "blue"}` | `{"blue": "red"}` | Bad Match | Object pairs not equal |
+## Basic Usage
+This section will explore how to use the JSPEC language through examples of JSPEC files and Python snippets. For all of the examples in this section, it will be assumed that the example JSPEC file has been loaded as a JSPEC instance **`spec`**. For documentation on the functions of this module. follow the link [here](https://github.com/chrismalcolm/jspec/tree/main/docs/functions/README.md).
 
-### Array
-A JSPEC array is a list of JSPEC terms and JSPEC array captures. A JSON array will match an with a JSPEC array, provided it can match all the JSPEC terms and satisfy all JSPEC array captures. They are expressed in the same way arrays are in JSON.
+### Example 1
+The example below is a JSPEC schema, specifying that the JSON be an object with a key "name" with a string value, a key "age" with an integer value, and with no other keys allowed.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `[1,2,3,4]` | `[1,2,3,4]` | Good Match | Elements at correct indices |
-| `[1,2,3,4]` | `[4,3,2,1]` | Bad Match | Elements at incorrect indices |
-| `[1,2,3,4]` | `[1,1,1,1]` | Bad Match | Elements do not match |
-| `[1,2,3,4]` | `[1,2,3]` | Bad Match | Length of elements do not match |
+*example_01.jspec*
+```
+{
+    "name": string,
+    "age": int
+}
+```
 
-### String
-A JSPEC string is a regex pattern string. A JSON string will match with a JSPEC string, provided it satisfies the regex pattern string. They are expressed in the same way strings are in JSON.
+Using this JSPEC file to validate **`{"name": "Alice", "age": 32}`** and **`{"name": "Connor", "age": 47, "online": True}`** produces the following result.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `"cat"` | `"cat"` | Good Match | Strings are equal |
-| `<\w+>` | `<word>` | Good Match | Satisfies the regex |
-| `<\w+>` | `<1234>` | Bad Match | Does not satisfy the regex |
+```python
+>>> jspec.check(spec, {"name": "Alice", "age": 32})
+True, ''
+>>> jspec.check(spec, {"name": "Connor", "age": 47, "online": True})
+False, 'unexpected key "online" at position $'
+>>> 
+```
 
-### Int
-A JSPEC int is an integer. A JSON int will match with a JSPEC int, provided its integer value equals the integer value of the JSPEC int. They are expressed in the same way ints are in JSON.
+The latter JSON object failed the validation check; since it contains an additional field "online", which *example_01.jspec* did not allow.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `123` | `123` | Good Match | Same integer value |
-| `-485` | `-485` | Good Match | Same integer value |
-| `10` | `100` | Bad Match | Different integer value |
+The **string** and **int** used in the JSPEC file are called **placeholders**. They allow the presence of any value of their named type. There are 7 placeholders in total, **object**, **array**, **string**, **int**, **real**, **bool** and **number**, where using **number** will allow any int or real.
 
-### Real
-A JSPEC real is a real number. A JSON real will match an with a JSPEC real, provided its real number value equals the real number value of the JSPEC real. They are expressed in the same way reals are in JSON.
+### Example 2
+To allow for additional fields, we can add an **object ellipsis** to our original example. An object ellipsis (...) will ignore all additional fields. Only one object ellipsis should be used per object.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `3.141` | `3.141` | Good Match | Same float value |
-| `0.9999e-10` | `0.9999e-10` | Good Match | Same float value |
-| `2.1e4` | `21000` | Good Match | Same float value |
-| `2.1e4` | `2100` | Bad Match | Different float value |
+*example_02.jspec*
+```
+{
+    "name": string,
+    "age": int,
+    ...
+}
+```
 
-### Boolean
-A JSPEC boolean is a boolean. A JSON boolean will match an with a JSPEC boolean, provided its boolean value equals the boolean value of the JSPEC boolean. They are expressed in the same way booleans are in JSON.
+Now when we use this JSPEC file to validate **`{"name": "Alice", "age": 32}`** and **`{"name": "Connor", "age": 47, "online": True}`**, it produces the following result.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `true` | `true` | Good Match | Same boolean value |
-| `false` | `false` | Good Match | Same boolean value |
-| `true` | `false` | Bad Match | Different boolean value |
-| `false` | `true` | Bad Match | Different boolean value |
+```python
+>>> jspec.check(spec, {"name": "Alice", "age": 32})
+True, ''
+>>> jspec.check(spec, {"name": "Connor", "age": 47, "online": True})
+True, ''
+>>> 
+```
 
-### Null
-A JSPEC null is a null. A JSON null value will match with a JSPEC null. They are expressed in the same way nulls are in JSON.
+As we can see now, both JSON objects pass, as the **object ellipsis** has allowed for the "online" key to be in the object, and all other conditions are satisfied.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `null` | `null` | Good Match | Null |
-| `null` | `1` | Bad Match | Not null |
+### Example 3
+An **array ellipsis** can be used to ignore any number of JSON elements inside an array. You can use multiple array ellipses in an array, so long as they are not consecutive. The example below is a JSPEC schema for an array, beginning with a 1 and ending with a 5,
 
-### Wildcard
-A JSPEC wildcard is the JSPEC term that will match any JSON element. It is expressed as a wildcard character ` *`.
+*example_03.jspec*
+```
+[1, ... ,5]
+```
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `*` | `123` | Good Match | Matches any element |
-| `*` | `[1,2,3]` | Good Match | Matches any element |
-| `*` | `{"a": "b"}` | Good Match | Matches any element |
+We can now use this JSPEC file to validate the three examples below.
+```python
+>>> jspec.check(spec, [1, 2, 3, 4, 5])
+True, ''
+>>> jspec.check(spec, [1, 5])
+True, ''
+>>> jspec.check(spec, [1, 3, 5, 7, 9])
+False, 'unexpected element 7 in array at position $'
+>>> 
+```
 
-### Negation
-A JSPEC negation is a negated JSPEC term. A JSON element will match with a JSPEC negation, provided it does not match with the negated JSPEC term. They are expressed as an exclamation mark followed by the negated JSPEC term.
+The first example passes, as the array beings with 1, ends with 5, and 2, 3 and 4 are ignored. The second example passes, as the array beings with 1 and ends with 5, and there are no elements to ignore. The third example fails; since the array does not end in a 5.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `!4` | `3` | Good Match | 4 != 3 |
-| `!4` | `{}` | Good Match | 4 != {} |
-| `![]` | `[1,2,3]` | Good Match | [] != [1,2,3] |
-| `![1,2]` | `"[]"` | Good Match | [1,2] != "[]" |
-| `!![1,2]` | `"[1,2]"` | Good Match | [1,2] = "[1,2]" |
-| `!4` | `4` | Bad Match | 4 = 4 |
-| `![1,2]` | `[1,2]` | Bad Match | [1,2] = [1,2] |
+### Example 4
+The JSPEC language also supports **regex** for string values. The example below is a schema to match a key "name" with a value "Mike" and a key "email" with the regex pattern for an email address. 
 
-### Macro
-A JSPEC macro is a variable name that can be exported as a Python native JSON constant during the matching process. These variables are environment variables. A JSON element will match with a JSPEC macro, provided that it equals the exported Python native JSON constant. They are expressed as the environment variable name, enclosed in angled parentheses.
+*example_04.jspec*
+```
+{
+    "name": "Mike",
+    "email": "([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})"
+}
+```
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `<ENV_VARIABLE>` | `123` | Good Match | Only when the env variable `ENV_VARIABLE` equals 123 |
-| `<IMPORTANT_LIST>` | `[1,2,3]` | Good Match | Only when the env variable `IMPORTANT_LIST` equals [1,2,3] |
-| `<OTHER_VARIABLE>` | `123` | Bad Match | Only when the env variable `OTHER_VARIABLE` does not equal 123 |
+To see this JSPEC validation in action, here are a couple of examples.
+```python
+>>> jspec.check(spec, {"name": "Mike" "email": "not_an_email_address"})
+False, 'did not satisfy regex at position $.email'
+>>> jspec.check(spec, {"name": "Mike" "email": "mike@example.com"})
+True, ''
+>>> 
+```
 
-### Conditional
-A JSPEC conditional is a logical statement of JSPEC terms and logical operators (`&` AND, `|` OR, `^` XOR). A JSON element will match with a JSPEC conditional, provided it satisfies the logical statement of JSPEC terms and logical operators. They are expressed as JSPEC terms in between the logical operators, enclosed in rounded parentheses.
+The first example failed since the "email" value "not_an_email_address" does not satisfy the regex for an email address, as specified in *example_04.jspec*. The second example passes as the "email" and "name" conditions are both satisfied.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `(1 \| 4 \| 2)` | `1` | Good Match | Satisfied the logical statement |
-| `(1 \| 4 \| 2)` | `4` | Good Match | Satisfied the logical statement |
-| `(!"a" & !"b")` | `"c"` | Good Match | Satisfied the logical statement |
-| `(!"a\d" ^ !"\w7")` | `"c7"` | Good Match | Satisfied the logical statement |
-| `(1 \| 2 \| 3)` | `4` | Bad Match | Did not satisfied the logical statement |
-|`(!"a\d" ^ !"\w7")` | `"a7"` | Bad Match | Did not satisfied the logical statement |
+### Example 5
+If there is an element that should not appear, a **negation** operator can be used. This is done by placing an exclamation mark before the element, to show that it should not appear there. 
 
-### Placeholder
-A JSPEC placeholder is a JSON datatype name, which will match any JSON element of that datatype. The possible placeholders are `object`, `array`, `string`, `int`, `real`, `bool` and `number`. The numerical placeholders can also have an inequality attached to them, to set a range of numerical values for it to match.
+It is also possible to allow for any element to appear, using the **wildcard** star character. The example below demonstrates a use for both of these.   
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `object` | `{"a": 1, "b": 2}` | Good Match | Matches any object |
-| `array` | `[1,2,3]` | Good Match | Matches any array|
-| `string` | `"something"` | Good Match | Matches any string |
-| `int` | `3` | Good Match | Matches any int |
-| `real` | `-0.90e4` | Good Match | Matches any real |
-| `bool` | `true` | Good Match | Matches any boolean |
-| `number` | `12` | Good Match | Matches any int or real |
-| `object` | `[1,2,3]` | Bad Match | Is not an object |
-| `array` | `{"a": 1, "b": 2}` | Bad Match | Is not an array|
-| `number` | `"12"` | Bad Match | Is not a int or real |
+*example_05.jspec*
+```
+{
+    "id": !null,
+    "metadata": *
+    "fraction": {
+        "numerator": int,
+        "denominator": (int & !0)
+    },
+}
+```
+The negation used for "id" means that its value cannot be null. 
 
-### Object Capture
-A JSPEC object capture is a list of JSPEC object pairs and logical operators (`&` AND, `|` OR, `^` XOR) which form a logical statement. Any JSON object pairs which can be part of the capture group must satisfy the logical statement. It also has an optional minimum and the maximum number of object pairs in the capture group. They are expressed as JSPEC object pairs in between the logical operators, enclosed in rounded parentheses, with an optional multiplier range. The optional range is expressed as `xn` or `xn-m` where `n` and `m` are non-negative integers or `?` and `n` <= `m`.
+The wildcard used for "metadata" means that its value can be anything.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `{("\w": int)x2}` | `{"a": 1, "b": 2}` | Good Match | Captures "a": 1 and "b": 2 |
-| `{("\w": int \| "\w": bool)x2-5}` | `{"a": 1, "b": true, "c": false}` | Good Match | Captures "a": 1, "b": true and "c": false | Captures "a": 1, "b": true and "c": false |
-| `{"c": 3, ("\w": int)x?}` | `{"a": 1, "b": 2, "c": 3}` | Good Match | Captures "a": 1 and "b": 2 | Captures  |
-| `{("\w": int \| "\w": bool)x?-5}` | `{"a": 1, "b": true, "c": false}` | Good Match | Captures "a": 1 and "b": true and "c": false | Captures  |
-| `{("\w": int \| "\w": bool)x2-?, "d": null}` | `{"a": 1, "b": true, "c": false, "d": null}` | Good Match | Captures "a": 1 and "b": true and "c": false | Captures  |
-| `{("\w": int)x1}` | `{"a": 1, "b": 2}` | Bad Match | Not enough to satisfy capture |
-| `{("\w": int)x3}` | `{"a": 1, "b": 2}` | Bad Match | Not enough capacity to match JSON object pairs |
-| `{("\w": int \| "\w": bool)x2-?, "d": null}` | `{"a": 1, "b": true, "c": false}` | Bad Match | Missing "d": null |
+The example above also introduces a **conditional** statement, i.e. **`(int & !0)`**. A conditional is a set of conditions split by the logical operators AND **&**; OR **|**; XOR **^**. In the example above, the denominator must be an int AND must be not equal to 0.
 
-### Array Capture
-A JSPEC array capture is a list of JSPEC object pairs and logical operators (`&` AND, `|` OR, `^` XOR) which form a logical statement. Any JSON object pairs which can be part of the capture group must satisfy the logical statement. It also has an optional minimum and the maximum number of object pairs in the capture group. They are expressed as JSPEC terms in between the logical operators, enclosed in rounded parentheses, with an optional multiplier range. The optional range is expressed as `xn` or `xn-m` where `n` and `m` are non-negative integers or `?` and `n` <= `m`.
+To use *example_05.jspec* to validate a few JSON examples:
+```python
+>>> jspec.check(spec, {"id": "abc", "fraction": {"numerator": -5, "denominator": 4}, "metadata": "data"})
+True, ''
+>>> jspec.check(spec, {"id": 123, "fraction": {"numerator": 12, "denominator": 0}, "metadata": [1, 2, 3]})
+False, 'failed to match negation at $.fraction.denominator, expected !0'
+>>> 
+```
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `[(int)x4, (string)x1-2]` | `[1,2,3,4,"a","b"]` | Good Match | First capture is satisfied by 1,2,3,4 and second capture is satisfied by "a","b" |
-| `[1,2,3,(bool)x?,5,6]` | `[1,2,3,true,true,false,5,6]` | Good Match | Capture satisfied by true,true,false |
-| `[(int)x3, (string)x3]` | `[1,2,3,4,"a","b"]` | Bad Match | Second capture not satisfied |
-| `[1,2,3,(bool)x?,5,6]` | `[1,2,3,4,5,6]` | Bad Match | Capture not satisfied |
+The first example passed as the denominator is non-zero and satisfied all the other conditions. The second example failed; since even though it passes all the other conditions, the denominator equals zero. Notice that the value for "metadata" could have been any value of any type, since the wildcard character can accept anything.
 
-### Object Ellipsis
-A JSPEC object ellipsis will match with any extra object pairs that have not already been matched. It is equivalent to the wildcard object capture `(string: *)x?`.
+### Example 6
+The numerical placeholder types (i.e. **int**, **real** and **number**) can also use **inequalities**. Combining this with conditional statements means that you can provide ranges for certain values.
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `{"a":1,"b":2, ...}` | `{"a":1,"b":2,"c":3}` | Good Match | Ellipsis matches "c":3 |
-| `{"a":1,"b":2, ...}` | `{"a":1,"b":2}` | Good Match | Ellipsis matches nothing |
-| `{...}` | `{"a": "b"}` | Good Match | Ellipsis matches "a": "b" |
-| `{"a":1,"b":2, ...}` | `{"a":1}` | Bad Match | The JSPEC object pair "b": 2 is not matched |
+*example_06.jspec*
+```
+{
+    "route_id": int >= 0,
+    "distance": number < 100
+    "deliverables": (int >= 0 & int <= 2000),
+    "height": ((real > 3 & real < 50) | (real > 650))
+}
+```
+Breaking down the example schema above; "route_id" needs to be an int bigger than or equal to 0; "distance" needs to be an integer or real less than 100; "deliverables" needs to be an integer between 0 and 2000 inclusive; "height" needs to either be a real between 3 and 50, or a real larger than 650.
 
-### Array Ellipsis
-A JSPEC array ellipsis will match with any amount of consecutive elements in an array. It is equivalent to the wildcard array capture `(*)x?`.
+```python
+>>> jspec.check(spec, {"route_id": 45108, "distance": 130.4, "deliverables": 1800, "height": 289.5})
+False, 'conditional not satisfied at $.height'
+>>> jspec.check(spec, {"route_id": 702, "distance": 7.8, "deliverables": 2021, "height": 13.4})
+False, 'conditional not satisfied at $.height'
+>>> jspec.check(spec, {"route_id": 3.3, "distance": 88.9, "deliverables": 300, "height": 750})
+False, 'expecting an int at $.route_id'
+>>> jspec.check(spec, {"route_id": 15, "distance": 22.5, "deliverables": 1400, "height": 49.5})
+True, ''
+>>> 
+```
 
-| JSPEC Snippet | JSON Snippet | Result | Reason | 
-|-|-|-|-|
-| `[1,2,3 ... 5,6]` | `[1,2,3,4,5,6]` | Good Match | Ellipsis matches with 4 |
-| `[... ,"b","c",...]` | `["a","b","c","d","e"]` | Good Match | First ellipsis macthes "a", second ellipsis matches "d","e" |
-| `[1,2,3 ... 4,5]` | `[1,2,3,4,5]` | Good Match | Ellipsis matches nothing |
-| `[...]` | `[{}, 1, null]` | Good Match | Ellipsis matches {}, 1, null |
-| `[...]` | `[]` | Good Match | Ellipsis matches nothing |
-| `[1,2,3 ... 5,6]` | `[1,2,4,3,5,6]` | Bad Match | Ellipsis cannot match anything |
-| `[1,...]` | `[2,1] ` | Bad Match | Ellipsis cannot match anything |
+All the examples that failed above were due to being outside of the required ranges for some of their values, or incorrect types.
 
-### Comments
-A JSPEC comment cannot be used to match against anything in a JSON, and the only purpose is to provide documentation insights for the viewer of the JSPEC document. Both single line and multiline comments are supported in the following formats:
+## Advanced Usage
+
+### Example 7
+An **array capture** can be used to match multiple elements in an array. The syntax for an array capture is the same as a conditional, but it is also followed by a count or range. 
+
+A count is written as **xn** where n can be either an integer or ?. If it is an integer n, the array capture will expect n elements satisfying the criteria in the array capture. If it is a "?", the array will accept any number of elements satisfying the criteria in the array capture.
+
+A range can be written in 3 different ways. As **xn-m** where n and m are integers n < m, means the array capture will expect n to m elements satisfying the criteria in the array capture. As **xn-?** where n is an integer, means the array capture will expect at least n elements to satisfy the criteria in the array capture. As x?-n where n is an integer, means the array capture will expect at most n elements to satisfy the criteria in the array capture.
+
+The example below gives a field for each of these scenarios.
+
+*example_07.jspec*
+```
+{
+    "five_positive_ints": [(int > 0)x5],
+    "any_number_of_strings": [(string)x?],
+    "range_of_bools": [(bool)x2-4],
+    "string_or_ints": [(string | int)x1-?],
+    "say_one": [("one" | "ONE" | 1 | 1.0)x?-3] 
+}
+```
+
+An example of a good match for validation.
+```python
+>>> ex1 = {
+>>>     "five_positive_ints": [1, 2, 3, 4, 5],
+>>>     "any_number_of_strings": ["first", "second"],
+>>>     "range_of_bools": [True, False, True],
+>>>     "string_or_ints": ["a", 1, "b", 2, 3, "x"],
+>>>     "say_one": ["ONE", 1] 
+>>> }
+>>> jspec.check(spec, ex1)
+True, ''
+>>> 
+```
+
+### Example 8
+An **object capture** works exactly the same way as an array capture, except the rule applies to the key-value pair.
+
+*example_08.jspec*
+```
+{
+    ("data_\d+": int)x5
+}
+```
+
+The schema above is requiring an object with exactly 5 key-value pairs, with the keys satisfying the regex "\w+_\d+" and values being integers. Note that for object captures, the keys have to be a string.
+
+An example of a good match for validation.
+```python
+>>> ex2 = {
+>>>     "data_2": 3,
+>>>     "data_5": 1,
+>>>     "data_8": 4,
+>>>     "data_1": 4,
+>>>     "data_9": 7,
+>>> }
+>>> jspec.check(spec, ex2)
+True, ''
+>>> 
+```
+
+### Example 9
+A macro is a variable name that can be exported as a Python native JSON constant during the matching process. These variables are environment variables. A JSON element will match with a JSPEC macro, provided that it equals the exported Python native JSON constant. They are expressed as the environment variable name, enclosed in angled parentheses.
+
+*example_09.jspec*
+```
+{
+    "test_object": <TEST_OBJECT>,
+    "test_array": <TEST_ARRAY>,
+    "test_string": <TEST_STRING>
+}
+```
+
+To create an example, we need to set the environment variables in the schema.
+```python
+>>> os.environ["TEST_OBJECT"] = '{"hello": "world"}'
+>>> os.environ["TEST_ARRAY"] = '["hello", "world", 123]'
+>>> os.environ["TEST_STRING"] = '"Hello World!"'
+>>> jspec.check(spec, {"test_object": {"hello": "world"}, "test_array": ["hello", "world", 123], "test_string": "Hello World!"})
+>>> True, ''
+>>> 
+```
+
+### Example 10
+Single line and multiline **comments** are also supported in the JSPEC language. Single line comments are written using **//** and extend to the end of the line. Multiline comments begin with **/\*** and end with **\*/**. They can be placed in any whitespace. Both comment types are demonstrated below.
 
 ```
 {
@@ -267,103 +348,11 @@ A JSPEC comment cannot be used to match against anything in a JSON, and the only
     "versions": [1, 2, /*like here*/ 3, 4 /*and here*/, 5]
 }
 ```
-
-## Basic Python Usage
-A specification can be defined using a JSPEC file or a string. Using the **jspec.load** or **jspec.loads** methods respectively, this can produce a **jspec.JSPEC** instance. This instance can also be converted back to a JSPEC file or string, using the **jspec.dump** or **jspec.dumps** methods respectively. To check a JSON against a JSPEC, use the 
-**jspec.check** to check using a **jspec.JSPEC** instance, or use the **jspec.checks** to check using a string. Any JSON used for these two methods must be in a Python native format, which can be achieved using the **json.loads** method.
-
-JSPEC file
-```
-{
-    "id": <MY_ID>,
-    "timestamp": number,
-    "data": [
-        (
-            {
-                "longitude": real,
-                "latitude": real
-            }
-        )x?
-    ],
-    ...
-}
-```
-
-This example describes a JSON object with an "id" field set as the environment variable MY_ID, the "timestamp" field as a number, and "data" as a list of objects, each with a "longitude" and "latitude" keys and real values.
-
-Source
-```python
-import os
-import jspec
-
-os.environ["MY_ID"] = '1'
-with open("./test/assets/test.jspec", "r") as f:
-    spec = jspec.load(f)
-element_1 = {
-    "id": 1,
-    "timestamp": 1530.5,
-    "data": [
-        {
-            "longitude": 10.2,
-            "latitude": 41.3,
-        },
-        {
-            "longitude": 33.3,
-            "latitude": 76.2,
-        },
-        {
-            "longitude": 9.5,
-            "latitude": 12.1,
-        }
-    ],
-    "other": "data"
-}
-
-element_2 = {
-    "id": 1,
-    "bad": "fields"
-}
-
-result_1, reason_1 = jspec.check(spec, element_1)
-print("1:", result_1, reason_1)
-
-result_2, reason_2 = jspec.check(spec, element_1)
-print("2:",result_2, reason_2)
-```
-
-Output
-```bash
-1: True, ''
-2: False, 'At location $ - exhausted JSON object, failed to match the following JSPEC pairs: ["data": [({"latitude": real, "longitude": real})x?], "timestamp": number, ...]'
-```
-
-## Visual Studio Code Extension
-This repository also provided a Visual Studio Code extension which is available to be downloaded from the marketplace, under the name "JSPEC". It provides syntax highlighting for the JSPEC Language.
-
 ## Contributing
-The process for contributing would be creating a PR and having it reviewed and merged by @chrismalcolm. Please add your name and email to the `CONTRIBUTORS.txt` file when contributing.
+I am open to any suggestions on how this project can be improved. The process for contributing would be creating a PR and having it reviewed and merged by @chrismalcolm. Please add your name and email to the `CONTRIBUTORS.txt` file when contributing.
 
-### Deploying an update to the extension
-The sub repository for extension source code is found here: https://github.com/chrismalcolm/jspec/tree/main/extensions/vscode
-
-Link to the marketplace publisher here: https://marketplace.visualstudio.com/manage/publishers/ChrisMalcolm
-
-To deploy a new version of the Visual Studio extension, make sure `Node.js` is installed and run the following to install `vsce`:
-
-```bash
-npm install -g vsce
-```
-
-To create a new `.vslx` file, navigate to the sub-repository for the extension and run:
-
-```bash
-vsce package
-```
-
-This will create the package. This can just be dragged and dropped using the UI of the marketplace publisher, to deploy a new version of the extension.
-
-### Unit testing
-The aim of this project is for code to be fully unit testable with 100% coverage for the main modules. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage` and a local dependency.
+## Unit testing
+The aim of this project is for code to be fully unit testable with 100% coverage for the main modules **scanner**, **entity** and **matcher**. The command-line helpers **parse** and **check** are also included in the unit tests, but there is no requirement for these to be included in the coverage report. The `coverage` module is used when running unit tests, to get a report on the coverage of the tests. If you do not have coverage installed, run `pip install coverage` and a local dependency.
 
 ```bash
 # Run the unit test suite
