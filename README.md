@@ -2,7 +2,7 @@
 ![Tests](https://github.com/chrismalcolm/jspec/actions/workflows/tests.yml/badge.svg)
 ![CodeCov](https://github.com/chrismalcolm/jspec/actions/workflows/codecov.yml/badge.svg)
 [![PyPi license](https://badgen.net/pypi/license/pip/)](https://pypi.org/project/jspec/)
-[![PyPi version](https://badgen.net/pypi/v/pip/)](https://pypi.org/project/jspec/)
+[![PyPI version shields.io](https://img.shields.io/pypi/v/jspec.svg)](https://pypi.org/project/jspec/)
 [![python](https://img.shields.io/badge/python-3.6%20|%203.7%20|%203.8%20|%203.9%20|%203.10-blue.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![docs](https://img.shields.io/badge/docs-passing-success.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 
@@ -38,7 +38,7 @@ Use the JSPEC **`load`** function to create the specification object, then use t
 >>> jspec.check(spec, {"name": "Chris", "age": 26, "status": "online"})
 True, ''
 >>> jspec.check(spec, {"name": "Bob", "age": 34.5})
-False, 'at $.age expecting an int not a real'
+False, 'At location $ - exhausted JSON object, failed to match the following JSPEC pairs: ["age": int, ...]'
 >>> 
 ```
 
@@ -114,7 +114,7 @@ Using this JSPEC file to validate **`{"name": "Alice", "age": 32}`** and **`{"na
 >>> jspec.check(spec, {"name": "Alice", "age": 32})
 True, ''
 >>> jspec.check(spec, {"name": "Connor", "age": 47, "online": True})
-False, 'unexpected key "online" at position $'
+False, 'At location $ - exhausted JSPEC object, failed to match the following JSON pairs: ["online": true]'
 >>> 
 ```
 
@@ -161,7 +161,7 @@ True, ''
 >>> jspec.check(spec, [1, 5])
 True, ''
 >>> jspec.check(spec, [1, 3, 5, 7, 9])
-False, 'unexpected element 7 in array at position $'
+False, "At location $ - exhausted JSON array, no JSON element left to match '5'"
 >>> 
 ```
 
@@ -180,9 +180,9 @@ The JSPEC language also supports **regex** for string values. The example below 
 
 To see this JSPEC validation in action, here are a couple of examples.
 ```python
->>> jspec.check(spec, {"name": "Mike" "email": "not_an_email_address"})
-False, 'did not satisfy regex at position $.email'
->>> jspec.check(spec, {"name": "Mike" "email": "mike@example.com"})
+>>> jspec.check(spec, {"name": "Mike", "email": "not_an_email_address"})
+False, 'At location $.email - regex pattern \'([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})\' failed to match \'"not_an_email_address"\''
+>>> jspec.check(spec, {"name": "Mike", "email": "mike@example.com"})
 True, ''
 >>> 
 ```
@@ -198,11 +198,11 @@ It is also possible to allow for any element to appear, using the **wildcard** s
 ```
 {
     "id": !null,
-    "metadata": *
+    "metadata": *,
     "fraction": {
         "numerator": int,
         "denominator": (int & !0)
-    },
+    }
 }
 ```
 The negation used for "id" means that its value cannot be null. 
@@ -216,7 +216,7 @@ To use *example_05.jspec* to validate a few JSON examples:
 >>> jspec.check(spec, {"id": "abc", "fraction": {"numerator": -5, "denominator": 4}, "metadata": "data"})
 True, ''
 >>> jspec.check(spec, {"id": 123, "fraction": {"numerator": 12, "denominator": 0}, "metadata": [1, 2, 3]})
-False, 'failed to match negation at $.fraction.denominator, expected !0'
+False, "At location $.fraction.denominator - conditional elements (int & !0) do not match the element '0'"
 >>> 
 ```
 
@@ -229,7 +229,7 @@ The numerical placeholder types (i.e. **int**, **real** and **number**) can also
 ```
 {
     "route_id": int >= 0,
-    "distance": number < 100
+    "distance": number < 100,
     "deliverables": (int >= 0 & int <= 2000),
     "height": ((real > 3 & real < 50) | (real > 650))
 }
@@ -238,11 +238,11 @@ Breaking down the example schema above; "route_id" needs to be an int bigger tha
 
 ```python
 >>> jspec.check(spec, {"route_id": 45108, "distance": 130.4, "deliverables": 1800, "height": 289.5})
-False, 'conditional not satisfied at $.height'
+False, 'At location $ - failed to match the following JSON pairs: ["distance": 130.4, "distance": 130.4, "height": 289.5, "height": 289.5]'
 >>> jspec.check(spec, {"route_id": 702, "distance": 7.8, "deliverables": 2021, "height": 13.4})
-False, 'conditional not satisfied at $.height'
+False, "At location $.deliverables - conditional elements (int >= 0 & int <= 2000) do not match the element '2021'"
 >>> jspec.check(spec, {"route_id": 3.3, "distance": 88.9, "deliverables": 300, "height": 750})
-False, 'expecting an int at $.route_id'
+False, 'At location $ - failed to match the following JSON pairs: ["height": 750, "height": 750, "route_id": 3.3, "route_id": 3.3]'
 >>> jspec.check(spec, {"route_id": 15, "distance": 22.5, "deliverables": 1400, "height": 49.5})
 True, ''
 >>> 

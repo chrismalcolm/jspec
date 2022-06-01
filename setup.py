@@ -11,7 +11,7 @@ setup(
     author="Christopher Malcolm",
     author_email="chris.c.malcolm.96@gmail.com",
     name="jspec",
-    version="2.1.3",
+    version="2.1.4",
     description="JSPEC is a powerful yet simple and lightweight JSON validation module",
     long_description_content_type="text/markdown",
     long_description=long_description,
