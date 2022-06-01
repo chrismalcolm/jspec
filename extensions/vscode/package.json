@@ -7,7 +7,7 @@
     },
     "displayName": "JSPEC",
     "description": "Syntax highlighting for the JSPEC language",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "engines": {
         "vscode": "^1.67.0"
     },
